@@ -659,6 +659,8 @@ enum EStrings {
 
 /// Codes returned by #CKeyboard for special keys
 enum EKeyDataValue {
+    kv_Space = ' ',
+    kv_Tab = '\t',
     kv_First = 0xE000,		// 0xE000 - 0xF8FF private use unicode region
     kv_Esc = kv_First,
     kv_Backspace,
