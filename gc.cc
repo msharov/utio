@@ -178,22 +178,25 @@ void CGC::Text (Point2d p, const string& str)
     }
 }
 
+static const CGC::Point2d c_ZeroPoint (0, 0);
+
 /// Clips point \p pt to the canvas size.
 void CGC::Clip (Point2d& pt) const
 {
-    for (uoff_t i = 0; i < pt.size(); ++ i) {
-	if (pt[i] < 0)
-	    pt[i] = 0;
-	else if (pt[i] > coord_t(m_Size[i]))
-	    pt[i] = m_Size[i];
-    }
+    Point2d bottomright (m_Size);
+    bottomright -= 1;
+    simd::pmax (c_ZeroPoint, pt);
+    simd::pmin (bottomright, pt);
 }
 
 /// Clips rectangle \p r to the canvas.
 void CGC::Clip (Rect& r) const
 {
-    foreach (Rect::iterator, i, r)
-	Clip (*i);
+    const Point2d bottomright (m_Size);
+    simd::pmax (c_ZeroPoint, r[0]);
+    simd::pmin (bottomright, r[0]);
+    simd::pmax (c_ZeroPoint, r[1]);
+    simd::pmin (bottomright, r[1]);
     if (r[0][1] > r[1][1])
 	swap (r[0], r[1]);
     if (r[0][0] > r[1][0])
