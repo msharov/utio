@@ -3,7 +3,7 @@ include ../Common.mk
 DEMOS	= demo00 demo01 demo02
 OBJS	= demo00.o demo01.o demo02.o
 SRCS	= demo00.cc demo01.cc demo02.cc
-LIBS	= -l${LIBNAME} -lustl
+LIBS	+= -l${LIBNAME} -lustl
 
 .PHONY:	all run clean depend
 
