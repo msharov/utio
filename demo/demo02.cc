@@ -7,31 +7,26 @@ static Point2d g_Pos (0, 0);
 
 static void DrawBox (CGC& gc, Point2d pos)
 {
-    Rect outer (0, 0, 12, 12), inner (4, 4, 8, 8);
-    outer += pos;
-    inner += pos;
-    gc.Bar (outer, gc.GraphicChar (acs_Board));
-    gc.Bar (inner, 0);
-    gc.Box (outer);
-    gc.Box (inner);
-    Point2d textPos (pos);
-    ++ textPos[0];
-    ++ textPos[1];
-    gc.Text (textPos, "GC demo");
-    ++ textPos[1];
+    gc.Bar (pos[0], pos[1], 12, 4, gc.GraphicChar (acs_Board));
+    gc.Box (pos[0], pos[1], 12, 4);
+    gc.Bar (pos[0], pos[1] + 4, 4, 4, gc.GraphicChar (acs_Board));
+    gc.Bar (pos[0] + 8, pos[1] + 4, 4, 4, gc.GraphicChar (acs_Board));
+    gc.Bar (pos[0], pos[1] + 8, 12, 4, gc.GraphicChar (acs_Board));
+    gc.Text (pos[0] + 1, pos[1] + 1, "GC demo");
     gc.FgColor (lightcyan);
-    gc.Char (textPos[0], textPos[1], gc.GraphicChar(acs_LeftArrow));
-    gc.Char (textPos[0] + 1, textPos[1], gc.GraphicChar(acs_DownArrow));
-    gc.Char (textPos[0] + 2, textPos[1], gc.GraphicChar(acs_UpArrow));
-    gc.Char (textPos[0] + 3, textPos[1], gc.GraphicChar(acs_RightArrow));
+    gc.Char (pos[0] + 1, pos[1] + 2, gc.GraphicChar(acs_LeftArrow));
+    gc.Char (pos[0] + 2, pos[1] + 2, gc.GraphicChar(acs_DownArrow));
+    gc.Char (pos[0] + 3, pos[1] + 2, gc.GraphicChar(acs_UpArrow));
+    gc.Char (pos[0] + 4, pos[1] + 2, gc.GraphicChar(acs_RightArrow));
     gc.FgColor (green);
-    gc.Text (textPos[0] + 5, textPos[1], "Move");
-    ++ textPos[1];
-    gc.Text (textPos, "q to quit");
+    gc.Text (pos[0] + 6, pos[1] + 2, "Move");
+    gc.Text (pos[0] + 1, pos[1] + 3, "q to quit");
 }
 
 static void Draw (CGC& gc)
 {
+    gc.BgColor (black);
+    gc.FgColor (green);
     gc.Clear();
     gc.BgColor (yellow);
     gc.FgColor (black);
