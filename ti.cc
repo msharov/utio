@@ -1,3 +1,11 @@
+// This file is part of the utio library, an terminal I/O library.
+//
+// Copyright (C) 2004 by Mike Sharov <msharov@talentg.com>
+// This file is free software, distributed under the MIT License.
+//
+// ti.cc
+//
+
 #include "ti.h"
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,20 +1,7 @@
 // This file is part of the utio library, an terminal I/O library.
+//
 // Copyright (C) 2004 by Mike Sharov <msharov@talentg.com>
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU Library General Public
-// License along with this library; if not, write to the 
-// Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
-// Boston, MA  02111-1307  USA.
+// This file is free software, distributed under the MIT License.
 //
 // gc.cc
 //
@@ -95,7 +82,8 @@ void CGC::Bar (Rect r, wchar_t c)
 /// Draws a horizontal line from \p p of length \p l.
 void CGC::HLine (Point2d p, dim_t l)
 {
-    Clip (p);
+    if (!Clip (p))
+	return;
     if (coord_t(l) > m_Size[0] - p[0])
 	l = m_Size[0] - p[0];
     const CCharCell vlc (GraphicChar (acs_HLine), m_Template);
@@ -105,7 +93,8 @@ void CGC::HLine (Point2d p, dim_t l)
 /// Draws a vertical line from \p p of length \p l.
 void CGC::VLine (Point2d p, dim_t l)
 {
-    Clip (p);
+    if (!Clip (p))
+	return;
     if (coord_t(l) > m_Size[1] - p[1])
 	l = m_Size[1] - p[1];
     const CCharCell vlc (GraphicChar (acs_VLine), m_Template);
@@ -161,7 +150,8 @@ void CGC::Char (Point2d p, wchar_t c)
 /// Prints string \p str at \p p.
 void CGC::Text (Point2d p, const string& str)
 {
-    Clip (p);
+    if (!Clip (p))
+	return;
     const canvas_t::iterator doutstart (CanvasAt (p));
     const canvas_t::iterator doutend = doutstart + (m_Size[0] - p[0]);
     assert (doutend >= doutstart);
@@ -181,17 +171,20 @@ void CGC::Text (Point2d p, const string& str)
 static const CGC::Point2d c_ZeroPoint (0, 0);
 
 /// Clips point \p pt to the canvas size.
-void CGC::Clip (Point2d& pt) const
+bool CGC::Clip (Point2d& pt) const
 {
+    const Point2d oldPoint (pt);
     Point2d bottomright (m_Size);
     bottomright -= 1;
     simd::pmax (c_ZeroPoint, pt);
     simd::pmin (bottomright, pt);
+    return (oldPoint == pt);
 }
 
 /// Clips rectangle \p r to the canvas.
-void CGC::Clip (Rect& r) const
+bool CGC::Clip (Rect& r) const
 {
+    const Rect oldRect (r);
     const Point2d bottomright (m_Size);
     simd::pmax (c_ZeroPoint, r[0]);
     simd::pmin (bottomright, r[0]);
@@ -201,6 +194,7 @@ void CGC::Clip (Rect& r) const
 	swap (r[0], r[1]);
     if (r[0][0] > r[1][0])
 	swap (r[0][0], r[1][0]);
+    return (oldRect == r);
 }
 
 //----------------------------------------------------------------------

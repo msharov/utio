@@ -5,8 +5,8 @@
  * in g_Files. Being a configuration file, this file can be used or
  * modified entirely without restriction. You should change all values
  * appropriately to the name of your project and its requirements. The
- * LGPL does not apply to this file. It can and should be treated as a
- * template for the creation of your own configuration file.
+ * bsconf license does not apply to this file. It can and should be treated
+ * as a template for the creation of your own configuration file.
  *
  * All substituted variable names are given without enclosing @@. For
  * example: "CC" will match "@CC@" in config.h.in and replace it with
@@ -81,7 +81,7 @@ static string_t g_Components [] = {
     "debug",		"#DEBUG\t\t= 1",			"DEBUG\t\t= 1 ",
     "libstdc++",	"#define WITHOUT_LIBSTDCPP 1",		"#undef WITHOUT_LIBSTDCPP",
     "libstdc++",	"STANDALONE\t= -nodefaultlibs ",	"#STANDALONE\t= -nodefaultlibs",
-    "getkey",		"#undef WANT_GETKEY",			"#define WANT_GETKEY 1"
+    "getkey",		"#undef UTIO_WANT_GETKEY",		"#define UTIO_WANT_GETKEY 1"
 };
 
 /* Parallel to g_Components */

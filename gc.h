@@ -1,20 +1,7 @@
 // This file is part of the utio library, an terminal I/O library.
+//
 // Copyright (C) 2004 by Mike Sharov <msharov@talentg.com>
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU Library General Public
-// License along with this library; if not, write to the 
-// Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
-// Boston, MA  02111-1307  USA.
+// This file is free software, distributed under the MIT License.
 //
 // gc.h
 //
@@ -72,8 +59,8 @@ public:
     inline dim_t		Height (void) const	{ return (m_Size[1]); }
     inline void			Resize (dim_t x,dim_t y){ Resize (Size2d (x, y)); }
     void			Resize (Size2d sz);
-    void			Clip (Rect& r) const;
-    void			Clip (Point2d& r) const;
+    bool			Clip (Rect& r) const;
+    bool			Clip (Point2d& r) const;
     inline void			SetTabSize (size_t nts = 8)	{ assert (nts && "Tab size can not be 0"); m_TabSize = nts; }
     void			MakeDiffFrom (const CGC& src);
 private:

@@ -1,20 +1,7 @@
 // This file is part of the utio library, an terminal I/O library.
+//
 // Copyright (C) 2004 by Mike Sharov <msharov@talentg.com>
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Library General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Library General Public License for more details.
-//
-// You should have received a copy of the GNU Library General Public
-// License along with this library; if not, write to the 
-// Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
-// Boston, MA  02111-1307  USA.
+// This file is free software, distributed under the MIT License.
 //
 // kb.cc
 //
@@ -43,7 +30,7 @@ namespace utio {
 /// Constructs node with id \p nodeId.
 CKeyboard::CKeyboard (void)
 : m_Keymap (),
-#if WANT_GETKEY
+#if UTIO_WANT_GETKEY
   m_Keydata (),
 #endif
   m_InitialTermios (),
@@ -52,7 +39,7 @@ CKeyboard::CKeyboard (void)
   m_bTermInUIMode (false)
 {
     fill_n ((void*) &m_InitialTermios, sizeof(struct termios), '\x0');
-    #if WANT_GETKEY
+    #if UTIO_WANT_GETKEY
 	m_Keydata.reserve (64);
     #endif
 }
@@ -70,7 +57,7 @@ void CKeyboard::Open (const CTerminfo& rti)
 {
     LoadKeymap (rti);
     EnterUIMode();
-    #if WANT_GETKEY
+    #if UTIO_WANT_GETKEY
 	int flag;
 	if ((flag = fcntl (STDIN_FILENO, F_GETFL)) < 0)
 	    throw file_exception ("fcntl", "stdin");
@@ -83,28 +70,27 @@ void CKeyboard::Open (const CTerminfo& rti)
 void CKeyboard::Close (void)
 {
     LeaveUIMode();
-    #if WANT_GETKEY
+    #if UTIO_WANT_GETKEY
 	int flag;
 	if ((flag = fcntl (STDIN_FILENO, F_GETFL)) >= 0)
 	    fcntl (STDIN_FILENO, F_SETFL, flag & ~O_NONBLOCK);
     #endif
 }
 
-#if WANT_GETKEY
+#if UTIO_WANT_GETKEY
 /// Reads a key from stdin.
 wchar_t CKeyboard::GetKey (metastate_t* pMeta, bool bBlock) const
 {
     wchar_t key = 0;
     metastate_t meta;
-    while (!key) {
-	while (m_Keydata.empty()) {
-	    WaitForKeyData (!bBlock);
-	    ReadKeyData();
-	}
-	istream is (m_Keydata);
-	DecodeKey (is, key, meta);
-	m_Keydata.erase (m_Keydata.begin(), is.pos());
-    }
+    istream is;
+    do {
+	if (m_Keydata.empty() && bBlock)
+	    WaitForKeyData();
+	ReadKeyData();
+	is.link (m_Keydata);
+    } while (!DecodeKey (is, key, meta) && bBlock);
+    m_Keydata.erase (m_Keydata.begin(), is.pos());
     if (pMeta)
 	*pMeta = meta;
     return (key);
@@ -127,17 +113,19 @@ void CKeyboard::ReadKeyData (void) const
     m_Keydata.resize (m_Keydata.size() + os.pos());
 }
 
-/// Blocks until something is available on stdin.
-void CKeyboard::WaitForKeyData (suseconds_t timeout) const
+/// Blocks until something is available on stdin. Returns false on \p timeout.
+bool CKeyboard::WaitForKeyData (suseconds_t timeout) const
 {
     fd_set fds;
     FD_ZERO (&fds);
     FD_SET (STDIN_FILENO, &fds);
     struct timeval tv = { 0, timeout };
     errno = 0;
-    do { select (1, &fds, NULL, NULL, timeout ? &tv : NULL); } while (errno == EINTR);
-    if (errno)
+    int rv;
+    do { rv = select (1, &fds, NULL, NULL, timeout ? &tv : NULL); } while (errno == EINTR);
+    if (rv < 0)
 	throw file_exception ("select", "stdin");
+    return (rv);
 }
 #endif
 
@@ -238,11 +226,12 @@ bool CKeyboard::DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const
     size_t matchedSize = 0;
     const string::const_iterator sfirst (is.ipos());
     for (uoff_t i = 0; i < m_Keymap.size(); ++ i) {
-	const size_t kss = strlen (m_Keymap[i]);
+	const CTerminfo::capout_t ks = m_Keymap[i];
+	const size_t kss = strlen (ks);
 	if (kss > is.remaining() || kss < matchedSize)
 	    continue;
 	const string::const_iterator slast (is.ipos() + kss);
-	if (equal (sfirst, slast, m_Keymap[i])) {
+	if (equal (sfirst, slast, ks)) {
 	    kv = i + kv_First;
 	    matchedSize = kss;
 	}
@@ -272,8 +261,16 @@ bool CKeyboard::DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const
 	if (isupper (kv))
 	    kf.set (mksbit_Shift);
     }
+
+    // If it is really an ESC key, then reset variables.
+    if (!matchedSize && kv == kv_Esc) {
+	matchedSize = strlen (m_Keymap [kv - kv_First]);
+	is.seek (is.pos() - matchedSize);
+	kf.reset (mksbit_Alt);
+    }
+
+    // Try to report shift state.
     if (matchedSize) {
-	// Try to report shift state.
 	// Warning: this is unreliable and only works on a vt.
 	#define TIOCL_GETSHIFTSTATE	6 // This is some internal kernel constant.
 	int sstate = TIOCL_GETSHIFTSTATE;
