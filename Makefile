@@ -1,7 +1,7 @@
 include Common.mk
 
-SRCS	= ti.cc kb.cc gc.cc
-OBJS	= ti.o kb.o gc.o
+SRCS	= gc.cc ti.cc kb.cc
+OBJS	= gc.o ti.o kb.o
 INCS	= config.h ti.h ticonst.h kb.h gc.h gdt.h
 DOCT	= utio.in
 LIBS	= -lustl
