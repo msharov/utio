@@ -38,9 +38,9 @@ class Rect : public tuple<2, Point2d> {
 public:
     inline		Rect (const Rect& r)
 			    : tuple<2, Point2d> (r) {}
-    inline		Rect (coord_t x1 = 0, coord_t y1 = 0, coord_t x2 = 0, coord_t y2 = 0)
-			    { at(0)[0] = x1; at(0)[1] = y1;
-			      at(1)[0] = x2; at(1)[1] = y2; }
+    inline		Rect (coord_t x = 0, coord_t y = 0, dim_t w = 0, dim_t h = 0)
+			    { at(0)[0] = x; at(0)[1] = y;
+			      at(1)[0] = x + w; at(1)[1] = y + h; }
     inline		Rect (const Point2d& tl, const Point2d& br)
 			    { at(0) = tl; at(1) = br; }
     inline		Rect (const Point2d& tl, const Size2d& wh)

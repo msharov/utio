@@ -44,21 +44,21 @@ public:
 				CGC (void);
     void			Clear (void);
     void			Box (Rect r);
-    void			Bar (Rect r, wchar_t c);
+    void			Bar (Rect r, wchar_t c = ' ');
     void			HLine (Point2d p, dim_t l);
     void			VLine (Point2d p, dim_t l);
     void			GetImage (Rect r, canvas_t& cells) const;
     void			Image (Rect r, const canvas_t& cells);
     void			Char (Point2d p, wchar_t c);
     void			Text (Point2d p, const string& str);
-    inline void			Box (coord_t x1, coord_t y1, coord_t x2, coord_t y2)		{ Box (Rect (x1, y1, x2, y2)); }
-    inline void			Bar (coord_t x1, coord_t y1, coord_t x2, coord_t y2, wchar_t c)	{ Bar (Rect (x1, y1, x2, y2), c); }
-    inline void			HLine (coord_t x, coord_t y, dim_t l)				{ HLine (Point2d (x, y), l); }
-    inline void			VLine (coord_t x, coord_t y, dim_t l)				{ VLine (Point2d (x, y), l); }
-    inline void			GetImage (coord_t x1, coord_t y1, coord_t x2, coord_t y2, canvas_t& cells)	{ GetImage (Rect (x1, y1, x2, y2), cells); }
-    inline void			Image (coord_t x1, coord_t y1, coord_t x2, coord_t y2, const canvas_t& cells)	{ Image (Rect (x1, y1, x2, y2), cells); }
-    inline void			Char (coord_t x, coord_t y, wchar_t c)				{ Char (Point2d (x, y), c); }
-    inline void			Text (coord_t x, coord_t y, const string& str)			{ Text (Point2d (x, y), str); }
+    inline void			Box (coord_t x, coord_t y, dim_t w, dim_t h)				{ Box (Rect (x, y, w, h)); }
+    inline void			Bar (coord_t x, coord_t y, dim_t w, dim_t h, wchar_t c = ' ')		{ Bar (Rect (x, y, w, h), c); }
+    inline void			HLine (coord_t x, coord_t y, dim_t l)					{ HLine (Point2d (x, y), l); }
+    inline void			VLine (coord_t x, coord_t y, dim_t l)					{ VLine (Point2d (x, y), l); }
+    inline void			GetImage (coord_t x, coord_t y, coord_t w, coord_t h, canvas_t& cells)	{ GetImage (Rect (x, y, w, h), cells); }
+    inline void			Image (coord_t x, coord_t y, coord_t w, coord_t h, const canvas_t& cells)	{ Image (Rect (x, y, w, h), cells); }
+    inline void			Char (coord_t x, coord_t y, wchar_t c)					{ Char (Point2d (x, y), c); }
+    inline void			Text (coord_t x, coord_t y, const string& str)				{ Text (Point2d (x, y), str); }
     wchar_t			GraphicChar (EGraphicChar c) const;
     inline void			FgColor (EColor c)	{ m_Template.m_FgColor = c; }
     inline void			BgColor (EColor c)	{ m_Template.m_BgColor = c; }
@@ -67,7 +67,10 @@ public:
     inline void			AllAttrsOff (void)	{ m_Template.m_Attrs = 0; }
     inline const canvas_t&	Canvas (void) const	{ return (m_Canvas); }
     inline canvas_t&		Canvas (void)		{ return (m_Canvas); }
-    inline const Size2d&	ScreenSize (void) const	{ return (m_Size); }
+    inline const Size2d&	Size (void) const	{ return (m_Size); }
+    inline dim_t		Width (void) const	{ return (m_Size[0]); }
+    inline dim_t		Height (void) const	{ return (m_Size[1]); }
+    inline void			Resize (dim_t x,dim_t y){ Resize (Size2d (x, y)); }
     void			Resize (Size2d sz);
     void			Clip (Rect& r) const;
     void			Clip (Point2d& r) const;
