@@ -514,16 +514,16 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     ++ prevCell.m_Attrs;
     ++ prevCell.m_FgColor;
     bool bInAcsMode = prevCell.HasAttr (a_altcharset);
-    capout_t cursorRightStr = GetString (ti::cursor_right);
-    if (cursorRightStr == string::empty_string)
-	cursorRightStr = NULL;
 
     for (coord_t j = y; j < y + h; ++ j) {
 	allout += MoveTo (x, j);
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
-	    wchar_t c = data->m_Char;
-	    if (c > CHAR_MAX)
-		c = SubstituteChar (c);
+	    if (!data->m_Char) {
+		prevCell = *data;
+		continue;
+	    } else if (!prevCell.m_Char)
+		allout += MoveTo (x, y);
+	    const wchar_t c = data->m_Char > CHAR_MAX ? SubstituteChar (data->m_Char) : data->m_Char;
 	    if (prevCell.m_Attrs != data->m_Attrs)
 		allout += Attrs (data->m_Attrs);
 	    if (prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
@@ -532,12 +532,7 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
 		allout += bInAcsMode ? ExitAcsMode() : EnterAcsMode();
 		bInAcsMode = !bInAcsMode;
 	    }
-	    if (!c)
-		allout += (cursorRightStr ? cursorRightStr : MoveTo (i + 1, j));
-	    else if (c < CHAR_MAX || bInAcsMode)
-		allout += char(c);
-	    else
-		allout += c;
+	    allout += ((c < CHAR_MAX || bInAcsMode) ? char(c) : ' ');
 	    prevCell = *data;
 	}
     }
