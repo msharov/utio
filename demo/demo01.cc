@@ -2,8 +2,7 @@
 using namespace utio;
 using namespace ustl;
 
-const size_t cn_KeyNames = kv_Last - kv_First;
-static const char* c_KeyNameMap [cn_KeyNames] = {
+static const char* c_KeyNameMap [kv_nKeys] = {
     /* kv_Esc */		"Esc",
     /* kv_Backspace */		"Backspace",
     /* kv_Backtab */		"Backtab",
@@ -179,9 +178,9 @@ int main (void)
 	cout << "Got key: ";
 	if (key >= kv_First && key < kv_Last)
 	    cout << c_KeyNameMap [key - kv_First];
-	else if (key == '\t')
+	else if (key == kv_Tab)
 	    cout << "Tab";
-	else if (key == ' ')
+	else if (key == kv_Space)
 	    cout << "Space";
 	else
 	    cout << key;
