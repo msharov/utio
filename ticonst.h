@@ -84,7 +84,7 @@ enum EAttribute {
 /// Structure for character images
 class CCharCell {
 public:
-    inline		CCharCell (wchar_t v = ' ', EColor fg = green, EColor bg = black, uint16_t attrs = 0)
+    inline		CCharCell (wchar_t v = ' ', EColor fg = lightgray, EColor bg = black, uint16_t attrs = 0)
 			: m_Char (v), m_FgColor (fg), m_BgColor (bg), m_Attrs (attrs) {}
     inline		CCharCell (wchar_t v, const CCharCell& t)
 			: m_Char (v), m_FgColor (t.m_FgColor), m_BgColor (t.m_BgColor), m_Attrs (t.m_Attrs) {}
