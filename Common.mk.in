@@ -28,7 +28,7 @@ CWARNOPTS	= -Werror -Wall -W -Winline -Wpointer-arith -Wno-cast-align \
 		-Wcast-qual -Wwrite-strings -Wshadow -Wredundant-decls @SYSWARNS@
 CXXWARNOPTS	= ${CWARNOPTS} -Wconversion -Wsign-promo -Wsynth -Woverloaded-virtual
 PROCESSOR_OPTS	=@PROCESSOR_OPTS@
-INLINE_OPTS	=@INLINE_OPTS@
+#INLINE_OPTS	=@INLINE_OPTS@
 CUSTOMINCDIR	=@CUSTOMINCDIR@
 CUSTOMLIBDIR	=@CUSTOMLIBDIR@
 
@@ -48,8 +48,8 @@ ifdef DEBUG
     CFLAGS	+= -O0 -g
     CXXFLAGS	+= -O0 -g
 else
-    CFLAGS	+= -O3 -DNDEBUG=1
-    CXXFLAGS	+= -O3 -DNDEBUG=1
+    CFLAGS	+= -Os -DNDEBUG=1
+    CXXFLAGS	+= -Os -DNDEBUG=1
     LDFLAGS	+= 
 endif
 ifdef PROFILE
@@ -58,7 +58,7 @@ ifdef PROFILE
     LDFLAGS	+= -pg
 endif
 ifdef STANDALONE
-    LIBS	+= @libsupc++@ @libgcc@ @libgcc_eh@ @libc@
+    LIBS	+= @libc@
 endif
 SHBLDFL		= @SHBLDFL@
 
