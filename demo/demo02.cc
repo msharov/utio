@@ -45,7 +45,7 @@ int main (void)
 
     wchar_t key = 0;
     CGC gc;
-    gc.Resize (ti.Columns(), ti.Rows());
+    gc.Resize (ti.Width(), ti.Height());
 
     cout << ti.HideCursor();
     while (key != 'q') {
