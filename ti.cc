@@ -514,6 +514,9 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     ++ prevCell.m_Attrs;
     ++ prevCell.m_FgColor;
     bool bInAcsMode = prevCell.HasAttr (a_altcharset);
+    capout_t cursorRightStr = GetString (ti::cursor_right);
+    if (cursorRightStr == string::empty_string)
+	cursorRightStr = NULL;
 
     for (coord_t j = y; j < y + h; ++ j) {
 	allout += MoveTo (x, j);
@@ -530,7 +533,7 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
 		bInAcsMode = !bInAcsMode;
 	    }
 	    if (!c)
-		allout += MoveTo (i + 1, j);
+		allout += (cursorRightStr ? cursorRightStr : MoveTo (i + 1, j));
 	    else if (c < CHAR_MAX || bInAcsMode)
 		allout += char(c);
 	    else
