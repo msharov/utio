@@ -87,7 +87,6 @@ void CGC::Box (Rect r)
 void CGC::Bar (Rect r, wchar_t c)
 {
     Clip (r);
-    r[1] -= 1;
     const CCharCell vlc (c, m_Template);
     for (dim_t y = 0; y < r.Height(); ++ y)
 	fill_n (CanvasAt (Point2d (r[0][0], r[0][1] + y)), r.Width(), vlc);
