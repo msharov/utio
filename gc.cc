@@ -162,16 +162,19 @@ void CGC::Char (Point2d p, wchar_t c)
 void CGC::Text (Point2d p, const string& str)
 {
     Clip (p);
-    canvas_t::iterator dout (CanvasAt (p));
-    const canvas_t::iterator doutstart = dout;
-    const canvas_t::iterator doutend = dout + (m_Size[0] - p[0]);
-    for (int i = 0; i < int(str.size()) && dout < doutend; ++ i, ++ dout) {
-	if (str[i] == '\t') {
-	    *dout = CCharCell (' ', m_Template);
-	    if ((p[0] + distance(doutstart,dout)) % m_TabSize != m_TabSize - 1)
-		-- i;
+    const canvas_t::iterator doutstart (CanvasAt (p));
+    const canvas_t::iterator doutend = doutstart + (m_Size[0] - p[0]);
+    assert (doutend >= doutstart);
+    canvas_t::iterator dout (doutstart);
+    utf8in_iterator<string::const_iterator> si (str.begin());
+    for (; si.base() < str.end() && dout < doutend; ++ si) {
+	if (*si == '\t') {
+	    const size_t absX = p[0] + distance (doutstart, dout);
+	    size_t toTab = Align (absX + 1, m_TabSize) - absX;
+	    for (; toTab && dout < doutend; --toTab, ++dout)
+		*dout = CCharCell (' ', m_Template);
 	} else
-	    *dout = CCharCell (str[i], m_Template);
+	    *dout++ = CCharCell (*si, m_Template);
     }
 }
 
