@@ -23,6 +23,7 @@
 #define TI_H_2B8E70FA3501DD2B50EF36C24E2DC717
 
 #include "ticonst.h"
+#include "gdt.h"
 
 namespace utio {
 
@@ -38,13 +39,15 @@ class CTerminfo {
 public:
     typedef int16_t		number_t;	///< Type of numeric terminfo values.
     typedef const char*		capout_t;	///< Type of values returned by all capability output functions.
-    static const size_t		c_nKeyStrings = (kv_Last - kv_First);
-    typedef tuple<c_nKeyStrings,capout_t>	keystrings_t;		///< List of key strings corresponding to EKeyDataValue enum.
+    typedef const string&	strout_t;
+    typedef tuple<kv_nKeys,capout_t>	keystrings_t;		///< List of key strings corresponding to EKeyDataValue enum.
+    typedef gdt::coord_t	coord_t;
+    typedef gdt::dim_t		dim_t;
 public:
 			CTerminfo (void);
     void		Load (const char* termname = NULL);
     void		LoadEntry (memblock& buf, const char* termname = NULL) const;
-    capout_t		MoveTo (int x, int y) const;
+    capout_t		MoveTo (coord_t x, coord_t y) const;
     capout_t		Color (EColor fg, EColor bg = color_Preserve) const;
     inline capout_t	Clear (void) const;
     capout_t		AttrOn (EAttribute a) const;
@@ -55,14 +58,14 @@ public:
     inline capout_t	ShowCursor (void) const;
     inline capout_t	EnterAcsMode (void) const;
     inline capout_t	ExitAcsMode (void) const;
-    capout_t		Image (int x, int y, size_t w, size_t h, const CCharCell* data) const;
-    capout_t		Box (int x, int y, size_t w, size_t h) const;
-    capout_t		Bar (int x, int y, size_t w, size_t h, char c = ' ') const;
-    inline capout_t	HLine (int x, int y, size_t w) const;
-    inline capout_t	VLine (int x, int y, size_t h) const;
+    strout_t		Image (coord_t x, coord_t y, dim_t w, dim_t h, const CCharCell* data) const;
+    strout_t		Box (coord_t x, coord_t y, dim_t w, dim_t h) const;
+    strout_t		Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c = ' ') const;
+    inline strout_t	HLine (coord_t x, coord_t y, dim_t w) const;
+    inline strout_t	VLine (coord_t x, coord_t y, dim_t h) const;
     inline capout_t	Reset (void) const;
-    inline size_t	Columns (void) const			{ return (m_nColumns); }
-    inline size_t	Rows (void) const			{ return (m_nRows); }
+    inline dim_t	Width (void) const			{ return (m_nColumns); }
+    inline dim_t	Height (void) const			{ return (m_nRows); }
     inline size_t	Colors (void) const			{ return (m_nColors); }
     inline size_t	ColorPairs (void) const			{ return (m_nPairs); }
     inline char		AcsChar (EGraphicChar c) const		{ return (m_AcsMap[c]); }
@@ -89,12 +92,12 @@ private:
     struct SAcscInfo;
 private:
     static const SAcscInfo	c_AcscInfo [acs_Last];		///< Codes for all ACS characters.
-    static const int16_t	c_KeyToStringMap [c_nKeyStrings];
+    static const int16_t	c_KeyToStringMap [kv_nKeys];
 private:
     void		CacheFrequentValues (void);
     void		ObtainTerminalParameters (void);
     void		RunStringProgram (const char* program, string& result, progargs_t args) const;
-    void		_MoveTo (int x, int y) const;
+    void		_MoveTo (coord_t x, coord_t y) const;
     void		_Attrs (uint16_t a) const;
     progvalue_t		PSPop (void) const;
     inline void		PSPush (progvalue_t v) const;
@@ -108,8 +111,8 @@ private:
     acsmap_t		m_AcsMap;		///< Decoded ACS characters.
     mutable progstack_t	m_ProgStack;		///< Stack for running string programs.
     mutable size_t	m_Attrs;		///< Currently active attributes.
-    size_t		m_nColumns;		///< Number of display columns.
-    size_t		m_nRows;		///< Number of display rows.
+    dim_t		m_nColumns;		///< Number of display columns.
+    dim_t		m_nRows;		///< Number of display rows.
     size_t		m_nColors;		///< Number of available colors.
     size_t		m_nPairs;		///< Number of available color pairs (unused).
 };
@@ -159,13 +162,13 @@ inline CTerminfo::capout_t CTerminfo::ExitAcsMode (void) const
 }
 
 /// Draws a horizontal line.
-inline CTerminfo::capout_t CTerminfo::HLine (int x, int y, size_t w) const
+inline CTerminfo::strout_t CTerminfo::HLine (coord_t x, coord_t y, dim_t w) const
 {
     return (Bar (x, y, w, 1, AcsChar(acs_HLine)));
 }
 
 /// Draws a vertical line.
-inline CTerminfo::capout_t CTerminfo::VLine (int x, int y, size_t h) const
+inline CTerminfo::strout_t CTerminfo::VLine (coord_t x, coord_t y, dim_t h) const
 {
     return (Bar (x, y, 1, h, AcsChar(acs_VLine)));
 }

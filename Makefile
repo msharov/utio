@@ -2,7 +2,7 @@ include Common.mk
 
 SRCS	= ti.cc kb.cc gc.cc
 OBJS	= ti.o kb.o gc.o
-INCS	= config.h ti.h ticonst.h kb.h
+INCS	= config.h ti.h ticonst.h kb.h gc.h gdt.h
 DOCT	= utio.in
 LIBS	= -lustl
 

@@ -23,6 +23,7 @@
 #define UTIO_H_43078EBF206DBF1D69BA318A1FF83074
 
 #include "utio/kb.h"
+#include "utio/gc.h"
 
 #endif
 

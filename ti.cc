@@ -27,8 +27,6 @@ namespace utio {
 
 //----------------------------------------------------------------------
 
-const size_t CTerminfo::c_nKeyStrings;
-
 /// Structure for describing alternate character set values.
 struct CTerminfo::SAcscInfo {
     char	m_vt100Code;	///< vt100 code for this character.
@@ -193,9 +191,9 @@ void CTerminfo::ObtainTerminalParameters (void)
     }
     // Try to fallback to the terminfo entries, or to 80x24.
     if (!m_nRows || !m_nColumns) {
-	if ((m_nRows = GetNumber (ti::lines)) == size_t(ti::no_value))
+	if ((m_nRows = GetNumber (ti::lines)) == dim_t(ti::no_value))
 	    m_nRows = 24;
-	if ((m_nColumns = GetNumber (ti::columns)) == size_t(ti::no_value))
+	if ((m_nColumns = GetNumber (ti::columns)) == dim_t(ti::no_value))
 	    m_nColumns = 80;
     }
 }
@@ -320,7 +318,7 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 }
 
 /// Appends move(x,y) string to m_Output.
-inline void CTerminfo::_MoveTo (int x, int y) const
+inline void CTerminfo::_MoveTo (coord_t x, coord_t y) const
 {
     RunStringProgram (GetString (ti::cursor_address), m_Output, progargs_t(y, x));
 }
@@ -328,7 +326,7 @@ inline void CTerminfo::_MoveTo (int x, int y) const
 /// Replaces \p c with a terminal-specific accelerated value, if available.
 wchar_t CTerminfo::SubstituteChar (wchar_t c) const
 {
-    for (size_t i = 0; i < acs_Last; ++ i)
+    for (uoff_t i = 0; i < acs_Last; ++ i)
 	if (c_AcscInfo[i].m_Unicode == c)
 	    return (m_AcsMap[i]);
     return (c);
@@ -361,7 +359,7 @@ void CTerminfo::Update (void)
 }
 
 /// Moves the cursor to \p x, \p y.
-CTerminfo::capout_t CTerminfo::MoveTo (int x, int y) const
+CTerminfo::capout_t CTerminfo::MoveTo (coord_t x, coord_t y) const
 {
     m_Output.clear();
     _MoveTo (x, y);
@@ -468,7 +466,7 @@ CTerminfo::capout_t CTerminfo::Attrs (uint16_t a) const
 }
 
 /// Draws a box in the given location using ACS characters.
-CTerminfo::capout_t CTerminfo::Box (int x, int y, size_t w, size_t h) const
+CTerminfo::strout_t CTerminfo::Box (coord_t x, coord_t y, dim_t w, dim_t h) const
 {
     m_Output = EnterAcsMode();
     _MoveTo (x, y);
@@ -477,7 +475,7 @@ CTerminfo::capout_t CTerminfo::Box (int x, int y, size_t w, size_t h) const
     fill_n (back_inserter(m_Output), w - 2, AcsChar (acs_HLine));
     m_Output += AcsChar (acs_UpperRightCorner);
 
-    for (size_t yi = 1; yi < h - 1; ++ yi) {
+    for (dim_t yi = 1; yi < h - 1; ++ yi) {
 	_MoveTo (x, y + yi);
 	m_Output += AcsChar (acs_VLine);
 	_MoveTo (x + w - 1, y + yi);
@@ -494,10 +492,10 @@ CTerminfo::capout_t CTerminfo::Box (int x, int y, size_t w, size_t h) const
 }
 
 /// Draws a rectangle filled with \p c.
-CTerminfo::capout_t CTerminfo::Bar (int x, int y, size_t w, size_t h, char c) const
+CTerminfo::strout_t CTerminfo::Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c) const
 {
     m_Output = EnterAcsMode();
-    for (size_t yi = 0; yi < h; ++ yi) {
+    for (dim_t yi = 0; yi < h; ++ yi) {
 	_MoveTo (x, y + yi);
 	fill_n (back_inserter(m_Output), w, c);
     }
@@ -506,39 +504,39 @@ CTerminfo::capout_t CTerminfo::Bar (int x, int y, size_t w, size_t h, char c) co
 }
 
 /// Draws character \p data into the given box. 0-valued characters are transparent.
-CTerminfo::capout_t CTerminfo::Image (int x, int y, size_t w, size_t h, const CCharCell* data) const
+CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, const CCharCell* data) const
 {
-    if (!w || !h)
-	return (string::empty_string);
+    assert (data && "Image should only be called with valid data");
+    assert (x >= 0 && y >= 0 && x + w <= Width() && y + h <= Height() && "Clip the image data before passing it in. CGC::Clip can do it.");
 
     string allout;
     CCharCell prevCell (*data);
+    ++ prevCell.m_Attrs;
+    ++ prevCell.m_FgColor;
+    bool bInAcsMode = prevCell.HasAttr (a_altcharset);
 
-    allout += MoveTo (x, y);
-    allout += AllAttrsOff();
-    allout += Attrs (prevCell.m_Attrs);
-    allout += Color (EColor(prevCell.m_FgColor), EColor(prevCell.m_BgColor));
-    bool bInAcsMode = false;
-
-    for (uoff_t j = y; j < y + h; ++ j) {
-	for (uoff_t i = x; i < x + w; ++ i, ++ data) {
+    for (coord_t j = y; j < y + h; ++ j) {
+	allout += MoveTo (x, j);
+	for (coord_t i = x; i < x + w; ++ i, ++ data) {
+	    wchar_t c = data->m_Char;
+	    if (c > CHAR_MAX)
+		c = SubstituteChar (c);
 	    if (prevCell.m_Attrs != data->m_Attrs)
 		allout += Attrs (data->m_Attrs);
 	    if (prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
 		allout += Color (EColor(data->m_FgColor), EColor(data->m_BgColor));
-	    if (data->HasAttr (a_altcharset) ^ bInAcsMode) {
-		allout += bInAcsMode ? EnterAcsMode() : ExitAcsMode();
+	    if ((data->HasAttr (a_altcharset) || c != data->m_Char) ^ bInAcsMode) {
+		allout += bInAcsMode ? ExitAcsMode() : EnterAcsMode();
 		bInAcsMode = !bInAcsMode;
 	    }
-	    if (!data->m_Char)
+	    if (!c)
 		allout += MoveTo (i + 1, j);
-	    else if (bInAcsMode)
-		allout += wchar_t(data->m_Char);
+	    else if (c < CHAR_MAX || bInAcsMode)
+		allout += char(c);
 	    else
-		allout += char(data->m_Char);
+		allout += c;
 	    prevCell = *data;
 	}
-	allout += MoveTo (x, j);
     }
     allout += AllAttrsOff();
 
@@ -585,7 +583,7 @@ const CTerminfo::SAcscInfo CTerminfo::c_AcscInfo [acs_Last] = {
     { /* acs_VLine */			'x', '|', 0x2502 }
 };
 
-const int16_t CTerminfo::c_KeyToStringMap [c_nKeyStrings] = {
+const int16_t CTerminfo::c_KeyToStringMap [kv_nKeys] = {
     /* kv_Esc */		ti::key_command,
     /* kv_Backspace */		ti::key_backspace,
     /* kv_Backtab */		ti::key_btab,
