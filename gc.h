@@ -55,8 +55,8 @@ public:
     inline void			Bar (coord_t x, coord_t y, dim_t w, dim_t h, wchar_t c = ' ')		{ Bar (Rect (x, y, w, h), c); }
     inline void			HLine (coord_t x, coord_t y, dim_t l)					{ HLine (Point2d (x, y), l); }
     inline void			VLine (coord_t x, coord_t y, dim_t l)					{ VLine (Point2d (x, y), l); }
-    inline void			GetImage (coord_t x, coord_t y, coord_t w, coord_t h, canvas_t& cells)	{ GetImage (Rect (x, y, w, h), cells); }
-    inline void			Image (coord_t x, coord_t y, coord_t w, coord_t h, const canvas_t& cells)	{ Image (Rect (x, y, w, h), cells); }
+    inline void			GetImage (coord_t x, coord_t y, dim_t w, dim_t h, canvas_t& cells)	{ GetImage (Rect (x, y, w, h), cells); }
+    inline void			Image (coord_t x, coord_t y, dim_t w, dim_t h, const canvas_t& cells)	{ Image (Rect (x, y, w, h), cells); }
     inline void			Char (coord_t x, coord_t y, wchar_t c)					{ Char (Point2d (x, y), c); }
     inline void			Text (coord_t x, coord_t y, const string& str)				{ Text (Point2d (x, y), str); }
     wchar_t			GraphicChar (EGraphicChar c) const;
@@ -75,6 +75,7 @@ public:
     void			Clip (Rect& r) const;
     void			Clip (Point2d& r) const;
     inline void			SetTabSize (size_t nts = 8)	{ assert (nts && "Tab size can not be 0"); m_TabSize = nts; }
+    void			MakeDiffFrom (const CGC& src);
 private:
     inline canvas_t::iterator		CanvasAt (Point2d p);
     inline canvas_t::const_iterator	CanvasAt (Point2d p) const;

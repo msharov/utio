@@ -519,10 +519,10 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
 	allout += MoveTo (x, j);
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
 	    if (!data->m_Char) {
-		prevCell = *data;
+		prevCell.m_Char = 0;
 		continue;
 	    } else if (!prevCell.m_Char)
-		allout += MoveTo (x, y);
+		allout += MoveTo (i, j);
 	    const wchar_t c = data->m_Char > CHAR_MAX ? SubstituteChar (data->m_Char) : data->m_Char;
 	    if (prevCell.m_Attrs != data->m_Attrs)
 		allout += Attrs (data->m_Attrs);

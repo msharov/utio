@@ -90,6 +90,8 @@ public:
 			: m_Char (v), m_FgColor (t.m_FgColor), m_BgColor (t.m_BgColor), m_Attrs (t.m_Attrs) {}
     inline bool	EqualFormat (const CCharCell& v) const
 			{ return (m_FgColor == v.m_FgColor && m_BgColor == v.m_BgColor && m_Attrs == v.m_Attrs); }
+    inline bool	operator== (const CCharCell& v) const
+			{ return (m_Char == v.m_Char && EqualFormat (v)); }
     inline bool	HasAttr (EAttribute a) const	{ return (m_Attrs & (1 << a)); }
     inline void	SetAttr (EAttribute a)		{ m_Attrs |= (1 << a); }
     inline void	ClearAttr (EAttribute a)	{ m_Attrs &= ~(1 << a); }

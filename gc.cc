@@ -116,11 +116,12 @@ void CGC::VLine (Point2d p, dim_t l)
 /// Copies canvas data from \p r into \p cells.
 void CGC::GetImage (Rect r, canvas_t& cells) const
 {
+    const size_t inyskip = Width() - r.Width();
     Clip (r);
     cells.resize (r.Width() * r.Height());
     canvas_t::iterator dout (cells.begin());
     canvas_t::const_iterator din (CanvasAt (r[0]));
-    for (dim_t y = 0; y < r.Height(); ++ y)
+    for (dim_t y = 0; y < r.Height(); ++ y, din += inyskip)
 	for (dim_t x = 0; x < r.Width(); ++ x, ++ din, ++ dout)
 	    if (din->m_Char)
 		*dout = *din;
@@ -129,13 +130,26 @@ void CGC::GetImage (Rect r, canvas_t& cells) const
 /// Copies canvas data from \p cells into \p r.
 void CGC::Image (Rect r, const canvas_t& cells)
 {
+    const size_t outyskip = Width() - r.Width();
     Clip (r);
     canvas_t::const_iterator din (cells.begin());
     canvas_t::iterator dout (CanvasAt (r[0]));
-    for (dim_t y = 0; y < r.Height(); ++ y)
+    for (dim_t y = 0; y < r.Height(); ++ y, dout += outyskip)
 	for (dim_t x = 0; x < r.Width(); ++ x, ++ din, ++ dout)
 	    if (din->m_Char)
 		*dout = *din;
+}
+
+/// Zeroes out cells which are identical to those in \p src.
+void CGC::MakeDiffFrom (const CGC& src)
+{
+    assert (src.Canvas().size() == m_Canvas.size() && "Diffs can only be made on equally sized canvasses");
+    CCharCell nullCell (0);
+    canvas_t::iterator inew (Canvas().begin());
+    canvas_t::const_iterator iold (src.Canvas().begin());
+    for (; iold < src.Canvas().end(); ++ iold, ++ inew)
+	if (*iold == *inew)
+	    *inew = nullCell;
 }
 
 /// Prints character \p c.
