@@ -66,6 +66,8 @@ int main (void)
 	else if (key == 'b')
 	    bg += 1;
     }
+    cout << ti.AllAttrsOff();
+    cout << ti.Color (green, black);
     cout << ti.ShowCursor();
     return (0);
 }
