@@ -87,7 +87,7 @@ private:
     void		_MoveTo (coord_t x, coord_t y) const;
     void		_Attrs (uint16_t a) const;
     progvalue_t		PSPop (void) const;
-    inline void		PSPush (progvalue_t v) const;
+    void		PSPush (progvalue_t v) const;
 private:
     mutable string	m_Output;		///< The very un-threadsafe temporary buffer.
     string		m_Name;			///< Name of the terminfo entry.

@@ -241,7 +241,7 @@ CTerminfo::progvalue_t CTerminfo::PSPop (void) const
 }
 
 /// Pushes \p v onto the program stack.
-inline void CTerminfo::PSPush (progvalue_t v) const
+void CTerminfo::PSPush (progvalue_t v) const
 {
     m_ProgStack.push_back (v);
 }
