@@ -518,17 +518,18 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     for (coord_t j = y; j < y + h; ++ j) {
 	allout += MoveTo (x, j);
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
-	    if (!data->m_Char) {
-		prevCell.m_Char = 0;
+	    const wchar_t dc = data->m_Char, pc = prevCell.m_Char;
+	    if (!dc) {
+		prevCell = *data;
 		continue;
-	    } else if (!prevCell.m_Char)
+	    } else if (!pc)
 		allout += MoveTo (i, j);
-	    const wchar_t c = data->m_Char > CHAR_MAX ? SubstituteChar (data->m_Char) : data->m_Char;
-	    if (prevCell.m_Attrs != data->m_Attrs)
+	    const wchar_t c = dc > CHAR_MAX ? SubstituteChar (dc) : dc;
+	    if (!pc || prevCell.m_Attrs != data->m_Attrs)
 		allout += Attrs (data->m_Attrs);
-	    if (prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
+	    if (!pc || prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
 		allout += Color (EColor(data->m_FgColor), EColor(data->m_BgColor));
-	    if ((data->HasAttr (a_altcharset) || c != data->m_Char) ^ bInAcsMode) {
+	    if ((data->HasAttr (a_altcharset) || c != dc) ^ bInAcsMode) {
 		allout += bInAcsMode ? ExitAcsMode() : EnterAcsMode();
 		bInAcsMode = !bInAcsMode;
 	    }
