@@ -21,15 +21,15 @@
 #define PACKAGE_VERSION		LIB_MAJOR "." LIB_MINOR
 #define PACKAGE_TARNAME		PACKAGE_NAME
 #define PACKAGE_STRING		PACKAGE_NAME " " PACKAGE_VERSION
-#define PACKAGE_BUGREPORT	"Mike Sharov <msharov@talentg.com>"
+#define PACKAGE_BUGREPORT	"Mike Sharov <msharov@users.sourceforge.net>"
 
-static string_t g_Files [] = {
+static cpchar_t g_Files [] = {
     "Common.mk",
     "config.h"
 };
 
 /* Values substitute @VARNAME@ */
-static string_t g_EnvVars [] = {
+static cpchar_t g_EnvVars [] = {
     "CC",
     "LD",
     "CXX",
@@ -42,7 +42,7 @@ static string_t g_EnvVars [] = {
 };
 
 /*  VARIABLE	PROGRAM		HOW TO CALL	IF NOT FOUND */
-static string_t g_ProgVars [] = {
+static cpchar_t g_ProgVars [] = {
     "CC",	"gcc",		"gcc",		"@CC@",
     "CC",	"cc",		"cc",		"gcc",
     "CXX",	"g++",		"g++",		"@CXX@",
@@ -57,12 +57,12 @@ static string_t g_ProgVars [] = {
 };
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
-static string_t	g_Headers [] = {
+static cpchar_t	g_Headers [] = {
     "sys/ioctl.h",	"#undef HAVE_SYS_IOCTL_H",	"#define HAVE_SYS_IOCTL_H 1"
 };
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
-static string_t g_Libs [] = {
+static cpchar_t g_Libs [] = {
     "supc++",		"",				"-lsupc++",
     "gcc",		"",				"-lgcc",
     "gcc_eh",		"-lgcc_s",			"-lgcc_eh",
@@ -70,12 +70,12 @@ static string_t g_Libs [] = {
 };
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
-static string_t g_Functions [] = {
+static cpchar_t g_Functions [] = {
     "strsignal",	"#undef HAVE_STRSIGNAL",	"#define HAVE_STRSIGNAL 1"
 };
 
 /*   NAME               WITHOUT TEXT                            WITH TEXT */
-static string_t g_Components [] = {
+static cpchar_t g_Components [] = {
     "shared",		"#BUILD_SHARED\t= 1",			"BUILD_SHARED\t= 1 ",
     "static",		"#BUILD_STATIC\t= 1",			"BUILD_STATIC\t= 1 ",
     "debug",		"#DEBUG\t\t= 1",			"DEBUG\t\t= 1 ",
@@ -100,7 +100,7 @@ static SComponentInfo g_ComponentInfos [VectorSize(g_Components) / 3] = {
 };
 
 /* Substitutes names like @PACKAGE_NAME@ with the second field */
-static string_t g_CustomVars [] = {
+static cpchar_t g_CustomVars [] = {
     "PACKAGE_NAME",		PACKAGE_NAME,
     "PACKAGE_VERSION",		PACKAGE_VERSION,
     "PACKAGE_TARNAME",		PACKAGE_TARNAME,

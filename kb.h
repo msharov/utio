@@ -1,6 +1,6 @@
 // This file is part of the utio library, an terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@talentg.com>
+// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 //
 // kb.h
@@ -11,13 +11,6 @@
 
 #include "ti.h"
 #include <termios.h>
-
-#ifndef TI_H_2B8E70FA3501DD2B50EF36C24E2DC717
-#error Include ti.h
-#endif
-#ifndef TICONST_H_668685586A306EC93FCA2A4B233066A9
-#error include ticonst.h
-#endif
 
 namespace utio {
 
