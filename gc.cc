@@ -119,8 +119,11 @@ void CGC::GetImage (Rect r, canvas_t& cells) const
     Clip (r);
     cells.resize (r.Width() * r.Height());
     canvas_t::iterator dout (cells.begin());
-    for (dim_t y = 0; y < r.Height(); ++ y, dout += r.Width())
-	copy_n (CanvasAt (Point2d (r[0][0], r[0][1] + y)), r.Width(), dout);
+    canvas_t::const_iterator din (CanvasAt (r[0]));
+    for (dim_t y = 0; y < r.Height(); ++ y)
+	for (dim_t x = 0; x < r.Width(); ++ x, ++ din, ++ dout)
+	    if (din->m_Char)
+		*dout = *din;
 }
 
 /// Copies canvas data from \p cells into \p r.
@@ -128,8 +131,11 @@ void CGC::Image (Rect r, const canvas_t& cells)
 {
     Clip (r);
     canvas_t::const_iterator din (cells.begin());
-    for (dim_t y = 0; y < r.Height(); ++ y, din += r.Width())
-	copy_n (din, r.Width(), CanvasAt (Point2d (r[0][0], r[0][1] + y)));
+    canvas_t::iterator dout (CanvasAt (r[0]));
+    for (dim_t y = 0; y < r.Height(); ++ y)
+	for (dim_t x = 0; x < r.Width(); ++ x, ++ din, ++ dout)
+	    if (din->m_Char)
+		*dout = *din;
 }
 
 /// Prints character \p c.
