@@ -31,6 +31,7 @@ public:
     void		Close (void);
     void		EnterUIMode (void);
     void		LeaveUIMode (void);
+    void		LoadKeymap (const CTerminfo& rti);
     bool		DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const;
     void		SetKeyboardEntry (uint8_t table, uint8_t keycode, uint16_t value, uint16_t* oldValue = NULL);
     inline bool		IsInUIMode (void) const	{ return (m_bTermInUIMode); }
@@ -40,8 +41,6 @@ public:
 private:
     void		ReadKeyData (void) const;
 #endif
-protected:
-    void		LoadKeymap (const CTerminfo& rti);
 private:
     keymap_t		m_Keymap;
 #if UTIO_WANT_GETKEY
