@@ -68,16 +68,11 @@ CTerminfo::CTerminfo (void)
 /// Loads terminfo entry \p termname into \p buf
 void CTerminfo::LoadEntry (memblock& buf, const char* termname) const
 {
-    assert (termname && "Autodetect TERM value elswhere.");
     const char* defTiPath = getenv ("TERMINFO");
-    if (!defTiPath)
-	defTiPath = "/usr/share/terminfo";
-    string tipath (defTiPath);
-    tipath += '/';
-    tipath += termname[0];
-    tipath += '/';
-    tipath += termname;
-
+    if (!defTiPath) defTiPath = "/usr/share/terminfo";
+    if (!termname)  termname = "linux";
+    string tipath;
+    tipath.format ("%s/%c/%s", defTiPath, termname[0], termname);
     buf.read_file (tipath);
 }
 
