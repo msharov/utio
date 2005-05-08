@@ -142,9 +142,9 @@ size_t CTerminfo::stream_size (void) const
 /// Loads the terminfo entry \p termname.
 void CTerminfo::Load (const char* termname)
 {
-    if (!termname)
+    if (!termname || !*termname)
 	termname = getenv ("TERM");
-    if (!termname)
+    if (!termname || !*termname)
 	termname = "linux";
     memblock tibuf;
     LoadEntry (tibuf, termname);
@@ -256,7 +256,7 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    result += *i;
 	    continue;
 	}
-	int width = 0, base = 10;
+	int width = 0, base = 0;
 	switch (*++i) {	// beware the excessive use of fallthrough :)
 	    case '%': result += *i;		break;	// %% outputs %.
 	    case 'i': ++args[0]; ++args[1];	break;	// %i adds 1 to i two arguments.
@@ -266,8 +266,7 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    case '1': case '2': case '3': case '4':	// part of %d width field
 	    case '5': case '6': case '7': case '8':
 	    case '9': if (!base) base = 10;
-		      width *= base;
-		      width += *i - '0';
+		      width = width * base + (*i - '0');
 		      continue;
 	    case '\\': base = 0;
 	    case '{': continue;				// %{number}
@@ -281,6 +280,8 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    case '+': PSPush (PSPop() + PSPop());	break;
 	    case '-': PSPush (-PSPop() + PSPop());	break;
 	    case '*': PSPush (PSPop() * PSPop());	break;
+	    case '/': PSPush (PSPop() / PSPopNonzero());break;
+	    case 'm': PSPush (PSPop() % PSPopNonzero());break;
 	    case '|': PSPush (PSPop() | PSPop());	break;
 	    case '&': PSPush (PSPop() & PSPop());	break;
 	    case '^': PSPush (PSPop() ^ PSPop());	break;
@@ -296,29 +297,13 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 			  i = min (prgstr.find ("%e", i), prgstr.find ("%;", i)) - 1;
 	    case '?':
 	    case ';': bCondValue = true; break;
-	    case 'p': {					// %p[0-9] pushes numbered parameter.
-		const uoff_t pi = (*++i - '1');
-		PSPush (pi < args.size() ? args[pi] : 0);
-		break; }
-	    case '/': {
-		const progvalue_t num = PSPop();
-		progvalue_t den = PSPop();
-		if (!den) den = 1;
-		PSPush (num / den);
-		break; }
-	    case 'm': {
-		const progvalue_t num = PSPop();
-		progvalue_t den = PSPop();
-		if (!den) den = 1;
-		PSPush (num % den);
-		break; }
+	    case 'p': PSPush (args [min (*++i - '1', args.size() - 1)]); break; // %p[0-9] pushes numbered parameter.
 	    case 'd': {		// %d prints the top of the stack and pops the stack.
 		progvalue_t n = PSPop();
 		const size_t iSize = result.size();
 		do {
 		    result += string::value_type('0' + (n % 10));
-		    n /= 10;
-		} while (n || --width > 0);
+		} while ((n /= 10) || --width > 0);
 		reverse (result.begin() + iSize, result.end());
 		break; }
 	};

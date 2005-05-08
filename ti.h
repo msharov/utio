@@ -51,6 +51,7 @@ public:
     inline strout_t	HLine (coord_t x, coord_t y, dim_t w) const;
     inline strout_t	VLine (coord_t x, coord_t y, dim_t h) const;
     inline capout_t	Reset (void) const;
+    inline strout_t	Name (void) const			{ return (m_Name); }
     inline dim_t	Width (void) const			{ return (m_nColumns); }
     inline dim_t	Height (void) const			{ return (m_nRows); }
     inline size_t	Colors (void) const			{ return (m_nColors); }
@@ -87,6 +88,7 @@ private:
     void		_MoveTo (coord_t x, coord_t y) const;
     void		_Attrs (uint16_t a) const;
     progvalue_t		PSPop (void) const;
+    inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return (v ? v : 1); }
     void		PSPush (progvalue_t v) const;
 private:
     mutable string	m_Output;		///< The very un-threadsafe temporary buffer.
