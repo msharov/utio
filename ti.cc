@@ -297,7 +297,7 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 			  i = min (prgstr.find ("%e", i), prgstr.find ("%;", i)) - 1;
 	    case '?':
 	    case ';': bCondValue = true; break;
-	    case 'p': PSPush (args [min (*++i - '1', args.size() - 1)]); break; // %p[0-9] pushes numbered parameter.
+	    case 'p': PSPush (args [min (uoff_t(*++i - '1'), args.size() - 1)]); break; // %p[0-9] pushes numbered parameter.
 	    case 'd': {		// %d prints the top of the stack and pops the stack.
 		progvalue_t n = PSPop();
 		const size_t iSize = result.size();
