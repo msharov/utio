@@ -133,12 +133,29 @@ void CGC::Image (Rect r, const canvas_t& cells)
 void CGC::MakeDiffFrom (const CGC& src)
 {
     assert (src.Canvas().size() == m_Canvas.size() && "Diffs can only be made on equally sized canvasses");
-    CCharCell nullCell (0);
-    canvas_t::iterator inew (Canvas().begin());
-    canvas_t::const_iterator iold (src.Canvas().begin());
-    for (; iold < src.Canvas().end(); ++ iold, ++ inew)
+    register canvas_t::pointer inew (Canvas().begin());
+    register canvas_t::const_pointer iold (src.Canvas().begin());
+    const canvas_t::const_pointer iend (src.Canvas().end());
+#if CPU_HAS_SSE
+    iold -= size_t(iend - iold) % 2;		// Make odd byte always "new".
+    for (; iold < iend; iold += 2, inew += 2) {
+	asm (
+	    "movups %1, %%xmm0		\n\t"
+	    "movups %2, %%xmm1		\n\t"
+	    "cmpps $4, %%xmm0, %%xmm1	\n\t"	// 4 is !=
+	    "andps %%xmm0, %%xmm1	\n\t"
+	    "movups %%xmm1, %0"
+	    : "=o"(*inew)
+	    : "o"(*iold), "o"(*inew)
+	    : "memory", "xmm0", "xmm1"
+	);
+    }
+#else
+    const CCharCell nullCell (0, black, black, 0);
+    for (; iold < iend; ++ iold, ++ inew)
 	if (*iold == *inew)
 	    *inew = nullCell;
+#endif
 }
 
 /// Prints character \p c.
