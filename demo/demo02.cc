@@ -44,14 +44,19 @@ int main (void)
     kb.Open (ti);
 
     wchar_t key = 0;
-    CGC gc;
+    CGC gc, screen;
     gc.Resize (ti.Width(), ti.Height());
+    screen.Resize (ti.Width(), ti.Height());
 
     cout << ti.HideCursor();
     while (key != 'q') {
+	gc.Image (screen);
 	Draw (gc);
+	gc.MakeDiffFrom (screen);
 	cout << ti.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
 	cout.flush();
+	screen.Image (gc);
+
 	key = kb.GetKey();
 	if (key == kv_Up && g_Pos[1] > 0)
 	    -- g_Pos[1];

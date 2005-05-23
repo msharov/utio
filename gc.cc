@@ -136,26 +136,10 @@ void CGC::MakeDiffFrom (const CGC& src)
     register canvas_t::pointer inew (Canvas().begin());
     register canvas_t::const_pointer iold (src.Canvas().begin());
     const canvas_t::const_pointer iend (src.Canvas().end());
-#if CPU_HAS_SSE
-    iold -= size_t(iend - iold) % 2;		// Make odd byte always "new".
-    for (; iold < iend; iold += 2, inew += 2) {
-	asm (
-	    "movups %1, %%xmm0		\n\t"
-	    "movups %2, %%xmm1		\n\t"
-	    "cmpps $4, %%xmm0, %%xmm1	\n\t"	// 4 is !=
-	    "andps %%xmm0, %%xmm1	\n\t"
-	    "movups %%xmm1, %0"
-	    : "=o"(*inew)
-	    : "o"(*iold), "o"(*inew)
-	    : "memory", "xmm0", "xmm1"
-	);
-    }
-#else
-    const CCharCell nullCell (0, black, black, 0);
+    const CCharCell nullCell (0, color_Preserve, color_Preserve, 0);
     for (; iold < iend; ++ iold, ++ inew)
 	if (*iold == *inew)
 	    *inew = nullCell;
-#endif
 }
 
 /// Prints character \p c.

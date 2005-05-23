@@ -44,6 +44,7 @@ public:
     inline void			VLine (coord_t x, coord_t y, dim_t l)					{ VLine (Point2d (x, y), l); }
     inline void			GetImage (coord_t x, coord_t y, dim_t w, dim_t h, canvas_t& cells)	{ GetImage (Rect (x, y, w, h), cells); }
     inline void			Image (coord_t x, coord_t y, dim_t w, dim_t h, const canvas_t& cells)	{ Image (Rect (x, y, w, h), cells); }
+    inline void			Image (const CGC& cells)						{ Image (Rect (0, 0, cells.Width(), cells.Height()), cells.Canvas()); }
     inline void			Char (coord_t x, coord_t y, wchar_t c)					{ Char (Point2d (x, y), c); }
     inline void			Text (coord_t x, coord_t y, const string& str)				{ Text (Point2d (x, y), str); }
     wchar_t			GraphicChar (EGraphicChar c) const;

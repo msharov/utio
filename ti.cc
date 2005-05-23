@@ -508,7 +508,11 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
 	    const wchar_t dc = data->m_Char, pc = prevCell.m_Char;
 	    if (!dc) {
-		prevCell = *data;
+		prevCell = CCharCell (0, color_Preserve, color_Preserve, 0);
+		if (bInAcsMode) {
+		    allout += ExitAcsMode();
+		    bInAcsMode = false;
+		}
 		continue;
 	    } else if (!pc)
 		allout += MoveTo (i, j);
