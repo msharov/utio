@@ -50,12 +50,12 @@ int main (void)
 
     cout << ti.HideCursor();
     while (key != 'q') {
-	gc.Image (screen);
 	Draw (gc);
 	gc.MakeDiffFrom (screen);
 	cout << ti.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
 	cout.flush();
 	screen.Image (gc);
+	gc.Image (screen);
 
 	key = kb.GetKey();
 	if (key == kv_Up && g_Pos[1] > 0)

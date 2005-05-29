@@ -29,7 +29,7 @@ public:
     typedef gdt::Rect		Rect;
 public:
 				CGC (void);
-    void			Clear (void);
+    void			Clear (wchar_t c = ' ');
     void			Box (Rect r);
     void			Bar (Rect r, wchar_t c = ' ');
     void			HLine (Point2d p, dim_t l);

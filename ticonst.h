@@ -126,6 +126,43 @@ enum EGraphicChar {
     acs_Last
 };
 
+/// \brief Unicode wchar_t values for EGraphicChar constants.
+/// The unicode value is from UnicodeData.txt from www.unicode.org
+enum EGraphicCharValue {
+    acsv_PoundSign		= 0x00A3,
+    acsv_DownArrow		= 0x2193,
+    acsv_LeftArrow		= 0x2190,
+    acsv_RightArrow		= 0x2192,
+    acsv_UpArrow		= 0x2191,
+    acsv_Board			= 0x2593,
+    acsv_Bullet			= 0x2022,
+    acsv_Checkerboard		= 0x2592,
+    acsv_Degree			= 0x00B0,
+    acsv_Diamond		= 0x25C6,
+    acsv_GreaterEqual		= 0x2265,
+    acsv_Pi			= 0x03C0,
+    acsv_HLine			= 0x2500,
+    acsv_Lantern		= 0x2609,
+    acsv_Plus			= 0x253C,
+    acsv_LessEqual		= 0x2266,
+    acsv_LowerLeftCorner	= 0x250C,
+    acsv_LowerRightCorner	= 0x2510,
+    acsv_NotEqual		= 0x2260,
+    acsv_PlusMinus		= 0x00B1,
+    acsv_Scanline1		= 0x23BA,
+    acsv_Scanline3		= 0x23BB,
+    acsv_Scanline7		= 0x23BC,
+    acsv_Scanline9		= 0x23BD,
+    acsv_Block			= 0x2588,
+    acsv_TopTee			= 0x252C,
+    acsv_RightTee		= 0x2524,
+    acsv_LeftTee		= 0x251C,
+    acsv_BottomTee		= 0x2534,
+    acsv_UpperLeftCorner	= 0x2514,
+    acsv_UpperRightCorner	= 0x2518,
+    acsv_VLine			= 0x2502
+};
+
 /// \brief Contains constants copied from term.h in enum form.
 ///
 /// These constants are in a namespace to make them semi-private and to

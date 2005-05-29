@@ -46,9 +46,9 @@ wchar_t	CGC::GraphicChar (EGraphicChar c) const
 }
 
 /// Clears the canvas with spaces with current attributes.
-void CGC::Clear (void)
+void CGC::Clear (wchar_t c)
 {
-    const CCharCell vlc (' ', m_Template);
+    const CCharCell vlc (c, m_Template);
     fill (m_Canvas, vlc);
 }
 
@@ -64,10 +64,10 @@ void CGC::Box (Rect r)
     HLine (rr[1], r.Width());
     VLine (r[0], r.Height());
     VLine (rr[0], r.Height());
-    *CanvasAt(rr[0]) = CCharCell (GraphicChar (acs_UpperRightCorner), m_Template);
-    *CanvasAt(rr[1]) = CCharCell (GraphicChar (acs_LowerLeftCorner), m_Template);
-    *CanvasAt(r[1]) = CCharCell (GraphicChar (acs_LowerRightCorner), m_Template);
-    *CanvasAt(r[0]) = CCharCell (GraphicChar (acs_UpperLeftCorner), m_Template);
+    *CanvasAt(rr[0]) = CCharCell (acsv_UpperRightCorner, m_Template);
+    *CanvasAt(rr[1]) = CCharCell (acsv_LowerLeftCorner, m_Template);
+    *CanvasAt(r[1]) = CCharCell (acsv_LowerRightCorner, m_Template);
+    *CanvasAt(r[0]) = CCharCell (acsv_UpperLeftCorner, m_Template);
 }
 
 /// Draws a box with character \p c as the border.
@@ -86,7 +86,7 @@ void CGC::HLine (Point2d p, dim_t l)
 	return;
     if (coord_t(l) > m_Size[0] - p[0])
 	l = m_Size[0] - p[0];
-    const CCharCell vlc (GraphicChar (acs_HLine), m_Template);
+    const CCharCell vlc (acsv_HLine, m_Template);
     fill_n (CanvasAt(p), l, vlc);
 }
 
@@ -97,7 +97,7 @@ void CGC::VLine (Point2d p, dim_t l)
 	return;
     if (coord_t(l) > m_Size[1] - p[1])
 	l = m_Size[1] - p[1];
-    const CCharCell vlc (GraphicChar (acs_VLine), m_Template);
+    const CCharCell vlc (acsv_VLine, m_Template);
     for (dim_t i = 0; i < l; ++ i)
 	*CanvasAt (Point2d (p[0], p[1] + i)) = vlc;
 }
