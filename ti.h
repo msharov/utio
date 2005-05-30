@@ -85,6 +85,18 @@ private:
 private:
     static const SAcscInfo	c_AcscInfo [acs_Last];		///< Codes for all ACS characters.
     static const int16_t	c_KeyToStringMap [kv_nKeys];
+    /// Current terminal state.
+    class CContext {
+    public:
+			CContext (void);
+    public:
+	string		m_Output;		///< Output string buffer.
+	progstack_t	m_ProgStack;		///< Stack for running ti programs.
+	gdt::Point2d	m_Pos;			///< Current cursor position.
+	uint16_t	m_Attrs;		///< Text attributes.
+	uint8_t		m_FgColor;		///< Foreground (text) color.
+	uint8_t		m_BgColor;		///< Background color.
+    };
 private:
     void		CacheFrequentValues (void);
     void		ObtainTerminalParameters (void);
@@ -94,15 +106,13 @@ private:
     inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return (v ? v : 1); }
     void		PSPush (progvalue_t v) const;
 private:
-    mutable string	m_Output;		///< The very un-threadsafe temporary buffer.
     string		m_Name;			///< Name of the terminfo entry.
     boolvec_t		m_Booleans;		///< Boolean caps.
     numvec_t		m_Numbers;		///< Numeric caps.
     stroffvec_t		m_StringOffsets;	///< String caps (offsets into m_StringTable)
     strtable_t		m_StringTable;		///< Actual string caps values.
     acsmap_t		m_AcsMap;		///< Decoded ACS characters.
-    mutable progstack_t	m_ProgStack;		///< Stack for running string programs.
-    mutable size_t	m_Attrs;		///< Currently active attributes.
+    mutable CContext	m_Ctx;			///< Current state of the terminal.
     dim_t		m_nColumns;		///< Number of display columns.
     dim_t		m_nRows;		///< Number of display rows.
     size_t		m_nColors;		///< Number of available colors.
@@ -126,7 +136,7 @@ inline CTerminfo::capout_t CTerminfo::Reset (void) const
 /// Stops all attributes, including color.
 inline CTerminfo::capout_t CTerminfo::AllAttrsOff (void) const
 {
-    m_Attrs = 0;
+    m_Ctx.m_Attrs = 0;
     return (GetString (ti::exit_attribute_mode));
 }
 
