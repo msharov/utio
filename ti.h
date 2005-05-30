@@ -39,12 +39,12 @@ public:
     void		MoveTo (coord_t x, coord_t y, rstrbuf_t s) const;
     strout_t		Color (EColor fg, EColor bg = color_Preserve) const;
     void		Color (EColor fg, EColor bg, rstrbuf_t s) const;
-    inline capout_t	Clear (void) const;
+    capout_t		Clear (void) const;
     capout_t		AttrOn (EAttribute a) const;
     capout_t		AttrOff (EAttribute a) const;
     strout_t		Attrs (uint16_t a) const;
     void		Attrs (uint16_t a, rstrbuf_t s) const;
-    inline capout_t	AllAttrsOff (void) const;
+    capout_t		AllAttrsOff (void) const;
     inline capout_t	HideCursor (void) const;
     inline capout_t	ShowCursor (void) const;
     inline capout_t	EnterAcsMode (void) const;
@@ -54,7 +54,7 @@ public:
     strout_t		Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c = ' ') const;
     strout_t		HLine (coord_t x, coord_t y, dim_t w) const;
     strout_t		VLine (coord_t x, coord_t y, dim_t h) const;
-    inline capout_t	Reset (void) const;
+    capout_t		Reset (void) const;
     inline strout_t	Name (void) const			{ return (m_Name); }
     inline dim_t	Width (void) const			{ return (m_nColumns); }
     inline dim_t	Height (void) const			{ return (m_nRows); }
@@ -100,6 +100,8 @@ private:
 private:
     void		CacheFrequentValues (void);
     void		ObtainTerminalParameters (void);
+    void		NormalizeColor (EColor& fg, EColor& bg, uint16_t& attrs) const;
+    void		NColor (EColor fg, EColor bg, rstrbuf_t s) const;
     void		RunStringProgram (const char* program, string& result, progargs_t args) const;
     void		_MoveTo (coord_t x, coord_t y) const;
     progvalue_t		PSPop (void) const;
@@ -120,25 +122,6 @@ private:
 };
 
 //----------------------------------------------------------------------
-
-/// Clears the screen.
-inline CTerminfo::capout_t CTerminfo::Clear (void) const
-{
-    return (GetString (ti::clear_screen));
-}
-
-/// Resets the terminal to a sane state.
-inline CTerminfo::capout_t CTerminfo::Reset (void) const
-{
-    return (GetString (ti::reset_1string));
-}
-
-/// Stops all attributes, including color.
-inline CTerminfo::capout_t CTerminfo::AllAttrsOff (void) const
-{
-    m_Ctx.m_Attrs = 0;
-    return (GetString (ti::exit_attribute_mode));
-}
 
 /// Makes the cursor invisible.
 inline CTerminfo::capout_t CTerminfo::HideCursor (void) const

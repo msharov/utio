@@ -72,7 +72,7 @@ int main (void)
 	    bg += 1;
     }
     cout << ti.AllAttrsOff();
-    cout << ti.Color (green, black);
+    cout << ti.Color (green, black) << endl;
     cout << ti.ShowCursor();
     return (0);
 }

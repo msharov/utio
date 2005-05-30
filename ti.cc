@@ -315,12 +315,6 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
     }
 }
 
-/// Appends move(x,y) string to s.
-void CTerminfo::MoveTo (coord_t x, coord_t y, rstrbuf_t s) const
-{
-    RunStringProgram (GetString (ti::cursor_address), s, progargs_t(y, x));
-}
-
 /// Replaces \p c with a terminal-specific accelerated value, if available.
 wchar_t CTerminfo::SubstituteChar (wchar_t c) const
 {
@@ -350,10 +344,41 @@ void CTerminfo::LoadKeystrings (keystrings_t& ksv) const
 // Screen output interface
 //----------------------------------------------------------------------
 
+/// Clears the screen.
+CTerminfo::capout_t CTerminfo::Clear (void) const
+{
+    m_Ctx.m_Pos[0] = 0;
+    m_Ctx.m_Pos[1] = 0;
+    return (GetString (ti::clear_screen));
+}
+
+/// Resets the terminal to a sane state.
+CTerminfo::capout_t CTerminfo::Reset (void) const
+{
+    return (GetString (ti::reset_1string));
+}
+
+/// Stops all attributes, including color.
+CTerminfo::capout_t CTerminfo::AllAttrsOff (void) const
+{
+    m_Ctx.m_Attrs = 0;
+    m_Ctx.m_FgColor = lightgray;
+    m_Ctx.m_BgColor = black;
+    return (GetString (ti::exit_attribute_mode));
+}
+
 /// Updates cached screen information.
 void CTerminfo::Update (void)
 {
     ObtainTerminalParameters();
+}
+
+/// Appends move(x,y) string to s.
+void CTerminfo::MoveTo (coord_t x, coord_t y, rstrbuf_t s) const
+{
+    RunStringProgram (GetString (ti::cursor_address), s, progargs_t(y, x));
+    m_Ctx.m_Pos[0] = x;
+    m_Ctx.m_Pos[1] = y;
 }
 
 /// Moves the cursor to \p x, \p y.
@@ -372,29 +397,46 @@ CTerminfo::strout_t CTerminfo::Color (EColor fg, EColor bg) const
     return (m_Ctx.m_Output);
 }
 
+/// Truncates color values to supported range and sets attributes to compensate.
+void CTerminfo::NormalizeColor (EColor& fg, EColor& bg, uint16_t& attrs) const
+{
+    if (fg > color_Last)
+	fg = lightgray;
+    if (bg > color_Last)
+	bg = black;
+    if (fg < 8)
+	attrs &= ~(1 << a_bold);
+    else if (fg >= 8 && fg < color_Last) {
+	attrs |= (1 << a_bold);
+	fg -= 8;
+    }
+    if (bg < 8)
+	attrs &= ~(1 << a_blink);
+    else if (bg >= 8 && bg < color_Last) {
+	attrs |= (1 << a_blink);
+	bg -= 8;
+    }
+}
+
+/// Sets the color using normalized values (i.e. no attribute setting)
+void CTerminfo::NColor (EColor fg, EColor bg, rstrbuf_t s) const
+{
+    if (m_Ctx.m_FgColor != fg && fg != color_Preserve)
+	RunStringProgram (GetString (ti::set_a_foreground), s, progargs_t(fg));
+    if (m_Ctx.m_BgColor != bg && bg != color_Preserve)
+	RunStringProgram (GetString (ti::set_a_background), s, progargs_t(bg));
+    m_Ctx.m_FgColor = fg;
+    m_Ctx.m_BgColor = bg;
+}
+
 /// Sets the color to \p fg on \p bg, appending result to \p s.
 void CTerminfo::Color (EColor fg, EColor bg, rstrbuf_t s) const
 {
     uint16_t newAttrs = m_Ctx.m_Attrs;
-    if (fg < 8)
-	newAttrs &= ~(1 << a_bold);
-    else if (fg >= 8 && fg < color_Last) {
-	newAttrs |= (1 << a_bold);
-	fg -= 8;
-    }
-    if (bg < 8)
-	newAttrs &= ~(1 << a_blink);
-    else if (bg >= 8 && bg < color_Last) {
-	newAttrs |= (1 << a_blink);
-	bg -= 8;
-    }
-
-    if (newAttrs != m_Ctx.m_Attrs)
+    NormalizeColor (fg, bg, newAttrs);
+    if (m_Ctx.m_Attrs != newAttrs)
 	Attrs (newAttrs, s);
-    if (fg < color_Last)
-	RunStringProgram (GetString (ti::set_a_foreground), s, progargs_t(fg));
-    if (bg < color_Last)
-	RunStringProgram (GetString (ti::set_a_background), s, progargs_t(bg));
+    NColor (fg, bg, s);
 }
 
 /// Starts attribute \p a.
@@ -448,6 +490,8 @@ CTerminfo::capout_t CTerminfo::AttrOff (EAttribute a) const
 /// Same as Attrs, but it appends to m_Output
 void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 {
+    if (m_Ctx.m_Attrs == a)
+	return;
     const capout_t sgr = GetString (ti::set_attributes);
     if (sgr == string::empty_string) {
 	size_t nToOff (0), nToOn (0);
@@ -457,8 +501,11 @@ void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 	    nToOn  += !(m_Ctx.m_Attrs & mask) && (a & mask);
 	}
 	const uint16_t oldAttrs (m_Ctx.m_Attrs);
-	if (nToOff)
-	    s += AllAttrsOff();
+	if (nToOff) {
+	    s += GetString (ti::exit_attribute_mode);
+	    m_Ctx.m_FgColor = lightgray;
+	    m_Ctx.m_BgColor = black;
+	}
 	mask = 1;
 	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1)
 	    if ((a & mask) && (nToOff || !(oldAttrs & mask)))
@@ -468,6 +515,8 @@ void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 	for (uoff_t i = 0; i < pa.size(); ++ i)
 	    pa[i] = (a >> i) & 1;
 	RunStringProgram (sgr, s, pa);
+	m_Ctx.m_FgColor = lightgray;
+	m_Ctx.m_BgColor = black;
     }
     m_Ctx.m_Attrs = a;
 }
@@ -536,46 +585,34 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     assert (data && "Image should only be called with valid data");
     assert (x >= 0 && y >= 0 && x + w <= Width() && y + h <= Height() && "Clip the image data before passing it in. CGC::Clip can do it.");
 
-    CCharCell prevCell (*data);
-    ++ prevCell.m_Attrs;
-    ++ prevCell.m_FgColor;
-    bool bInAcsMode = prevCell.HasAttr (a_altcharset);
+    const uint16_t oldAttrs (m_Ctx.m_Attrs);
+    const EColor oldFg (EColor(m_Ctx.m_FgColor)), oldBg (EColor(m_Ctx.m_BgColor));
 
-    m_Ctx.m_Output = AllAttrsOff();
-
+    m_Ctx.m_Output.clear();
     for (coord_t j = y; j < y + h; ++ j) {
-	MoveTo (x, j, m_Ctx.m_Output);
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
-	    const wchar_t dc = data->m_Char, pc = prevCell.m_Char;
-	    if (!dc) {
-		prevCell = CCharCell (0, color_Preserve, color_Preserve, 0);
-		if (bInAcsMode) {
-		    m_Ctx.m_Output += ExitAcsMode();
-		    bInAcsMode = false;
-		}
+	    wchar_t dc = data->m_Char;
+	    if (!dc)
 		continue;
-	    } else if (!pc)
+	    if (i != m_Ctx.m_Pos[0] || j != m_Ctx.m_Pos[1])
 		MoveTo (i, j, m_Ctx.m_Output);
-
-	    uint16_t dattr (data->m_Attrs);
-	    const wchar_t c = dc > CHAR_MAX ? SubstituteChar (dc) : dc;
-	    if (c != dc)
+	    uint16_t dattr (data->m_Attrs & BitMask(uint16_t,attr_Last));
+	    if (dc > CHAR_MAX) {
+		dc = SubstituteChar(dc);
 		dattr |= (1 << a_altcharset);
-	    if (((dattr >> a_altcharset) & 1) ^ bInAcsMode)
-		bInAcsMode = !bInAcsMode;
-	    if (!pc || prevCell.m_Attrs != dattr)
-		Attrs (dattr, m_Ctx.m_Output);
-	    if (!pc || prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
-		Color (EColor(data->m_FgColor), EColor(data->m_BgColor), m_Ctx.m_Output);
-	    m_Ctx.m_Output += (bInAcsMode || isprint(c)) ? char(c) : ' ';
-	    prevCell = *data;
+	    }
+	    if (!(dattr & (1 << a_altcharset)) && !isprint(dc))
+		dc = ' ';
+	    EColor fg (EColor(data->m_FgColor)), bg (EColor(data->m_BgColor));
+	    NormalizeColor (fg, bg, dattr);
+	    Attrs (dattr, m_Ctx.m_Output);
+	    NColor (fg, bg, m_Ctx.m_Output);
+	    m_Ctx.m_Output += char(dc);
+	    ++ m_Ctx.m_Pos[0];
 	}
     }
-    cerr << "======================================================================" << endl;
-    cerr << m_Ctx.m_Output << endl;
-    cerr << "======================================================================" << endl;
-
-    m_Ctx.m_Output += AllAttrsOff();
+    Attrs (oldAttrs, m_Ctx.m_Output);
+    NColor (oldFg, oldBg, m_Ctx.m_Output);
     return (m_Ctx.m_Output);
 }
 
