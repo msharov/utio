@@ -305,10 +305,10 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
     }
 }
 
-/// Appends move(x,y) string to m_Output.
-inline void CTerminfo::_MoveTo (coord_t x, coord_t y) const
+/// Appends move(x,y) string to s.
+void CTerminfo::MoveTo (coord_t x, coord_t y, rstrbuf_t s) const
 {
-    RunStringProgram (GetString (ti::cursor_address), m_Output, progargs_t(y, x));
+    RunStringProgram (GetString (ti::cursor_address), s, progargs_t(y, x));
 }
 
 /// Replaces \p c with a terminal-specific accelerated value, if available.
@@ -347,15 +347,23 @@ void CTerminfo::Update (void)
 }
 
 /// Moves the cursor to \p x, \p y.
-CTerminfo::capout_t CTerminfo::MoveTo (coord_t x, coord_t y) const
+CTerminfo::strout_t CTerminfo::MoveTo (coord_t x, coord_t y) const
 {
     m_Output.clear();
-    _MoveTo (x, y);
+    MoveTo (x, y, m_Output);
     return (m_Output);
 }
 
 /// Sets the color to \p fg on \p bg.
-CTerminfo::capout_t CTerminfo::Color (EColor fg, EColor bg) const
+CTerminfo::strout_t CTerminfo::Color (EColor fg, EColor bg) const
+{
+    m_Output.clear();
+    Color (fg, bg, m_Output);
+    return (m_Output);
+}
+
+/// Sets the color to \p fg on \p bg, appending result to \p s.
+void CTerminfo::Color (EColor fg, EColor bg, rstrbuf_t s) const
 {
     uint16_t newAttrs = m_Attrs;
     if (fg < 8)
@@ -370,15 +378,13 @@ CTerminfo::capout_t CTerminfo::Color (EColor fg, EColor bg) const
 	newAttrs |= (1 << a_blink);
 	bg -= 8;
     }
+
     if (newAttrs != m_Attrs)
-	Attrs (newAttrs); // reuses m_Output
-    else
-	m_Output.clear();
+	Attrs (newAttrs, s);
     if (fg < color_Last)
-	RunStringProgram (GetString (ti::set_a_foreground), m_Output, progargs_t(fg));
+	RunStringProgram (GetString (ti::set_a_foreground), s, progargs_t(fg));
     if (bg < color_Last)
-	RunStringProgram (GetString (ti::set_a_background), m_Output, progargs_t(bg));
-    return (m_Output);
+	RunStringProgram (GetString (ti::set_a_background), s, progargs_t(bg));
 }
 
 /// Starts attribute \p a.
@@ -422,34 +428,45 @@ CTerminfo::capout_t CTerminfo::AttrOff (EAttribute a) const
 	/* a_subscript */	ti::exit_subscript_mode,
 	/* a_superscript */	ti::exit_superscript_mode,
     };
-    m_Attrs &= ~(1 << a);
-    if (a < attr_Last && (as[a] != ti::exit_attribute_mode || GetString(ti::set_attributes) == string::empty_string))
-	return (GetString (as[a]));
-    _Attrs (m_Attrs);
-    return (string::empty_string);
+    const uint16_t newAttrs (m_Attrs & ~(1 << a));
+    if (a >= attr_Last || (as[a] == ti::exit_attribute_mode && GetString(ti::set_attributes) != string::empty_string))
+	return (Attrs (newAttrs));
+    m_Attrs = newAttrs;
+    return (GetString (as[a]));
 }
 
 /// Same as Attrs, but it appends to m_Output
-void CTerminfo::_Attrs (uint16_t a) const
+void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 {
     const capout_t sgr = GetString (ti::set_attributes);
     if (sgr == string::empty_string) {
-	for (uoff_t i = 0; i < attr_Last; ++ i)
-	    m_Output += AttrOn (EAttribute (a));
+	size_t nToOff (0), nToOn (0);
+	uint16_t mask (1);
+	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1) {
+	    nToOff += (m_Attrs & mask) && !(a & mask);
+	    nToOn  += !(m_Attrs & mask) && (a & mask);
+	}
+	const uint16_t oldAttrs (m_Attrs);
+	if (nToOff)
+	    s += AllAttrsOff();
+	mask = 1;
+	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1)
+	    if ((a & mask) && (nToOff || !(oldAttrs & mask)))
+		s += AttrOn (EAttribute (a));
     } else {
 	progargs_t pa;
 	for (uoff_t i = 0; i < pa.size(); ++ i)
 	    pa[i] = (a >> i) & 1;
-	RunStringProgram (GetString (ti::set_attributes), m_Output, pa);
-	m_Attrs = a;
+	RunStringProgram (sgr, s, pa);
     }
+    m_Attrs = a;
 }
 
 /// Sets all attributes to values in \p a (masked by EAttribute)
-CTerminfo::capout_t CTerminfo::Attrs (uint16_t a) const
+CTerminfo::strout_t CTerminfo::Attrs (uint16_t a) const
 {
     m_Output.clear();
-    _Attrs (a);
+    Attrs (a, m_Output);
     return (m_Output);
 }
 
@@ -457,20 +474,20 @@ CTerminfo::capout_t CTerminfo::Attrs (uint16_t a) const
 CTerminfo::strout_t CTerminfo::Box (coord_t x, coord_t y, dim_t w, dim_t h) const
 {
     m_Output = EnterAcsMode();
-    _MoveTo (x, y);
+    MoveTo (x, y, m_Output);
 
     m_Output += AcsChar (acs_UpperLeftCorner);
     fill_n (back_inserter(m_Output), w - 2, AcsChar (acs_HLine));
     m_Output += AcsChar (acs_UpperRightCorner);
 
     for (dim_t yi = 1; yi < h - 1; ++ yi) {
-	_MoveTo (x, y + yi);
+	MoveTo (x, y + yi, m_Output);
 	m_Output += AcsChar (acs_VLine);
-	_MoveTo (x + w - 1, y + yi);
+	MoveTo (x + w - 1, y + yi, m_Output);
 	m_Output += AcsChar (acs_VLine);
     }
 
-    _MoveTo (x, y + h - 1);
+    MoveTo (x, y + h - 1, m_Output);
     m_Output += AcsChar (acs_LowerLeftCorner);
     fill_n (back_inserter(m_Output), w - 2, AcsChar (acs_HLine));
     m_Output += AcsChar (acs_LowerRightCorner);
@@ -484,11 +501,23 @@ CTerminfo::strout_t CTerminfo::Bar (coord_t x, coord_t y, dim_t w, dim_t h, char
 {
     m_Output = EnterAcsMode();
     for (dim_t yi = 0; yi < h; ++ yi) {
-	_MoveTo (x, y + yi);
+	MoveTo (x, y + yi, m_Output);
 	fill_n (back_inserter(m_Output), w, c);
     }
     m_Output += ExitAcsMode();
     return (m_Output);
+}
+
+/// Draws a horizontal line.
+CTerminfo::strout_t CTerminfo::HLine (coord_t x, coord_t y, dim_t w) const
+{
+    return (Bar (x, y, w, 1, AcsChar(acs_HLine)));
+}
+
+/// Draws a vertical line.
+CTerminfo::strout_t CTerminfo::VLine (coord_t x, coord_t y, dim_t h) const
+{
+    return (Bar (x, y, 1, h, AcsChar(acs_VLine)));
 }
 
 /// Draws character \p data into the given box. 0-valued characters are transparent.
@@ -497,41 +526,46 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     assert (data && "Image should only be called with valid data");
     assert (x >= 0 && y >= 0 && x + w <= Width() && y + h <= Height() && "Clip the image data before passing it in. CGC::Clip can do it.");
 
-    string allout;
     CCharCell prevCell (*data);
     ++ prevCell.m_Attrs;
     ++ prevCell.m_FgColor;
     bool bInAcsMode = prevCell.HasAttr (a_altcharset);
 
+    m_Output = AllAttrsOff();
+
     for (coord_t j = y; j < y + h; ++ j) {
-	allout += MoveTo (x, j);
+	MoveTo (x, j, m_Output);
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
 	    const wchar_t dc = data->m_Char, pc = prevCell.m_Char;
 	    if (!dc) {
 		prevCell = CCharCell (0, color_Preserve, color_Preserve, 0);
 		if (bInAcsMode) {
-		    allout += ExitAcsMode();
+		    m_Output += ExitAcsMode();
 		    bInAcsMode = false;
 		}
 		continue;
 	    } else if (!pc)
-		allout += MoveTo (i, j);
+		MoveTo (i, j, m_Output);
+
+	    uint16_t dattr (data->m_Attrs);
 	    const wchar_t c = dc > CHAR_MAX ? SubstituteChar (dc) : dc;
-	    if (!pc || prevCell.m_Attrs != data->m_Attrs)
-		allout += Attrs (data->m_Attrs);
-	    if (!pc || prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
-		allout += Color (EColor(data->m_FgColor), EColor(data->m_BgColor));
-	    if ((data->HasAttr (a_altcharset) || c != dc) ^ bInAcsMode) {
-		allout += bInAcsMode ? ExitAcsMode() : EnterAcsMode();
+	    if (c != dc)
+		dattr |= (1 << a_altcharset);
+	    if (((dattr >> a_altcharset) & 1) ^ bInAcsMode)
 		bInAcsMode = !bInAcsMode;
-	    }
-	    allout += ((c < CHAR_MAX || bInAcsMode) ? char(c) : ' ');
+	    if (!pc || prevCell.m_Attrs != dattr)
+		Attrs (dattr, m_Output);
+	    if (!pc || prevCell.m_FgColor != data->m_FgColor || prevCell.m_BgColor != data->m_BgColor)
+		Color (EColor(data->m_FgColor), EColor(data->m_BgColor), m_Output);
+	    m_Output += (bInAcsMode || isprint(c)) ? char(c) : ' ';
 	    prevCell = *data;
 	}
     }
-    allout += AllAttrsOff();
+    cerr << "======================================================================" << endl;
+    cerr << m_Output << endl;
+    cerr << "======================================================================" << endl;
 
-    m_Output = allout;
+    m_Output += AllAttrsOff();
     return (m_Output);
 }
 

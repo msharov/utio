@@ -27,6 +27,7 @@ public:
     typedef int16_t		number_t;	///< Type of numeric terminfo values.
     typedef const char*		capout_t;	///< Type of values returned by all capability output functions.
     typedef const string&	strout_t;
+    typedef string&		rstrbuf_t;
     typedef tuple<kv_nKeys,capout_t>	keystrings_t;		///< List of key strings corresponding to EKeyDataValue enum.
     typedef gdt::coord_t	coord_t;
     typedef gdt::dim_t		dim_t;
@@ -34,12 +35,15 @@ public:
 			CTerminfo (void);
     void		Load (const char* termname = NULL);
     void		LoadEntry (memblock& buf, const char* termname = NULL) const;
-    capout_t		MoveTo (coord_t x, coord_t y) const;
-    capout_t		Color (EColor fg, EColor bg = color_Preserve) const;
+    strout_t		MoveTo (coord_t x, coord_t y) const;
+    void		MoveTo (coord_t x, coord_t y, rstrbuf_t s) const;
+    strout_t		Color (EColor fg, EColor bg = color_Preserve) const;
+    void		Color (EColor fg, EColor bg, rstrbuf_t s) const;
     inline capout_t	Clear (void) const;
     capout_t		AttrOn (EAttribute a) const;
     capout_t		AttrOff (EAttribute a) const;
-    capout_t		Attrs (uint16_t a) const;
+    strout_t		Attrs (uint16_t a) const;
+    void		Attrs (uint16_t a, rstrbuf_t s) const;
     inline capout_t	AllAttrsOff (void) const;
     inline capout_t	HideCursor (void) const;
     inline capout_t	ShowCursor (void) const;
@@ -48,8 +52,8 @@ public:
     strout_t		Image (coord_t x, coord_t y, dim_t w, dim_t h, const CCharCell* data) const;
     strout_t		Box (coord_t x, coord_t y, dim_t w, dim_t h) const;
     strout_t		Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c = ' ') const;
-    inline strout_t	HLine (coord_t x, coord_t y, dim_t w) const;
-    inline strout_t	VLine (coord_t x, coord_t y, dim_t h) const;
+    strout_t		HLine (coord_t x, coord_t y, dim_t w) const;
+    strout_t		VLine (coord_t x, coord_t y, dim_t h) const;
     inline capout_t	Reset (void) const;
     inline strout_t	Name (void) const			{ return (m_Name); }
     inline dim_t	Width (void) const			{ return (m_nColumns); }
@@ -86,7 +90,6 @@ private:
     void		ObtainTerminalParameters (void);
     void		RunStringProgram (const char* program, string& result, progargs_t args) const;
     void		_MoveTo (coord_t x, coord_t y) const;
-    void		_Attrs (uint16_t a) const;
     progvalue_t		PSPop (void) const;
     inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return (v ? v : 1); }
     void		PSPush (progvalue_t v) const;
@@ -123,6 +126,7 @@ inline CTerminfo::capout_t CTerminfo::Reset (void) const
 /// Stops all attributes, including color.
 inline CTerminfo::capout_t CTerminfo::AllAttrsOff (void) const
 {
+    m_Attrs = 0;
     return (GetString (ti::exit_attribute_mode));
 }
 
@@ -148,18 +152,6 @@ inline CTerminfo::capout_t CTerminfo::EnterAcsMode (void) const
 inline CTerminfo::capout_t CTerminfo::ExitAcsMode (void) const
 {
     return (AttrOff (a_altcharset));
-}
-
-/// Draws a horizontal line.
-inline CTerminfo::strout_t CTerminfo::HLine (coord_t x, coord_t y, dim_t w) const
-{
-    return (Bar (x, y, w, 1, AcsChar(acs_HLine)));
-}
-
-/// Draws a vertical line.
-inline CTerminfo::strout_t CTerminfo::VLine (coord_t x, coord_t y, dim_t h) const
-{
-    return (Bar (x, y, 1, h, AcsChar(acs_VLine)));
 }
 
 //----------------------------------------------------------------------
