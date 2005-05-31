@@ -19,7 +19,7 @@
 
 /// The header of the terminfo file
 struct STerminfoHeader {
-    uint16_t	m_Magic;
+    uint16_t	m_Magic;		///< Equal to TERMINFO_MAGIC constant above.
     uint16_t	m_NamesSize;
     uint16_t	m_nBooleans;
     uint16_t	m_nNumbers;
@@ -35,15 +35,6 @@ namespace utio {
 
 //----------------------------------------------------------------------
 
-/// Structure for describing alternate character set values.
-struct CTerminfo::SAcscInfo {
-    char	m_vt100Code;	///< vt100 code for this character.
-    char	m_Default;	///< Default value, if the terminfo does not specify.
-    uint16_t	m_Unicode;	///< Unicode equivalent character value.
-};
-
-//----------------------------------------------------------------------
-
 /// Default constructor.
 CTerminfo::CTerminfo (void)
 : m_Name (),
@@ -53,10 +44,10 @@ CTerminfo::CTerminfo (void)
   m_StringTable (),
   m_AcsMap (),
   m_Ctx (),
-  m_nColumns (80),
-  m_nRows (24),
   m_nColors (16),
-  m_nPairs (64)
+  m_nPairs (64),
+  m_nColumns (80),
+  m_nRows (24)
 {
 }
 
@@ -324,12 +315,6 @@ wchar_t CTerminfo::SubstituteChar (wchar_t c) const
     return (c);
 }
 
-/// Returns the unicode value for character \p c.
-/*static*/ wchar_t CTerminfo::AcsUnicodeValue (EGraphicChar c)
-{
-    return (c_AcscInfo[c].m_Unicode);
-}
-
 /// Loads terminal strings produced by special keys into \p ksv.
 void CTerminfo::LoadKeystrings (keystrings_t& ksv) const
 {
@@ -532,7 +517,7 @@ CTerminfo::strout_t CTerminfo::Attrs (uint16_t a) const
 /// Draws a box in the given location using ACS characters.
 CTerminfo::strout_t CTerminfo::Box (coord_t x, coord_t y, dim_t w, dim_t h) const
 {
-    m_Ctx.m_Output = EnterAcsMode();
+    m_Ctx.m_Output = AttrOn (a_altcharset);
     MoveTo (x, y, m_Ctx.m_Output);
 
     m_Ctx.m_Output += AcsChar (acs_UpperLeftCorner);
@@ -551,19 +536,19 @@ CTerminfo::strout_t CTerminfo::Box (coord_t x, coord_t y, dim_t w, dim_t h) cons
     fill_n (back_inserter(m_Ctx.m_Output), w - 2, AcsChar (acs_HLine));
     m_Ctx.m_Output += AcsChar (acs_LowerRightCorner);
 
-    m_Ctx.m_Output += ExitAcsMode();
+    Attrs ((m_Ctx.m_Attrs & ~(1 << a_altcharset)), m_Ctx.m_Output);
     return (m_Ctx.m_Output);
 }
 
 /// Draws a rectangle filled with \p c.
 CTerminfo::strout_t CTerminfo::Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c) const
 {
-    m_Ctx.m_Output = EnterAcsMode();
+    m_Ctx.m_Output = AttrOn (a_altcharset);
     for (dim_t yi = 0; yi < h; ++ yi) {
 	MoveTo (x, y + yi, m_Ctx.m_Output);
 	fill_n (back_inserter(m_Ctx.m_Output), w, c);
     }
-    m_Ctx.m_Output += ExitAcsMode();
+    Attrs ((m_Ctx.m_Attrs & ~(1 << a_altcharset)), m_Ctx.m_Output);
     return (m_Ctx.m_Output);
 }
 

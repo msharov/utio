@@ -36,19 +36,14 @@ public:
     void		Load (const char* termname = NULL);
     void		LoadEntry (memblock& buf, const char* termname = NULL) const;
     strout_t		MoveTo (coord_t x, coord_t y) const;
-    void		MoveTo (coord_t x, coord_t y, rstrbuf_t s) const;
     strout_t		Color (EColor fg, EColor bg = color_Preserve) const;
-    void		Color (EColor fg, EColor bg, rstrbuf_t s) const;
     capout_t		Clear (void) const;
     capout_t		AttrOn (EAttribute a) const;
     capout_t		AttrOff (EAttribute a) const;
     strout_t		Attrs (uint16_t a) const;
-    void		Attrs (uint16_t a, rstrbuf_t s) const;
     capout_t		AllAttrsOff (void) const;
     inline capout_t	HideCursor (void) const;
     inline capout_t	ShowCursor (void) const;
-    inline capout_t	EnterAcsMode (void) const;
-    inline capout_t	ExitAcsMode (void) const;
     strout_t		Image (coord_t x, coord_t y, dim_t w, dim_t h, const CCharCell* data) const;
     strout_t		Box (coord_t x, coord_t y, dim_t w, dim_t h) const;
     strout_t		Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c = ' ') const;
@@ -64,7 +59,6 @@ public:
     bool		GetBool (ti::EBooleans i) const;
     number_t		GetNumber (ti::ENumbers i) const;
     capout_t		GetString (ti::EStrings i) const;
-    static wchar_t	AcsUnicodeValue (EGraphicChar c);
     wchar_t		SubstituteChar (wchar_t c) const;
     void		LoadKeystrings (keystrings_t& ksv) const;
     void		Update (void);
@@ -81,7 +75,12 @@ private:
     typedef vector<progvalue_t>	progstack_t;
     typedef tuple<acs_Last,char>	acsmap_t;
     typedef tuple<attr_Last,number_t>	progargs_t;
-    struct SAcscInfo;
+    /// Structure for describing alternate character set values.
+    struct SAcscInfo {
+	char		m_vt100Code;	///< vt100 code for this character.
+	char		m_Default;	///< Default value, if the terminfo does not specify.
+	uint16_t	m_Unicode;	///< Unicode equivalent character value.
+    };
 private:
     static const SAcscInfo	c_AcscInfo [acs_Last];		///< Codes for all ACS characters.
     static const int16_t	c_KeyToStringMap [kv_nKeys];
@@ -97,13 +96,17 @@ private:
 	uint8_t		m_FgColor;		///< Foreground (text) color.
 	uint8_t		m_BgColor;		///< Background color.
     };
+public:
+    static inline wchar_t AcsUnicodeValue (EGraphicChar c)	{ return (c_AcscInfo[c].m_Unicode); }
 private:
     void		CacheFrequentValues (void);
     void		ObtainTerminalParameters (void);
     void		NormalizeColor (EColor& fg, EColor& bg, uint16_t& attrs) const;
     void		NColor (EColor fg, EColor bg, rstrbuf_t s) const;
+    void		MoveTo (coord_t x, coord_t y, rstrbuf_t s) const;
+    void		Color (EColor fg, EColor bg, rstrbuf_t s) const;
+    void		Attrs (uint16_t a, rstrbuf_t s) const;
     void		RunStringProgram (const char* program, string& result, progargs_t args) const;
-    void		_MoveTo (coord_t x, coord_t y) const;
     progvalue_t		PSPop (void) const;
     inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return (v ? v : 1); }
     void		PSPush (progvalue_t v) const;
@@ -115,10 +118,10 @@ private:
     strtable_t		m_StringTable;		///< Actual string caps values.
     acsmap_t		m_AcsMap;		///< Decoded ACS characters.
     mutable CContext	m_Ctx;			///< Current state of the terminal.
-    dim_t		m_nColumns;		///< Number of display columns.
-    dim_t		m_nRows;		///< Number of display rows.
     size_t		m_nColors;		///< Number of available colors.
     size_t		m_nPairs;		///< Number of available color pairs (unused).
+    dim_t		m_nColumns;		///< Number of display columns.
+    dim_t		m_nRows;		///< Number of display rows.
 };
 
 //----------------------------------------------------------------------
@@ -133,18 +136,6 @@ inline CTerminfo::capout_t CTerminfo::HideCursor (void) const
 inline CTerminfo::capout_t CTerminfo::ShowCursor (void) const
 {
     return (GetString (ti::cursor_normal));
-}
-
-/// You must call this before using ACS characters.
-inline CTerminfo::capout_t CTerminfo::EnterAcsMode (void) const
-{
-    return (AttrOn (a_altcharset));
-}
-
-/// You must call this after using ACS characters.
-inline CTerminfo::capout_t CTerminfo::ExitAcsMode (void) const
-{
-    return (AttrOff (a_altcharset));
 }
 
 //----------------------------------------------------------------------
