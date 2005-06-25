@@ -245,7 +245,7 @@ void CTerminfo::PSPush (progvalue_t v) const
 /// Runs the % opcodes in \p program and appends to \p result.
 void CTerminfo::RunStringProgram (const char* program, string& result, progargs_t args) const
 {
-    bool bCondValue = true;
+    bool bCondValue = false;
     const string prgstr (program);
     foreach (string::const_iterator, i, prgstr) {
 	if (*i != '%') {			// Output normal data
@@ -289,10 +289,10 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    case '!': PSPush (!PSPop());		break;
 	    case '~': PSPush (~PSPop());		break;
 	    case 't': bCondValue = PSPop();
-	    case 'e': if (!bCondValue) // this also supports elsif
-			  i = min (prgstr.find ("%e", i), prgstr.find ("%;", i)) - 1;
+	    case 'e': if ((bCondValue = !bCondValue)) // this also supports elsif
+			  --(i = min (prgstr.find ("%e", i), prgstr.find ("%;", i)));
 	    case '?':
-	    case ';': bCondValue = true; break;
+	    case ';': break;
 	    case 'p': PSPush (args [min (uoff_t(*++i - '1'), args.size() - 1)]); break; // %p[0-9] pushes numbered parameter.
 	    case 'd': {		// %d prints the top of the stack and pops the stack.
 		progvalue_t n = PSPop();
@@ -579,8 +579,14 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
 	    wchar_t dc = data->m_Char;
 	    if (!dc)
 		continue;
-	    if (i != m_Ctx.m_Pos[0] || j != m_Ctx.m_Pos[1])
-		MoveTo (i, j, m_Ctx.m_Output);
+	    if (i != m_Ctx.m_Pos[0] || j != m_Ctx.m_Pos[1]) {
+		if (i == 0 && j == m_Ctx.m_Pos[1] + 1) {
+		    m_Ctx.m_Output += '\n';
+		    m_Ctx.m_Pos[0] = 0;
+		    ++ m_Ctx.m_Pos[1];
+		} else
+		    MoveTo (i, j, m_Ctx.m_Output);
+	    }
 	    uint16_t dattr (data->m_Attrs & BitMask(uint16_t,attr_Last));
 	    if (dc > CHAR_MAX) {
 		dc = SubstituteChar(dc);
