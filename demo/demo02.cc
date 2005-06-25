@@ -28,7 +28,7 @@ static void Draw (CGC& gc)
     gc.BgColor (black);
     gc.FgColor (green);
     gc.Clear();
-    gc.BgColor (yellow);
+    gc.BgColor (brown);
     gc.FgColor (black);
     DrawBox (gc, Point2d (10, 5));
     gc.BgColor (bg);
@@ -58,13 +58,13 @@ int main (void)
 	gc.Image (screen);
 
 	key = kb.GetKey();
-	if (key == kv_Up && g_Pos[1] > 0)
+	if ((key == kv_Up || key == 'k') && g_Pos[1] > 0)
 	    -- g_Pos[1];
-	else if (key == kv_Down && g_Pos[1] < gc.Height() - 12)
+	else if ((key == kv_Down || key == 'j') && g_Pos[1] < gc.Height() - 12)
 	    ++ g_Pos[1];
-	else if (key == kv_Left && g_Pos[0] > 0)
+	else if ((key == kv_Left || key == 'h') && g_Pos[0] > 0)
 	    -- g_Pos[0];
-	else if (key == kv_Right && g_Pos[0] < gc.Width() - 12)
+	else if ((key == kv_Right || key == 'l') && g_Pos[0] < gc.Width() - 12)
 	    ++ g_Pos[0];
 	else if (key == 'f')
 	    fg += 1;
