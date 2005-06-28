@@ -82,6 +82,7 @@ uninstall-incs:
 clean:
 	@echo "Removing generated files ..."
 	@${RM} -f ${OBJS} ${TOCLEAN} *.rpo
+	@+make -C demo clean
 
 depend: ${SRCS}
 	@${CXX} ${CXXFLAGS} -M ${SRCS} > .depend;
@@ -97,15 +98,15 @@ DISTTAR	= ${DISTNAM}-${BUILD}.tar.bz2
 dist:
 	mkdir ${TMPDIR}/${DISTNAM}
 	cp -r . ${TMPDIR}/${DISTNAM}
-	+make -C ${TMPDIR}/${DISTNAM} dox dist-clean
+	+make -C ${TMPDIR}/${DISTNAM} dist-clean
 	(cd ${TMPDIR}/${DISTNAM}; rm -rf CVS; cd docs; rm -rf CVS)
 	(cd ${TMPDIR}; tar jcf ${DISTDIR}/${DISTTAR} ${DISTNAM}; rm -rf ${DISTNAM})
 
 dist-clean:	clean
-	@rm -f Common.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend
+	@rm -f Common.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend demo/.depend
 
 maintainer-clean: dist-clean
-	@rm -rf docs
+	@rm -rf docs/html
 
 -include .depend
  

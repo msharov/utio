@@ -689,7 +689,7 @@ static void SubstituteHostOptions (void)
     sprintf (buf, "#define SIZE_OF_LONG_LONG %d", sizeof(long long));
     Substitute ("#undef SIZE_OF_LONG_LONG", buf);
 #endif
-#if __GNUC__ >= 3
+#if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
     Substitute ("#undef HAVE_VECTOR_EXTENSIONS", "#define HAVE_VECTOR_EXTENSIONS 1");
 #else
     Substitute ("-Wshadow ", "");
@@ -779,6 +779,8 @@ static void SubstituteFunctions (void)
 	Substitute (g_Functions [i * 3 + 1], g_Functions [i * 3 + 2]);
     if (g_SysType == sys_Mac)
 	Substitute ("#define HAVE_STRSIGNAL 1", "#undef HAVE_STRSIGNAL");
+    if (g_SysType == sys_Bsd)
+	Substitute ("#define HAVE_VA_COPY 1", "#undef HAVE_VA_COPY");
 }
 
 static void SubstituteComponents (void)
