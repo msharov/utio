@@ -7,12 +7,14 @@
 //
 
 #include "kb.h"
-#include <linux/kd.h>
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#if linux
+    #include <linux/kd.h>
+#endif
 
 namespace utio {
 
@@ -175,6 +177,7 @@ void CKeyboard::EnterUIMode (void)
 /// Manipulates terminal keymap (what loadkeys does)
 void CKeyboard::SetKeyboardEntry (uint8_t table, uint8_t keycode, uint16_t value, uint16_t* oldValue)
 {
+#if linux
     struct kbentry kbe;
     kbe.kb_table = table;
     kbe.kb_index = keycode;
@@ -189,6 +192,12 @@ void CKeyboard::SetKeyboardEntry (uint8_t table, uint8_t keycode, uint16_t value
 	if (ioctl (STDIN_FILENO, KDSKBENT, &kbe))
 	    throw file_exception ("KDGKBENT", "stdin");
     }
+#else
+    table = keycode = 0;
+    value = 0;
+    if (oldValue)
+	*oldValue = 0;
+#endif
 }
 
 /// Leaves UI mode.
@@ -269,21 +278,20 @@ bool CKeyboard::DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const
 	kf.reset (mksbit_Alt);
     }
 
+#if linux
     // Try to report shift state.
     if (matchedSize) {
 	// Warning: this is unreliable and only works on a vt.
 	#define TIOCL_GETSHIFTSTATE	6 // This is some internal kernel constant.
 	int sstate = TIOCL_GETSHIFTSTATE;
 	if (!ioctl (STDIN_FILENO, TIOCLINUX, &sstate)) {
-	    if (sstate & 1)
-		kf.set (mksbit_Shift);
-	    if (sstate & 4)
-		kf.set (mksbit_Ctrl);
-	    if (sstate & 10)
-		kf.set (mksbit_Alt);
+	    if (sstate & 1)	kf.set (mksbit_Shift);
+	    if (sstate & 4)	kf.set (mksbit_Ctrl);
+	    if (sstate & 10)	kf.set (mksbit_Alt);
 	}
 	is.skip (matchedSize);
     }
+#endif
     return (matchedSize);
 }
 
