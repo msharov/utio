@@ -7,14 +7,12 @@ int main (void)
     ti.Load();
 
     cout << ios::hex;
-    for (uint32_t y = black; y < color_Last; ++ y) {
-	for (uint32_t x = black; x < color_Last; ++ x)
+    for (int y = black; y < color_Last; ++ y) {
+	for (int x = black; x < color_Last; ++ x)
 	    cout << ti.Color (EColor(x), EColor(y)) << x;
-	cout << ti.Color (green, black);
-	cout << "\tHello World!";
-	cout << ti.AllAttrsOff();
-	cout << endl;
+	cout << ti.Color (green, black) << "\tHello World!" << endl;
     }
+    cout << ti.AllAttrsOff();
     return (0);
 }
 
