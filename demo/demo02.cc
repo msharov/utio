@@ -67,9 +67,9 @@ int main (void)
 	else if ((key == kv_Right || key == 'l') && g_Pos[0] < gc.Width() - 12)
 	    ++ g_Pos[0];
 	else if (key == 'f')
-	    fg += 1;
+	    fg = EColor ((fg + 1) % color_Last);
 	else if (key == 'b')
-	    bg += 1;
+	    fg = EColor ((bg + 1) % color_Last);
     }
     cout << ti.AllAttrsOff();
     cout << ti.Color (green, black) << endl;

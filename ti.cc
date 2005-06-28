@@ -74,7 +74,7 @@ void CTerminfo::LoadEntry (memblock& buf, const char* termname) const
     if (!termname)  termname = "linux";
     string tipath;
     tipath.format ("%s/%c/%s", defTiPath, termname[0], termname);
-    buf.read_file (tipath);
+    buf.read_file (tipath.c_str());
 }
 
 /// Reads the terminfo entry from stream \p is.
@@ -398,13 +398,13 @@ void CTerminfo::NormalizeColor (EColor& fg, EColor& bg, uint16_t& attrs) const
 	attrs &= ~(1 << a_bold);
     else if (fg >= 8 && fg < color_Last) {
 	attrs |= (1 << a_bold);
-	fg -= 8;
+	fg = EColor(fg - 8);
     }
     if (bg < 8)
 	attrs &= ~(1 << a_blink);
     else if (bg >= 8 && bg < color_Last) {
 	attrs |= (1 << a_blink);
-	bg -= 8;
+	bg -= EColor(bg - 8);
     }
 }
 
