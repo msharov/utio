@@ -1,4 +1,4 @@
-// This file is part of the utio library, an terminal I/O library.
+// This file is part of the utio library, a terminal I/O library.
 //
 // Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
@@ -11,9 +11,10 @@
 #ifndef TICONST_H_668685586A306EC93FCA2A4B233066A9
 #define TICONST_H_668685586A306EC93FCA2A4B233066A9
 
-#include <ustl.h>
 #include "config.h"
+#include <ustl.h>
 
+/// Terminal I/O Library namespace.
 namespace utio {
 using namespace ustl;
 

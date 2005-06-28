@@ -14,8 +14,8 @@
 */
 
 #define PACKAGE_NAME		"utio"
-#define LIB_MAJOR		"0"
-#define LIB_MINOR		"1"
+#define LIB_MAJOR		"1"
+#define LIB_MINOR		"0"
 #define LIB_BUILD		"0"
 
 #define PACKAGE_VERSION		LIB_MAJOR "." LIB_MINOR
@@ -58,6 +58,7 @@ static cpchar_t g_ProgVars [] = {
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
 static cpchar_t	g_Headers [] = {
+    "ustl.h",		"#undef HAVE_USTL_H",		"#define HAVE_USTL_H 1",
     "sys/ioctl.h",	"#undef HAVE_SYS_IOCTL_H",	"#define HAVE_SYS_IOCTL_H 1"
 };
 
