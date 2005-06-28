@@ -1,0 +1,51 @@
+#! /bin/bash
+#
+# This file is part of bsconf - a configure replacement.
+# Copyright (C) 2005 by Mike Sharov <msharov@users.sourceforge.net>
+# This file is free software, distributed under the MIT License.
+#
+
+if [ -z "${CC}" ]; then
+    IFS="${IFS}:"
+    for i in gcc g++ cc c++ c89 c99; do
+	for dir in ${PATH}; do
+	    if [ -x "$dir/$i" ]; then
+		export CC=$i;
+		break;
+	    fi;
+	done;
+	if [ ! -z "${CC}" ]; then
+	    break;
+	fi;
+    done
+    if [ -z "${CC}" ]; then
+	echo "Please set the CC environment variable to your C compiler";
+	exit;
+    fi
+fi
+
+STDDEFPATH=`echo "#include <stddef.h>" | ${CC} -E - | grep stddef.h | head -n 1 | cut -d ' ' -f 3 | cut -d \" -f 2`
+PRIVATE_INCDIR=`dirname ${STDDEFPATH}`
+PRIVATE_DIR=`dirname ${PRIVATE_INCDIR}`
+if [ -d "${PRIVATE_DIR}/lib" ]; then
+    PRIVATE_LIBDIR=${PRIVATE_DIR}/lib
+else
+    PRIVATE_LIBDIR=${PRIVATE_DIR}
+fi
+PRIVATE_PATHS=
+if [ ! -z "${PRIVATE_INCDIR}" ]; then
+    PRIVATE_PATHS="${PRIVATE_PATHS} --gccincludedir=${PRIVATE_INCDIR}"
+fi
+if [ ! -z "${PRIVATE_LIBDIR}" ]; then
+    PRIVATE_PATHS="${PRIVATE_PATHS} --gcclibdir=${PRIVATE_LIBDIR}"
+fi
+
+if [ ! -x bsconf ]; then
+    ${CC} -o bsconf bsconf.c
+fi
+if [ -x bsconf ]; then
+    ./bsconf ${PRIVATE_PATHS} $*;
+else
+    echo "Build of the configurator program failed. Ensure you have an ANSI C compiler.";
+fi
+
