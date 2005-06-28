@@ -8,6 +8,7 @@
 
 #include "kb.h"
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -116,7 +117,7 @@ void CKeyboard::ReadKeyData (void) const
 }
 
 /// Blocks until something is available on stdin. Returns false on \p timeout.
-bool CKeyboard::WaitForKeyData (suseconds_t timeout) const
+bool CKeyboard::WaitForKeyData (long timeout) const
 {
     fd_set fds;
     FD_ZERO (&fds);

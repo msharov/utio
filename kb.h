@@ -25,7 +25,7 @@ public:
     typedef bitset<mksbit_Last>		metastate_t;
     typedef CTerminfo::keystrings_t	keymap_t;
 public:
-    			CKeyboard (void);
+			CKeyboard (void);
 		       ~CKeyboard (void);
     void		Open (const CTerminfo& rti);
     void		Close (void);
@@ -37,7 +37,7 @@ public:
     inline bool		IsInUIMode (void) const	{ return (m_bTermInUIMode); }
 #if UTIO_WANT_GETKEY
     wchar_t		GetKey (metastate_t* pMeta = NULL, bool bBlock = true) const;
-    bool		WaitForKeyData (suseconds_t timeout = 0) const;
+    bool		WaitForKeyData (long timeout = 0) const;
 private:
     void		ReadKeyData (void) const;
 #endif
