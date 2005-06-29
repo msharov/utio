@@ -1,0 +1,35 @@
+		-----------------------------
+		 Useful Terminal I/O Library
+		-----------------------------
+
+1. Overview
+
+utio is an alternative (to curses) implementation for terminfo-described
+terminal access.
+
+
+2. Compilation
+
+You will need the uSTL library to compile utio.
+uSTL can be downloaded from http://sourceforge.net/projects/ustl
+
+./configure --help will list available configuration options.
+
+% ./configure
+% make
+% make install
+
+Optionally, if you have doxygen, you can build a reference manual with:
+
+% make dox
+
+
+3. Usage
+
+See docs/index.html for API description.
+
+
+4. Bug reporting
+
+Use the bug trackers at http://sourceforge.net/projects/utio
+

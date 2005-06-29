@@ -52,7 +52,6 @@ public:
     inline void			Image (const CGC& cells)						{ Image (Rect (0, 0, cells.Width(), cells.Height()), cells.Canvas()); }
     inline void			Char (coord_t x, coord_t y, wchar_t c)					{ Char (Point2d (x, y), c); }
     inline void			Text (coord_t x, coord_t y, const string& str)				{ Text (Point2d (x, y), str); }
-    wchar_t			GraphicChar (EGraphicChar c) const;
     inline void			FgColor (EColor c)	{ m_Template.m_FgColor = c; }
     inline void			BgColor (EColor c)	{ m_Template.m_BgColor = c; }
     inline void			AttrOn (EAttribute a)	{ m_Template.SetAttr (a); }

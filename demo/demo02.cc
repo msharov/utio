@@ -41,23 +41,24 @@ CGCDemo::CGCDemo (void)
 CGCDemo::~CGCDemo (void)
 {
     // Restores normal terminal state.
-    cout << m_TI.Color (lightgray, black) << m_TI.ShowCursor();
+    cout << m_TI.Color (lightgray, black);
+    cout << m_TI.ShowCursor() << endl;
 }
 
 /// Draws a box with a hole on the screen.
 void CGCDemo::DrawBox (CGC& gc, Point2d pos)
 {
-    gc.Bar (pos[0], pos[1], 12, 4, gc.GraphicChar (acs_Board));
+    gc.Bar (pos[0], pos[1], 12, 4, acsv_Board);
     gc.Box (pos[0], pos[1], 12, 4);
-    gc.Bar (pos[0], pos[1] + 4, 4, 4, gc.GraphicChar (acs_Board));
-    gc.Bar (pos[0] + 8, pos[1] + 4, 4, 4, gc.GraphicChar (acs_Board));
-    gc.Bar (pos[0], pos[1] + 8, 12, 4, gc.GraphicChar (acs_Board));
+    gc.Bar (pos[0], pos[1] + 4, 4, 4, acsv_Board);
+    gc.Bar (pos[0] + 8, pos[1] + 4, 4, 4, acsv_Board);
+    gc.Bar (pos[0], pos[1] + 8, 12, 4, acsv_Board);
     gc.Text (pos[0] + 1, pos[1] + 1, "GC demo");
     gc.FgColor (lightcyan);
-    gc.Char (pos[0] + 1, pos[1] + 2, gc.GraphicChar(acs_LeftArrow));
-    gc.Char (pos[0] + 2, pos[1] + 2, gc.GraphicChar(acs_DownArrow));
-    gc.Char (pos[0] + 3, pos[1] + 2, gc.GraphicChar(acs_UpArrow));
-    gc.Char (pos[0] + 4, pos[1] + 2, gc.GraphicChar(acs_RightArrow));
+    gc.Char (pos[0] + 1, pos[1] + 2, acsv_LeftArrow);
+    gc.Char (pos[0] + 2, pos[1] + 2, acsv_DownArrow);
+    gc.Char (pos[0] + 3, pos[1] + 2, acsv_UpArrow);
+    gc.Char (pos[0] + 4, pos[1] + 2, acsv_RightArrow);
     gc.FgColor (green);
     gc.Text (pos[0] + 6, pos[1] + 2, "Move");
     gc.Text (pos[0] + 1, pos[1] + 3, "q to quit");

@@ -39,12 +39,6 @@ inline CGC::canvas_t::const_iterator CGC::CanvasAt (Point2d p) const
     return (m_Canvas.begin() + p[1] * m_Size[0] + p[0]);
 }
 
-/// Returns unicode value for ACS char \p c.
-wchar_t	CGC::GraphicChar (EGraphicChar c) const
-{
-    return (CTerminfo::AcsUnicodeValue (c));
-}
-
 /// Clears the canvas with spaces with current attributes.
 void CGC::Clear (wchar_t c)
 {
