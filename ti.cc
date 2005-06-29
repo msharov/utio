@@ -404,7 +404,7 @@ void CTerminfo::NormalizeColor (EColor& fg, EColor& bg, uint16_t& attrs) const
 	attrs &= ~(1 << a_blink);
     else if (bg >= 8 && bg < color_Last) {
 	attrs |= (1 << a_blink);
-	bg -= EColor(bg - 8);
+	bg = EColor(bg - 8);
     }
 }
 
