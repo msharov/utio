@@ -50,6 +50,7 @@ public:
     strout_t		HLine (coord_t x, coord_t y, dim_t w) const;
     strout_t		VLine (coord_t x, coord_t y, dim_t h) const;
     capout_t		Reset (void) const;
+    void		ResetState (void) const;
     inline strout_t	Name (void) const			{ return (m_Name); }
     inline dim_t	Width (void) const			{ return (m_nColumns); }
     inline dim_t	Height (void) const			{ return (m_nRows); }

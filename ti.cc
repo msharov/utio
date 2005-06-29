@@ -337,14 +337,20 @@ CTerminfo::capout_t CTerminfo::Clear (void) const
     return (GetString (ti::clear_screen));
 }
 
-/// Resets the terminal to a sane state.
-CTerminfo::capout_t CTerminfo::Reset (void) const
+/// Resets the saved terminal state without doing anything to the terminal.
+void CTerminfo::ResetState (void) const
 {
     m_Ctx.m_Attrs = 0;
     m_Ctx.m_FgColor = lightgray;
     m_Ctx.m_BgColor = black;
     m_Ctx.m_Pos[0] = 0;
     m_Ctx.m_Pos[1] = 0;
+}
+
+/// Resets the terminal to a sane state.
+CTerminfo::capout_t CTerminfo::Reset (void) const
+{
+    ResetState();
     return (GetString (ti::reset_1string));
 }
 
