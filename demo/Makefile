@@ -1,15 +1,15 @@
 include ../Common.mk
 
 DEMOS	= demo00 demo01 demo02
-OBJS	= demo00.o demo01.o demo02.o
-SRCS	= demo00.cc demo01.cc demo02.cc
-LIBS	+= -l${LIBNAME} -lustl
+OBJS	= demo00.o demo01.o demo02.o stdmain.o
+SRCS	= demo00.cc demo01.cc demo02.cc stdmain.cc
+LIBS	+= -l${LIBNAME} -lustl -lsupc++
 
 .PHONY:	all run clean depend
 
-all:	${DEMOS}
+all:	stdmain.o ${DEMOS}
 
-demo%:	demo%.o
+demo%:	demo%.o stdmain.o
 	@echo "Linking $@ ..."
 	@${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 

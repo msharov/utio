@@ -1,8 +1,73 @@
-#include <utio.h>
-using namespace utio;
-using namespace ustl;
+// This file is part of the utio library, a terminal I/O library.
+//
+// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// This file is free software, distributed under the MIT License.
+//
 
-static const char* c_KeyNameMap [kv_nKeys] = {
+#include "stdmain.h"
+
+//----------------------------------------------------------------------
+
+/// Demonstrates the capabilities of the CKeyboard class.
+class CKeyboardDemo {
+    SINGLETON (CKeyboardDemo)
+public:
+    void		Run (void);
+private:
+    CTerminfo		m_TI;
+    CKeyboard		m_Kb;
+private:
+    static const char*	c_KeyNameMap [kv_nKeys];
+    static const char*	c_MetaBitNames [mksbit_Last];
+};
+
+//----------------------------------------------------------------------
+
+/// Default constructor.
+CKeyboardDemo::CKeyboardDemo (void)
+: m_TI (),
+  m_Kb ()
+{
+}
+
+/// Prints pressed keys until told to stop.
+void CKeyboardDemo::Run (void)
+{
+    m_TI.Load();	// Just loads the terminfo (using $TERM)
+    m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
+
+    cout << "Keyboard demo. Press keys to print their value, 'q' to quit." << endl;
+
+    wchar_t key = 0;
+    while (key != 'q') {
+	cout.flush();
+	CKeyboard::metastate_t meta;
+	key = m_Kb.GetKey (&meta);
+
+	cout << "Got key: ";
+	if (key >= kv_First && key < kv_Last)	// Special key
+	    cout << c_KeyNameMap [key - kv_First];
+	else if (key == kv_Tab)			// Tab is just the \t character
+	    cout << "Tab";
+	else if (key == kv_Space)		// So is space.
+	    cout << "Space";
+	else					// Otherwise it's a normal key.
+	    cout << key;
+	for (uoff_t i = 0; i < mksbit_Last; ++ i)
+	    if (meta[i])
+		cout << ", " << c_MetaBitNames[i];
+	cout << endl;
+    }
+}
+
+//----------------------------------------------------------------------
+
+StdDemoMain (CKeyboardDemo)
+
+//----------------------------------------------------------------------
+
+/// Names for all the special keycodes.
+const char* CKeyboardDemo::c_KeyNameMap [kv_nKeys] = {
     /* kv_Esc */		"Esc",
     /* kv_Backspace */		"Backspace",
     /* kv_Backtab */		"Backtab",
@@ -152,7 +217,8 @@ static const char* c_KeyNameMap [kv_nKeys] = {
     /* kv_UpRight */		"UpRight"
 };
 
-static const char* c_MetaBitNames [mksbit_Last] = {
+/// Names for the meta bits on the keycodes.
+const char* CKeyboardDemo::c_MetaBitNames [mksbit_Last] = {
     "Shift",
     "Alt",
     "Ctrl",
@@ -162,34 +228,4 @@ static const char* c_MetaBitNames [mksbit_Last] = {
     "CapsLock",
     "ScrollLock"
 };
-
-int main (void)
-{
-    CTerminfo ti;
-    CKeyboard kb;
-    ti.Load();
-    kb.Open (ti);
-    wchar_t key = 0;
-    CKeyboard::metastate_t meta;
-    cout << "Keyboard demo. Press keys to print their value, 'q' to quit." << endl;
-    cout.flush();
-    while (key != 'q') {
-	key = kb.GetKey (&meta);
-	cout << "Got key: ";
-	if (key >= kv_First && key < kv_Last)
-	    cout << c_KeyNameMap [key - kv_First];
-	else if (key == kv_Tab)
-	    cout << "Tab";
-	else if (key == kv_Space)
-	    cout << "Space";
-	else
-	    cout << key;
-	for (uoff_t i = 0; i < mksbit_Last; ++ i)
-	    if (meta[i])
-		cout << ", " << c_MetaBitNames[i];
-	cout << endl;
-	cout.flush();
-    }
-    return (0);
-}
 

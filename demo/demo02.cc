@@ -1,11 +1,51 @@
-#include <utio.h>
-using namespace utio;
-using namespace utio::gdt;
+// This file is part of the utio library, a terminal I/O library.
+//
+// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// This file is free software, distributed under the MIT License.
+//
 
-static EColor fg = green, bg = black;
-static Point2d g_Pos (0, 0);
+#include "stdmain.h"
 
-static void DrawBox (CGC& gc, Point2d pos)
+//----------------------------------------------------------------------
+
+/// Runs an interactive screen with a moveable box.
+class CGCDemo {
+    SINGLETON (CGCDemo)
+public:
+	       ~CGCDemo (void);
+    void	Run (void);
+private:
+    void	Draw (CGC& gc);
+    void	DrawBox (CGC& gc, Point2d pos);
+private:
+    CTerminfo	m_TI;	///< Terminfo access object.
+    CKeyboard	m_Kb;	///< Keyboard driver.
+    EColor	m_Fg;	///< Foreground color of the moveable box.
+    EColor	m_Bg;	///< Background color of the moveable box.
+    Point2d	m_Pos;	///< Position of the moveable box.
+};
+
+//----------------------------------------------------------------------
+
+/// Default constructor.
+CGCDemo::CGCDemo (void)
+: m_TI (),
+  m_Kb (),
+  m_Fg (green),
+  m_Bg (black),
+  m_Pos (0, 0)
+{
+}
+
+/// Destructor to clean up UI state.
+CGCDemo::~CGCDemo (void)
+{
+    // Restores normal terminal state.
+    cout << m_TI.Color (lightgray, black) << m_TI.ShowCursor();
+}
+
+/// Draws a box with a hole on the screen.
+void CGCDemo::DrawBox (CGC& gc, Point2d pos)
 {
     gc.Bar (pos[0], pos[1], 12, 4, gc.GraphicChar (acs_Board));
     gc.Box (pos[0], pos[1], 12, 4);
@@ -23,7 +63,8 @@ static void DrawBox (CGC& gc, Point2d pos)
     gc.Text (pos[0] + 1, pos[1] + 3, "q to quit");
 }
 
-static void Draw (CGC& gc)
+/// Draws two boxes on the screen, one moveable.
+void CGCDemo::Draw (CGC& gc)
 {
     gc.BgColor (black);
     gc.FgColor (green);
@@ -31,49 +72,59 @@ static void Draw (CGC& gc)
     gc.BgColor (brown);
     gc.FgColor (black);
     DrawBox (gc, Point2d (10, 5));
-    gc.BgColor (bg);
-    gc.FgColor (fg);
-    DrawBox (gc, g_Pos);
+    gc.BgColor (m_Bg);
+    gc.FgColor (m_Fg);
+    DrawBox (gc, m_Pos);
 }
 
-int main (void)
+/// Runs the event loop for the demo.
+void CGCDemo::Run (void)
 {
-    CTerminfo ti;
-    CKeyboard kb;
-    ti.Load();
-    kb.Open (ti);
+    m_TI.Load();	// Just loads the terminfo (using $TERM)
+    m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
+
+    CGC gc;		// This is where the code draws.
+    CGC screen;		// This contains the current contents of the screen.
+    gc.Resize (m_TI.Width(), m_TI.Height());
+    screen.Resize (m_TI.Width(), m_TI.Height());
+
+    // Don't want the cursor to blink unless in a text box.
+    cout << m_TI.HideCursor();
 
     wchar_t key = 0;
-    CGC gc, screen;
-    gc.Resize (ti.Width(), ti.Height());
-    screen.Resize (ti.Width(), ti.Height());
-
-    cout << ti.HideCursor();
     while (key != 'q') {
 	Draw (gc);
-	gc.MakeDiffFrom (screen);
-	cout << ti.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
-	cout.flush();
-	screen.Image (gc);
-	gc.Image (screen);
 
-	key = kb.GetKey();
-	if ((key == kv_Up || key == 'k') && g_Pos[1] > 0)
-	    -- g_Pos[1];
-	else if ((key == kv_Down || key == 'j') && g_Pos[1] < gc.Height() - 12)
-	    ++ g_Pos[1];
-	else if ((key == kv_Left || key == 'h') && g_Pos[0] > 0)
-	    -- g_Pos[0];
-	else if ((key == kv_Right || key == 'l') && g_Pos[0] < gc.Width() - 12)
-	    ++ g_Pos[0];
+	// Only the differences need to be written, so find them.
+	gc.MakeDiffFrom (screen);
+	// gc now has only new stuff, the rest is zeroed out, and isn't drawn.
+	cout << m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
+	cout.flush();
+	screen.Image (gc);	// Now apply the same diff to the screen cache.
+	gc.Image (screen);	// ... and copy it back for a fresh start.
+
+	key = m_Kb.GetKey();	// Synchronous call.
+
+	// Moving one of the boxes with bounds checking.
+	if ((key == kv_Up || key == 'k') && m_Pos[1] > 0)
+	    -- m_Pos[1];
+	else if ((key == kv_Down || key == 'j') && m_Pos[1] < gc.Height() - 12)
+	    ++ m_Pos[1];
+	else if ((key == kv_Left || key == 'h') && m_Pos[0] > 0)
+	    -- m_Pos[0];
+	else if ((key == kv_Right || key == 'l') && m_Pos[0] < gc.Width() - 12)
+	    ++ m_Pos[0];
+	// And color cycling to verify they all work.
 	else if (key == 'f')
-	    fg = EColor ((fg + 1) % color_Last);
+	    m_Fg = EColor ((m_Fg + 1) % color_Last);
 	else if (key == 'b')
-	    fg = EColor ((bg + 1) % color_Last);
+	    m_Bg = EColor ((m_Bg + 1) % color_Last);
     }
-    cout << ti.AllAttrsOff();
-    cout << ti.Color (green, black) << endl;
-    cout << ti.ShowCursor();
-    return (0);
 }
+
+//----------------------------------------------------------------------
+
+StdDemoMain (CGCDemo)
+
+//----------------------------------------------------------------------
 
