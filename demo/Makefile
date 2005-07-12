@@ -1,8 +1,10 @@
 include ../Common.mk
 
-DEMOS	= demo00 demo01 demo02
-OBJS	= demo00.o demo01.o demo02.o stdmain.o
-SRCS	= demo00.cc demo01.cc demo02.cc stdmain.cc
+DEMOCCS	= $(wildcard demo*.cc)
+SRCS	= ${DEMOCCS} stdmain.cc
+
+DEMOS	= $(DEMOCCS:.cc=)
+OBJS	= $(SRCS:.cc=.o)
 LIBS	+= -l${LIBNAME} -lustl -lsupc++
 
 .PHONY:	all run clean depend

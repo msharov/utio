@@ -1,8 +1,8 @@
 include Common.mk
 
-SRCS	= gc.cc ti.cc kb.cc
-OBJS	= gc.o ti.o kb.o
-INCS	= config.h ti.h ticonst.h kb.h gc.h gdt.h
+SRCS	= $(wildcard *.cc)
+OBJS	= $(SRCS:.cc=.o)
+INCS	= $(filter-out bsconf.%,$(wildcard *.h))
 DOCT	= utiodoc.in
 LIBS	= -lustl
 
@@ -59,7 +59,7 @@ uninstall-static: uninstall-incs
 install-incs: ${INCS}
 	@echo "Installing headers to ${INCDIR} ..."
 	@${INSTALLDIR} ${INCDIR}/${LIBNAME}
-	@for i in ${INCS}; do					\
+	@for i in $(filter-out ${LIBNAME}.h,${INCS}); do	\
 	    ${INSTALLDATA} $$i ${INCDIR}/${LIBNAME}/$$i;	\
 	done;
 	@${INSTALLDATA} ${LIBNAME}.h ${INCDIR}
