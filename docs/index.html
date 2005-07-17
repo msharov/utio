@@ -1,12 +1,15 @@
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>Useful Terminal I/O Library</title>
-    <link href="style/default.css" rel="stylesheet" type="text/css">
-    <link href="style.css" rel="stylesheet" type="text/css">
+    <meta http-equiv="Content-Type" content="text/xhtml+xml; charset=ISO-8859-1" />
+    <link href="style/default.css" rel="stylesheet" type="text/css" />
+    <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 <body id="bodyStyle">
 <div class="banner"><h1>Useful Terminal I/O Library</h1></div>
-<hr class="banner">
+<hr class="banner" />
 
 <h2><a name="Contents">Contents</a></h2>
 
@@ -18,7 +21,7 @@
     <li><a href="#Build">How to build it</a></li>
     <li><a href="#Support">What if it doesn't work?</a></li>
 </ul>
-<hr class="banner">
+<hr class="banner" />
 
 <h2><a name="Overview">Overview</a></h2>
 
@@ -87,11 +90,11 @@ a simple stream-based interface that lets you directly print terminal
 capabilities, taking care of all those little details, like having to
 set the bold attribute to get all 16 colors. Here's a simple example:
 </p>
-<listing>
+<pre>
     CTerminfo ti;
     ti.Load();
-    cout << ti.Color(red) << "Error: can't open file x" << endl;
-</listing>
+    cout &lt;&lt; ti.Color(red) &lt;&lt; "Error: can't open file x" &lt;&lt; endl;
+</pre>
 <p>
 The second (optional) argument to Color sets the background color. See
 EColor enum in <tt>ticonst.h</tt> for available color values. With
@@ -164,7 +167,7 @@ the <var>Image</var> command in <var>CTerminfo</var>. The intended use,
 however is a triple-buffer rotating system that writes only differences
 between updates. Here is an example of how it might work:
 </p>
-<listing>
+<pre>
     CGC gc;			// This is where the code draws.
     CGC scr;			// This contains the current contents of the screen.
 
@@ -176,13 +179,13 @@ between updates. Here is an example of how it might work:
 	Draw (gc);		// Draws everything that should be on the screen.
 	gc.MakeDiffFrom (scr);	// Only the differences need to be written, so find them.
 	// gc now has only new stuff, the rest is zeroed out, and isn't drawn.
-	cout << m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
+	cout &lt;&lt; m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
 	cout.flush();
 	screen.Image (gc);	// Now apply the same diff to the screen cache.
 	gc.Image (screen);	// ... and copy it back for a fresh start.
 	WaitForEvent();
     }
-</listing>
+</pre>
 
 <h2><a name="CKeyboard">CKeyboard</a></h2>
 
@@ -207,15 +210,15 @@ would greatly increase the code size of this library.  Thankfully,
 it is possible to run in semi-normal "cooked" mode and still interpret
 keycodes correctly. That is what <var>CKeyboard</var> is for.
 </p>
-<listing>
+<pre>
     m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
     wchar_t key = 0;
     CKeyboard::metastate_t meta;
     while (key != 'q') {
-	key = m_Kb.GetKey (&meta);	// Synchronous call.
+	key = m_Kb.GetKey (&amp;meta);	// Synchronous call.
 	// ... do whatever with key ...
     }
-</listing>
+</pre>
 <p>
 Look in <tt>ticonst.h</tt> for EKeyDataValue enum of possible return codes.
 They are what will be returned instead of the escape sequences. Metakey
@@ -252,12 +255,11 @@ Building this library is a fairly standard procedure. Download the package,
 unpack it into its directory. Make sure you have the necessary dependencies:
 </p>
 <ul>
-    <li>gcc compiler with C++ support. Version 3 or later is highly recommended.</li>
+    <li><a href="http://gcc.gnu.org">gcc compiler</a> with C++ support. Version 3 or later is highly recommended.</li>
     <li>POSIX-compatible libc. Anything made in the last 5 years should work.</li>
     <li>The <a href="http://sourceforge.net/projects/ustl">uSTL</a> library version 0.6 or higher.</li>
-    <li>The terminfo database. In ncurses package, if your distribution doesn't provide it.</li>
+    <li>The terminfo database. In the <a href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a> package, if your distribution doesn't provide it.</li>
 </ul>
-</p>
 <pre>
 % ./configure
 % make
@@ -275,7 +277,7 @@ that is known to work.
 
 <p>
 Problems should be reported using
-<a href="https://sourceforge.net/tracker/?atid=752280&group_id=142338&func=browse">
+<a href="https://sourceforge.net/tracker/?atid=752280&amp;group_id=142338&amp;func=browse">
     SourceForge project trackers
 </a>
 reachable on the
