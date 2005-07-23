@@ -10,8 +10,10 @@
 
 /// Demonstrates the capabilities of the CKeyboard class.
 class CKeyboardDemo {
-    SINGLETON (CKeyboardDemo)
+private:
+			CKeyboardDemo (void);
 public:
+			DECLARE_SINGLETON (CKeyboardDemo)
     void		Run (void);
 private:
     CTerminfo		m_TI;

@@ -10,9 +10,11 @@
 
 /// Runs an interactive screen with a moveable box.
 class CGCDemo {
-    SINGLETON (CGCDemo)
-public:
+private:
+		CGCDemo (void);
 	       ~CGCDemo (void);
+public:
+		DECLARE_SINGLETON (CGCDemo)
     void	Run (void);
 private:
     void	Draw (CGC& gc);

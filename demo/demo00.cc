@@ -9,8 +9,10 @@
 //----------------------------------------------------------------------
 
 class CHelloWorld {
-    SINGLETON (CHelloWorld)	// See stdmain.h
+private:
+		CHelloWorld (void);
 public:
+		DECLARE_SINGLETON (CHelloWorld)		// See stdmain.h
     void	Run (void);
 private:
     CTerminfo	m_TI;

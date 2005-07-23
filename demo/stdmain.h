@@ -36,32 +36,34 @@ using namespace ustl;
 
 extern "C" void InstallCleanupHandlers (void);
 
-/// Declares \p DemoClass to be a singleton.
-#define SINGLETON(DemoClass)			\
-    protected:					\
-	DemoClass (void);			\
-    public:					\
-	static DemoClass& Instance (void) {	\
-	    static DemoClass obj; return (obj);	\
-	}
+/// Declares singleton Instance() call in \p DemoClass.
+#define DECLARE_SINGLETON(DemoClass)	\
+    static DemoClass& Instance (void) { static DemoClass obj; return (obj); }
+
+/// Exception handling harness for demos
+template <typename T>
+int RunDemo (void) throw()
+{
+    int rv = EXIT_FAILURE;
+    try {
+	T::Instance().Run();
+	rv = EXIT_SUCCESS;
+    } catch (exception& e) {
+	cout.flush();
+	cerr << "Error: " << e << endl;
+    } catch (...) {
+	cout.flush();
+	cerr << "Unexpected error." << endl;
+    }
+    return (rv);
+}
 
 /// Standard main with error handling.
 #define StdDemoMain(DemoClass)			\
 int main (void)					\
 {						\
     InstallCleanupHandlers();			\
-    int rv = EXIT_FAILURE;			\
-    try {					\
-	DemoClass::Instance().Run();		\
-	rv = EXIT_SUCCESS;			\
-    } catch (exception& e) {			\
-	cout.flush();				\
-	cerr << "Error: " << e << endl;		\
-    } catch (...) {				\
-	cout.flush();				\
-	cerr << "Unexpected error." << endl;	\
-    }						\
-    return (rv);				\
+    return (RunDemo<DemoClass>());		\
 }
 
 #endif
