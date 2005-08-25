@@ -91,16 +91,19 @@ void CTerminfo::read (istream& is)
 
     // The boolean section
     m_Booleans.resize (h.m_nBooleans);
-    copy_n (istream_iterator<boolvec_t::value_type>(is), m_Booleans.size(), m_Booleans.begin());
+    foreach (boolvec_t::iterator, i, m_Booleans)
+	is >> *i;
     is.align (sizeof(number_t));
 
     // The numbers section
     m_Numbers.resize (h.m_nNumbers);
-    copy_n (istream_iterator<number_t>(is), m_Numbers.size(), m_Numbers.begin());
+    foreach (numvec_t::iterator, i, m_Numbers)
+	is >> *i;
 
     // The string offsets section
     m_StringOffsets.resize (h.m_nStrings);
-    copy_n (istream_iterator<stroffset_t>(is), m_StringOffsets.size(), m_StringOffsets.begin());
+    foreach (stroffvec_t::iterator, i, m_StringOffsets)
+	is >> *i;
 
     // The stringtable
     m_StringTable.resize (h.m_StringTableSize);
@@ -118,10 +121,10 @@ void CTerminfo::write (ostream& os) const
     h.m_nStrings = m_StringOffsets.size();
     h.m_StringTableSize = m_StringTable.size();
     os.write_strz (m_Name);
-    copy (m_Booleans, ostream_iterator<boolvec_t::value_type>(os));
+    foreach (boolvec_t::const_iterator, i, m_Booleans) os << *i;
     os << ios::talign<number_t>();
-    copy (m_Numbers, ostream_iterator<number_t>(os));
-    copy (m_StringOffsets, ostream_iterator<stroffset_t>(os));
+    foreach (numvec_t::const_iterator, i, m_Numbers) os << *i;
+    foreach (stroffvec_t::const_iterator, i, m_StringOffsets) os << *i;
     os.write (m_StringTable.begin(), m_StringTable.size());
 }
 
