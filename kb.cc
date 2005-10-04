@@ -123,9 +123,13 @@ bool CKeyboard::WaitForKeyData (long timeout) const
     FD_ZERO (&fds);
     FD_SET (STDIN_FILENO, &fds);
     struct timeval tv = { 0, timeout };
+    struct timeval* ptv = timeout ? &tv : NULL;
     errno = 0;
     int rv;
-    do { rv = select (1, &fds, NULL, NULL, timeout ? &tv : NULL); } while (errno == EINTR);
+    do {
+	errno = 0;
+	rv = select (1, &fds, NULL, NULL, ptv);
+    } while (errno == EINTR);
     if (rv < 0)
 	throw file_exception ("select", "stdin");
     return (rv);
@@ -237,6 +241,8 @@ bool CKeyboard::DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const
     const string::const_iterator sfirst (is.ipos());
     for (uoff_t i = 0; i < m_Keymap.size(); ++ i) {
 	const CTerminfo::capout_t ks = m_Keymap[i];
+	if (!ks)
+	    continue;
 	const size_t kss = strlen (ks);
 	if (kss > is.remaining() || kss < matchedSize)
 	    continue;
