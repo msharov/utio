@@ -1,27 +1,26 @@
-<html>
-<head>
-<style type="text/css">
-body {}
-#bodyStyle {
+body {
     font-family: sans-serif;
-    background: #59C;
+    color: black;
+    background-color: #59C;
     margin: 5mm;
-    color: black
 }
 div.banner {
-    margin: -5mm;
-    margin-bottom: 5mm;
-    padding: 1mm;
+    color: black;
+    background-color: #48B;
     text-align: center;
-    font-size: 6mm;
-    font-family: sans-serif;
-    background: #48B;
+    margin-top: -5mm;
+    margin-left: -5mm;
+    margin-right: -5mm;
+    margin-bottom: 5mm;
+    font-size: 1cm;
+    padding: 1mm;
 }
-a:link { color: #238 }
-a:visited { color: #632 }
-hr.banner {
-    display: none;
+div.motto {
+    color: #159;
+    font-style: italic;
+    font-size: 2mm;
+    margin-top: -5mm;
 }
-</style>
-</head>
-</html>
+a:link { color: #238; }
+a:visited { color: #632; }
+hr.banner { display: none; }
