@@ -24,23 +24,26 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
 
-/*--------------------------------------------------------------------*/
-
-#define BUFSIZE		0x10000
-#define MAX_LIB_DIRS	16
-#define MAX_INC_DIRS	16
-
-/*--------------------------------------------------------------------*/
+/*- Types and macros -------------------------------------------------*/
 
 #define VectorSize(v)	(sizeof(v) / sizeof(*v))
+#define foreachN(i,v,n)	for (i = 0; i != VectorSize(v) / n; ++ i)
+#define foreach(i,v)	foreachN(i,v,1)
 
 /*#define const*/
 /*typedef unsigned int	uint;*/
 typedef char*		pchar_t;
 typedef const char*	cpchar_t;
-typedef const char	string_t [64];
-typedef char		strbuf_t [128];
+typedef struct {
+    pchar_t	data;
+    uint	allocated;
+    uint	used;
+    uint	last;
+    uint	page;
+} SBuf, *pbuf_t;
+#define NULL_BUF	{ NULL, 0, 0, 0, 0 }
 
 typedef enum {
     vv_prefix,
@@ -66,56 +69,38 @@ typedef enum {
     vv_last
 } EVV;
 
-/*--------------------------------------------------------------------*/
-
-static void GetConfigVarValues (int argc, cpchar_t const* argv);
-static void FillInDefaultConfigVarValues (void);
-static void FindPrograms (void);
-static void SubstitutePaths (void);
-static void SubstituteEnvironment (int bForce);
-static void SubstitutePrograms (void);
-static void SubstituteCpuCaps (void);
-static void SubstituteCFlags (void);
-static void SubstituteHostOptions (void);
-static void SubstituteHeaders (void);
-static void SubstituteLibs (void);
-static void SubstituteFunctions (void);
-static void SubstituteComponents (void);
-static void SubstituteCustomVars (void);
-
-static void DetermineHost (void);
-static void DefaultConfigVarValue (EVV v, EVV root, cpchar_t suffix);
-static void Substitute (cpchar_t matchStr, cpchar_t replaceStr);
-static void ExecuteSubstitutionList (void);
-static void MakeSubstString (cpchar_t str, pchar_t substString);
-static cpchar_t CopyPathEntry (cpchar_t pi, pchar_t dest);
-static int  IsBadInstallDir (cpchar_t match);
-
-/* Unreliable (according to autoconf) libc stuff */
-static int   StrLen (cpchar_t str);
-static void  Lowercase (pchar_t str);
-static int   compare (cpchar_t str1, cpchar_t str2);
-static pchar_t copy (cpchar_t src, pchar_t dest);
-static pchar_t copy_n (cpchar_t src, pchar_t dest, int n);
-static pchar_t append (cpchar_t src, pchar_t dest);
-static pchar_t append2 (cpchar_t src1, cpchar_t src2, pchar_t dest);
-static void  fill_n (pchar_t str, int n, char v);
-static pchar_t copy_backward (cpchar_t src, pchar_t dest, int n);
-static void  ReadFile (cpchar_t filename);
-static void  WriteFile (cpchar_t filename);
-static void  FatalError (cpchar_t errortext);
-
-/*--------------------------------------------------------------------*/
-
-static int  g_BufSize;
-static char g_Buf [BUFSIZE];
-
 typedef struct {
     int		m_bDefaultOn;
     cpchar_t	m_Description;
 } SComponentInfo;
 
+typedef struct {
+    uint	m_Bit;
+    cpchar_t	m_Description;
+    cpchar_t	m_Disabled;
+    cpchar_t	m_Enabled;
+} SCpuCaps;
+
+typedef enum {
+    sys_Unknown,
+    sys_Linux,
+    sys_Mac,
+    sys_Bsd,
+    sys_Sun,
+    sys_Alpha
+} ESysType;
+
+typedef struct {
+    cpchar_t	sysname;
+    ESysType	type;
+} SHostType;
+
+/*- Global variables -------------------------------------------------*/
+
 #include "bsconf.h"
+#if !defined(BSCONF_VERSION) || BSCONF_VERSION < 0x03
+#error Your bsconf.h file is too old; please update its format.
+#endif
 
 static cpchar_t g_ConfigV [vv_last] = {
     "prefix",
@@ -140,21 +125,13 @@ static cpchar_t g_ConfigV [vv_last] = {
     "host"
 };
 
-static strbuf_t g_ConfigVV [vv_last];
-static strbuf_t g_ProgLocs [VectorSize (g_ProgVars) / 4];
-static strbuf_t g_CustomLibDirs [MAX_LIB_DIRS];
-static strbuf_t g_CustomIncDirs [MAX_INC_DIRS];
-static int g_nCustomLibDirs = 0;
-static int g_nCustomIncDirs = 0;
-
+static SBuf g_Subs = NULL_BUF;
+static SBuf g_ConfigVV [vv_last], g_ProgLocs [VectorSize (g_ProgVars) / 4];
+static SBuf g_CustomLibDirs [16], g_CustomIncDirs [16];
+static int g_nCustomLibDirs = 0, g_nCustomIncDirs = 0;
 static struct utsname g_Uname;
-
-typedef struct {
-    uint	m_Bit;
-    cpchar_t	m_Description;
-    cpchar_t	m_Disabled;
-    cpchar_t	m_Enabled;
-} SCpuCaps;
+static uint g_CpuCapBits = 0;
+static ESysType g_SysType = sys_Unknown;
 
 static const SCpuCaps g_CpuCaps [] = {
     {  0, "FPU",	"#undef CPU_HAS_FPU",		"#define CPU_HAS_FPU 1"		},
@@ -176,21 +153,6 @@ static const SCpuCaps g_CpuCaps [] = {
     { 30, "3dNow!+",	"#undef CPU_HAS_EXT_3DNOW",	"#define CPU_HAS_EXT_3DNOW 1"	},
     { 31, "3dNow!",	"#undef CPU_HAS_3DNOW",		"#define CPU_HAS_3DNOW 1"	}
 };
-static uint g_CpuCapBits = 0;
-
-typedef enum {
-    sys_Unknown,
-    sys_Linux,
-    sys_Mac,
-    sys_Bsd,
-    sys_Sun,
-    sys_Alpha
-} ESysType;
-
-typedef struct {
-    cpchar_t	sysname;
-    ESysType	type;
-} SHostType;
 
 static const SHostType g_HostTypes[] = {
     { "linux",		sys_Linux },
@@ -204,45 +166,229 @@ static const SHostType g_HostTypes[] = {
     { "alpha",		sys_Alpha }
 };
 
-static ESysType g_SysType = sys_Unknown;
+/*- Libc-like functions that might not exist -------------------------*/
 
-static cpchar_t g_LibSuffixes[] = { ".a", ".so", ".la" };
+static int StrLen (cpchar_t str)
+{
+    int l;
+    for (l = 0; *str; ++ l, ++ str);
+    return (l);
+}
 
-static uint g_nSubs = 0;
-static strbuf_t g_Subs [MAX_SUBSTITUTIONS * 2];
+static pchar_t copy_n (cpchar_t src, pchar_t dest, int n)
+{
+    while (n--)
+	*dest++ = *src++;
+    return (dest);
+}
 
-/*--------------------------------------------------------------------*/
+static void fill_n (pchar_t str, int n, char v)
+{
+    while (n--)
+	*str++ = v;
+}
 
-int main (int argc, const char* const* argv)
+static void copy_backward (cpchar_t src, pchar_t dest, uint n)
+{
+    dest += n; src += n;
+    while (n--)
+	*--dest = *--src;
+}
+
+static void Lowercase (pchar_t str)
+{
+    for (; *str; ++ str)
+	if (*str >= 'A' && *str <= 'Z')
+	    *str += 'a' - 'A';
+}
+
+static int compare (cpchar_t str1, cpchar_t str2)
+{
+    while (*str1 && *str2 && *str1 == *str2)
+	++ str1, ++ str2;
+    return (!*str2);
+}
+
+static void FatalError (cpchar_t errortext)
+{
+    perror (errortext);
+    exit(-1);
+}
+
+/*- Malloc buffer object ---------------------------------------------*/
+
+static pchar_t buf_addspace (pbuf_t p, uint n)
+{
+    if ((p->used += n) > p->allocated) {
+	p->allocated = p->used;
+	if (!(p->data = (pchar_t) realloc (p->data, p->allocated)))
+	    FatalError ("out of memory");
+    }
+    return (p->data + p->used - n);
+}
+
+static void buf_clear (pbuf_t p)		{ p->used = p->last; }
+static void append (cpchar_t s, pbuf_t p)	{ copy_n (s, buf_addspace (p, StrLen(s)), StrLen(s)); }
+static void copy (cpchar_t s, pbuf_t p)	{ buf_clear (p); append (s, p); }
+
+static void buf_copy_n (cpchar_t s, pbuf_t p, uint n)
+{
+    buf_clear (p);
+    copy_n (s, buf_addspace (p, n), n);
+}
+
+static void append2 (cpchar_t s1, cpchar_t s2, pbuf_t p)
+{
+    uint l1 = StrLen(s1), l2 = StrLen(s2);
+    copy_n (s2, copy_n (s1, buf_addspace (p, l1+l2), l1), l2);
+}
+
+static void buf_cap (pbuf_t p)
+{
+    if (p->used >= p->allocated || p->data [p->used]) {
+	*buf_addspace(p,1) = 0;
+	--p->used;
+    }
+}
+
+static pchar_t buf_resize_fragment (pbuf_t p, uint fo, uint os, uint ns)
+{
+    int d = ns - os;
+    if (d <= 0) {
+	copy_n (p->data + fo - d, p->data + fo, p->used - (fo - d));
+	p->used += d;
+    } else {
+	buf_addspace (p, d);
+	copy_backward (p->data + fo, p->data + fo + d, p->used - (fo + d));
+    }
+    buf_cap (p);
+    return (p->data + fo);
+}
+
+static void pushstring (pbuf_t p)	{ buf_cap (p); p->last = p->used + 1; }
+static pchar_t buf_str (pbuf_t p)	{ buf_cap (p); return (p->data + p->last); }
+#define S(buf)	buf_str(&buf)
+
+static void buf_free (pbuf_t p)
+{
+    if (p->data)
+	free (p->data);
+    p->data = NULL;
+    p->allocated = p->used = p->last = 0;
+}
+
+/*- File I/O with buffer objects -------------------------------------*/
+
+static void ReadFile (cpchar_t filename, pbuf_t buf)
+{
+    struct stat st;
+    if (stat (filename, &st))
+	FatalError ("stat");
+    FILE* fp = fopen (filename, "r");
+    if (!fp)
+	FatalError ("open");
+    buf_clear (buf);
+    buf->used = fread (buf_addspace (buf, st.st_size + 1), 1, st.st_size, fp);
+    if (((int) buf->used) < 0)
+	FatalError ("read");
+    buf_cap (buf);
+    fclose (fp);
+}
+
+static void WriteFile (cpchar_t filename, pbuf_t buf)
+{
+    uint bw;
+    FILE* fp = fopen (filename, "w");
+    if (!fp)
+	FatalError ("open");
+    bw = fwrite (buf->data, 1, buf->used, fp);
+    if (bw != buf->used)
+	FatalError ("write");
+    if (fclose (fp))
+	FatalError ("close");
+}
+
+/*- Substitution engine ----------------------------------------------*/
+
+static void MakeSubstString (cpchar_t str, pbuf_t pbuf)
+{
+    copy ("@", pbuf);
+    append2 (str, "@", pbuf);
+}
+
+static void Substitute (cpchar_t matchStr, cpchar_t replaceStr)
+{
+    copy (matchStr, &g_Subs);
+    pushstring (&g_Subs);
+    copy (replaceStr, &g_Subs);
+    pushstring (&g_Subs);
+}
+
+static void ExecuteSubstitutionList (pbuf_t buf)
+{
+    uint ml, rl;
+    cpchar_t m = g_Subs.data, r;
+    pchar_t cp, fbfirst = S(*buf);
+
+    while (m < g_Subs.data + g_Subs.used) {
+	ml = StrLen (m);
+	r = m + ml + 1;
+	rl = StrLen (r);
+	for (cp = fbfirst; cp < fbfirst + buf->used; ++ cp) {
+	    if (!compare (cp, m))
+		continue;
+	    cp = buf_resize_fragment (buf, cp - fbfirst, ml, rl);
+	    fbfirst = S(*buf);
+	    cp = copy_n (r, cp, rl);
+	}
+	m = r + rl + 1;
+    }
+}
+
+static void ApplySubstitutions (void)
 {
     uint f;
-    strbuf_t srcFile;
-
-    GetConfigVarValues (--argc, ++argv);
-    FillInDefaultConfigVarValues();
-
-    FindPrograms();
-    SubstituteComponents();
-    SubstituteHostOptions();
-    SubstituteCpuCaps();
-    SubstituteCFlags();
-    SubstitutePaths();
-    SubstituteEnvironment (0);
-    SubstitutePrograms();
-    SubstituteHeaders();
-    SubstituteLibs();
-    SubstituteFunctions();
-    SubstituteCustomVars();
-    SubstituteEnvironment (1);
-
-    for (f = 0; f < VectorSize(g_Files); ++ f) {
-	copy (g_Files[f], srcFile);
-	append (".in", srcFile);
-	ReadFile (srcFile);
-	ExecuteSubstitutionList();
-	WriteFile (g_Files[f]);
+    SBuf srcFile = NULL_BUF, fileBuf = NULL_BUF;
+    foreach (f, g_Files) {
+	copy (g_Files[f], &srcFile);
+	append (".in", &srcFile);
+	ReadFile (S(srcFile), &fileBuf);
+	ExecuteSubstitutionList (&fileBuf);
+	WriteFile (g_Files[f], &fileBuf);
     }
-    return (0);
+    buf_free (&fileBuf);
+    buf_free (&srcFile);
+}
+
+/*- Housekeeping -----------------------------------------------------*/
+
+static void InitGlobals (void)
+{
+    uint i;
+    SBuf nullBuf = NULL_BUF;
+    g_Subs = nullBuf;
+    foreach (i, g_ConfigVV)
+	g_ConfigVV[i] = nullBuf;
+    foreach (i, g_CustomLibDirs)
+	g_CustomLibDirs[i] = nullBuf;
+    foreach (i, g_CustomIncDirs)
+	g_CustomIncDirs[i] = nullBuf;
+    foreach (i, g_ProgLocs)
+	g_ProgLocs[i] = nullBuf;
+}
+
+static void FreeGlobals (void)
+{
+    uint i;
+    buf_free (&g_Subs);
+    foreach (i, g_ConfigVV)
+	buf_free (&g_ConfigVV[i]);
+    foreach (i, g_CustomLibDirs)
+	buf_free (&g_CustomLibDirs[i]);
+    foreach (i, g_CustomIncDirs)
+	buf_free (&g_CustomIncDirs[i]);
+    foreach (i, g_ProgLocs)
+	buf_free (&g_ProgLocs[i]);
 }
 
 static void PrintHelp (void)
@@ -282,7 +428,7 @@ static void PrintHelp (void)
 "\n");
     if (VectorSize(g_Components)) {
 	printf ("Options:\n");
-	for (i = 0; i < VectorSize(g_ComponentInfos); ++ i) {
+	foreach (i, g_ComponentInfos) {
 	    if (!g_ComponentInfos[i].m_Description[0])
 		continue;
 	    if (g_ComponentInfos[i].m_bDefaultOn)
@@ -306,21 +452,19 @@ static void PrintHelp (void)
 static void PrintVersion (void)
 {
     printf (PACKAGE_NAME " configure " PACKAGE_VERSION "\n"
-	    "\nUsing bsconf package version 0.1\n"
+	    "\nUsing bsconf package version 0.3\n"
 	    "Copyright (c) 2003-2005, Mike Sharov <msharov@users.sourceforge.net>\n"
 	    "This configure script and the bsconf package are free software.\n"
 	    "Unlimited permission to copy, distribute, and modify is granted.\n");
     exit (0);
 }
 
-/*--------------------------------------------------------------------*/
+/*- Configuration routines -------------------------------------------*/
 
 static void GetConfigVarValues (int argc, cpchar_t const* argv)
 {
     int a, apos, cvl;
     uint cv;
-    for (cv = 0; cv < vv_last; ++ cv)
-	fill_n (g_ConfigVV[cv], sizeof(strbuf_t), 0);
     /* --var=VALUE */
     for (a = 0; a < argc; ++ a) {
 	if (!compare (argv[a], "--"))
@@ -335,11 +479,11 @@ static void GetConfigVarValues (int argc, cpchar_t const* argv)
 	    if (compare (argv[a] + apos, "out"))
 		apos += 3;
 	    ++ apos;
-	    for (cv = 0; cv < VectorSize(g_ComponentInfos); ++ cv)
+	    foreach (cv, g_ComponentInfos)
 		if (compare (argv[a] + apos, g_Components[cv * 3]))
 		    g_ComponentInfos[cv].m_bDefaultOn = (apos == 7);
 	} else {
-	    for (cv = 0; cv < vv_last; ++ cv)
+	    foreach (cv, g_ConfigV)
 		if (compare (argv[a] + apos, g_ConfigV[cv]))
 		    break;
 	    if (cv == vv_last)
@@ -347,17 +491,17 @@ static void GetConfigVarValues (int argc, cpchar_t const* argv)
 	    apos += StrLen (g_ConfigV[cv]) + 1;
 	    cvl = StrLen (argv[a]) - apos + 1;
 	    if (cvl > 1) {
-		copy_n (argv[a] + apos, g_ConfigVV[cv], cvl);
+		buf_copy_n (argv[a] + apos, &g_ConfigVV[cv], cvl);
 		if (cv == vv_customlib)
-		    copy_n (argv[a] + apos, g_CustomLibDirs [g_nCustomLibDirs++], cvl);
+		    buf_copy_n (argv[a] + apos, &g_CustomLibDirs [g_nCustomLibDirs++], cvl);
 		else if (cv == vv_custominclude)
-		    copy_n (argv[a] + apos, g_CustomIncDirs [g_nCustomIncDirs++], cvl);
+		    buf_copy_n (argv[a] + apos, &g_CustomIncDirs [g_nCustomIncDirs++], cvl);
 	    }
-	    if (cv == vv_prefix && compare (g_ConfigVV[cv], "/home")) {
-		copy (g_ConfigVV[cv], g_CustomLibDirs [g_nCustomLibDirs]);
-		append ("/lib", g_CustomLibDirs [g_nCustomLibDirs++]);
-		copy (g_ConfigVV[cv], g_CustomIncDirs [g_nCustomIncDirs]);
-		append ("/include", g_CustomIncDirs [g_nCustomIncDirs++]);
+	    if (cv == vv_prefix && compare (S(g_ConfigVV[cv]), "/home")) {
+		copy (S(g_ConfigVV[cv]), &g_CustomLibDirs [g_nCustomLibDirs]);
+		append ("/lib", &g_CustomLibDirs [g_nCustomLibDirs++]);
+		copy (S(g_ConfigVV[cv]), &g_CustomIncDirs [g_nCustomIncDirs]);
+		append ("/include", &g_CustomIncDirs [g_nCustomIncDirs++]);
 	    }
 	}
     }
@@ -365,265 +509,271 @@ static void GetConfigVarValues (int argc, cpchar_t const* argv)
 
 static void DefaultConfigVarValue (EVV v, EVV root, cpchar_t suffix)
 {
-    if (!*(g_ConfigVV [v])) {
-	copy (g_ConfigVV [root], g_ConfigVV [v]);
-	append (suffix, g_ConfigVV [v]);
+    if (!*S(g_ConfigVV[v])) {
+	copy (S(g_ConfigVV [root]), &g_ConfigVV [v]);
+	append (suffix, &g_ConfigVV [v]);
     }
-}
-
-static void FillInDefaultConfigVarValues (void)
-{
-    if (!*(g_ConfigVV [vv_prefix]))
-	copy ("/usr/local", g_ConfigVV [vv_prefix]);
-    else if (g_ConfigVV [vv_prefix][0] == '/' && !g_ConfigVV [vv_prefix][1])
-	g_ConfigVV [vv_prefix][0] = 0;
-    if (!*(g_ConfigVV [vv_exec_prefix]))
-	DefaultConfigVarValue (vv_exec_prefix,	vv_prefix,	"");
-    else if (g_ConfigVV [vv_exec_prefix][0] == '/' && !g_ConfigVV [vv_exec_prefix][1])
-	g_ConfigVV [vv_exec_prefix][0] = 0;
-    if (!*(g_ConfigVV [vv_oldincludedir]))
-	copy ("/usr/include", g_ConfigVV [vv_oldincludedir]);
-
-    DefaultConfigVarValue (vv_bindir,		vv_exec_prefix,	"/bin");
-    DefaultConfigVarValue (vv_sbindir,		vv_exec_prefix,	"/sbin");
-    DefaultConfigVarValue (vv_libexecdir,	vv_prefix,	"/libexec");
-    DefaultConfigVarValue (vv_datadir,		vv_prefix,	"/share");
-    DefaultConfigVarValue (vv_sysconfdir,	vv_prefix,	"/etc");
-    DefaultConfigVarValue (vv_sharedstatedir,	vv_prefix,	"/com");
-    DefaultConfigVarValue (vv_localstatedir,	vv_prefix,	"/var");
-    DefaultConfigVarValue (vv_libdir,		vv_exec_prefix,	"/lib");
-    DefaultConfigVarValue (vv_gcclibdir,	vv_exec_prefix,	"/lib");
-    DefaultConfigVarValue (vv_includedir,	vv_prefix,	"/include");
-    DefaultConfigVarValue (vv_gccincludedir,	vv_prefix,	"/include");
-    DefaultConfigVarValue (vv_infodir,		vv_prefix,	"/info");
-    DefaultConfigVarValue (vv_mandir,		vv_prefix,	"/man");
-
-    if (!*(g_ConfigVV [vv_prefix]))
-	copy ("/", g_ConfigVV [vv_prefix]);
-    if (!*(g_ConfigVV [vv_exec_prefix]))
-	copy ("/", g_ConfigVV [vv_exec_prefix]);
-
-    if (!*(g_ConfigVV [vv_host]))
-	DetermineHost();
-    if (!*(g_ConfigVV [vv_build]))
-	copy (g_ConfigVV [vv_host], g_ConfigVV [vv_build]);
 }
 
 static void DetermineHost (void)
 {
-    int i;
+    uint i;
     fill_n ((pchar_t) &g_Uname, sizeof(struct utsname), 0);
     uname (&g_Uname);
     Lowercase (g_Uname.machine);
     Lowercase (g_Uname.sysname);
-    copy (g_Uname.machine, g_ConfigVV [vv_host]);
-    append ("-", g_ConfigVV [vv_host]);
+    copy (g_Uname.machine, &g_ConfigVV [vv_host]);
+    append ("-", &g_ConfigVV [vv_host]);
 #ifdef __GNUC__
-    append ("gnu", g_ConfigVV [vv_host]);
+    append ("gnu", &g_ConfigVV [vv_host]);
 #else
-    append ("unknown", g_ConfigVV [vv_host]);
+    append ("unknown", &g_ConfigVV [vv_host]);
 #endif
-    append2 ("-", g_Uname.sysname, g_ConfigVV [vv_host]);
-    for (i = 0; i < VectorSize(g_HostTypes); ++ i)
+    append2 ("-", g_Uname.sysname, &g_ConfigVV [vv_host]);
+    foreach (i, g_HostTypes)
 	if (compare (g_Uname.sysname, g_HostTypes[i].sysname))
 	    g_SysType = g_HostTypes[i].type;
     if (compare (g_Uname.machine, "alpha"))
 	g_SysType = sys_Alpha;
 }
 
-static cpchar_t CopyPathEntry (cpchar_t pi, pchar_t dest)
+static void FillInDefaultConfigVarValues (void)
 {
-    while (*pi && *pi != ':')
-	*dest++ = *pi++;
-    *dest = 0;
-    return (*pi ? ++pi : NULL);
+    typedef struct _SDefaultPathMap {
+	EVV		var;
+	EVV		base;
+	cpchar_t	path;
+    } SDefaultPathMap;
+    static const SDefaultPathMap c_Defaults[] = {
+	{ vv_bindir,		vv_exec_prefix,	"/bin" },
+	{ vv_sbindir,		vv_exec_prefix,	"/sbin" },
+	{ vv_libexecdir,	vv_prefix,	"/libexec" },
+	{ vv_datadir,		vv_prefix,	"/share" },
+	{ vv_sysconfdir,	vv_prefix,	"/etc" },
+	{ vv_sharedstatedir,	vv_prefix,	"/com" },
+	{ vv_localstatedir,	vv_prefix,	"/var" },
+	{ vv_libdir,		vv_exec_prefix,	"/lib" },
+	{ vv_gcclibdir,		vv_exec_prefix,	"/lib" },
+	{ vv_includedir,	vv_prefix,	"/include" },
+	{ vv_gccincludedir,	vv_prefix,	"/include" },
+	{ vv_infodir,		vv_prefix,	"/info" },
+	{ vv_mandir,		vv_prefix,	"/man" }
+    };
+    uint i;
+
+    if (!*S(g_ConfigVV [vv_prefix]))
+	copy ("/usr/local", &g_ConfigVV [vv_prefix]);
+    else if (S(g_ConfigVV[vv_prefix])[0] == '/' && !S(g_ConfigVV[vv_prefix])[1])
+	g_ConfigVV [vv_prefix].data[0] = 0;
+    if (!*S(g_ConfigVV [vv_exec_prefix]))
+	DefaultConfigVarValue (vv_exec_prefix,	vv_prefix,	"");
+    else if (S(g_ConfigVV[vv_exec_prefix])[0] == '/' && !S(g_ConfigVV[vv_exec_prefix])[1])
+	g_ConfigVV [vv_exec_prefix].data[0] = 0;
+    if (!*S(g_ConfigVV [vv_oldincludedir]))
+	copy ("/usr/include", &g_ConfigVV [vv_oldincludedir]);
+
+    foreach (i, c_Defaults)
+	DefaultConfigVarValue (c_Defaults[i].var, c_Defaults[i].base, c_Defaults[i].path);
+
+    if (!*S(g_ConfigVV [vv_prefix]))
+	copy ("/usr", &g_ConfigVV [vv_prefix]);
+    if (!*S(g_ConfigVV [vv_exec_prefix]))
+	copy ("/usr", &g_ConfigVV [vv_exec_prefix]);
+
+    if (!*S(g_ConfigVV [vv_host]))
+	DetermineHost();
+    if (!*S(g_ConfigVV [vv_build]))
+	copy (S(g_ConfigVV [vv_host]), &g_ConfigVV [vv_build]);
+}
+
+static cpchar_t CopyPathEntry (cpchar_t pi, pbuf_t dest)
+{
+    uint pil = 0;
+    while (pi[pil] && pi[pil] != ':') ++ pil;
+    buf_copy_n (pi, dest, pil);
+    return (*(pi += pil) ? ++pi : NULL);
 }
 
 static int IsBadInstallDir (cpchar_t match)
 {
-    return (compare (match, "/etc") ||
-	    compare (match, "/usr/sbin") ||
-	    compare (match, "/c") ||
-	    compare (match, "/C") ||
-	    compare (match, "/usr/etc") ||
-	    compare (match, "/sbin") ||
-	    compare (match, "/usr/ucb") ||
-	    compare (match, "/usr/afsws/bin"));
+    static const char* c_BadDirs[] = {
+	"/etc", "/usr/sbin", "/c", "/C", "/usr/etc",
+	"/sbin", "/usr/ucb", "/usr/afsws/bin"
+    };
+    uint i;
+    foreach (i, c_BadDirs)
+	if (compare (match, c_BadDirs[i]))
+	    return (1);
+    return (0);
 }
 
 static void FindPrograms (void)
 {
     uint i, count;
     cpchar_t path, pi;
-    strbuf_t match;
+    SBuf match = NULL_BUF;
 
     path = getenv ("PATH");
     if (!path)
 	path = "";
 
-    for (i = 0; i < VectorSize(g_ProgLocs); ++ i) {
-	fill_n (g_ProgLocs[i], sizeof(strbuf_t), 0);
-	fill_n (match, sizeof(strbuf_t), 0);
+    foreach (i, g_ProgLocs) {
+	copy (".", &match);
 	count = 0;
-	for (pi = path; pi; pi = CopyPathEntry (pi, match)) {
+	for (pi = path; pi; pi = CopyPathEntry (pi, &match)) {
 	    /* Ignore "bad" versions of install, like autoconf does. */
-	    if (compare (g_ProgVars[i * 4 + 1], "install") && IsBadInstallDir (match))
+	    if (compare (g_ProgVars[i * 4 + 1], "install") && IsBadInstallDir (S(match)))
 		continue;
-	    append2 ("/", g_ProgVars[i * 4 + 1], match);
-	    if (access (match, X_OK) == 0) {
+	    append2 ("/", g_ProgVars[i * 4 + 1], &match);
+	    if (access (S(match), X_OK) == 0) {
 		++ count;
 		break;
 	    }
 	}
 	if (count && compare (g_ProgVars[i * 4 + 1], "install"))
-	    copy (match, g_ProgLocs[i]);
+	    copy (S(match), &g_ProgLocs[i]);
 	else
-	    copy (g_ProgVars[i * 4 + 2 + !count], g_ProgLocs[i]);
+	    copy (g_ProgVars[i * 4 + 2 + !count], &g_ProgLocs[i]);
     }
+    buf_free (&match);
 }
 
 static void SubstitutePaths (void)
 {
-    strbuf_t match;
+    SBuf match = NULL_BUF;
     int cv;
-    for (cv = 0; cv < vv_last; ++ cv) {
-	MakeSubstString (g_ConfigV [cv], match);
-	Substitute (match, g_ConfigVV [cv]);
+    foreach (cv, g_ConfigV) {
+	MakeSubstString (g_ConfigV [cv], &match);
+	Substitute (S(match), S(g_ConfigVV [cv]));
     }
+    buf_free (&match);
 }
 
 static void SubstituteCFlags (void)
 {
-    strbuf_t buf;
+    SBuf buf = NULL_BUF;
     int j;
 
-    buf[0] = 0;
     for (j = 0; j < g_nCustomIncDirs; ++ j)
-	append2 (" -I", g_CustomIncDirs[j], buf);
-    Substitute ("@CUSTOMINCDIR@", buf);
+	append2 (" -I", S(g_CustomIncDirs[j]), &buf);
+    Substitute ("@CUSTOMINCDIR@", S(buf));
 
-    buf[0] = 0;
+    buf_clear (&buf);
     for (j = 0; j < g_nCustomLibDirs; ++ j)
-	append2 (" -L", g_CustomLibDirs[j], buf);
-    Substitute ("@CUSTOMLIBDIR@", buf);
+	append2 (" -L", S(g_CustomLibDirs[j]), &buf);
+    Substitute ("@CUSTOMLIBDIR@", S(buf));
 
-    buf[0] = 0;
+    buf_clear (&buf);
     #if __GNUC__ >= 3
 	if (g_CpuCapBits & (1 << 23))
-	    append (" -mmmx", buf);
+	    append (" -mmmx", &buf);
 	if (g_SysType == sys_Linux)
 	    if (g_CpuCapBits & ((1 << 22) | (1 << 25)))
-		append (" -msse -mfpmath=sse", buf);
+		append (" -msse -mfpmath=sse", &buf);
 	if (g_CpuCapBits & (1 << 26))
-	    append (" -msse2", buf);
+	    append (" -msse2", &buf);
 	if (g_CpuCapBits & (1 << 27))
-	    append (" -msse3", buf);
+	    append (" -msse3", &buf);
 	if (g_CpuCapBits & ((1 << 30) | (1 << 31)))
-	    append (" -m3dnow", buf);
+	    append (" -m3dnow", &buf);
     #endif
-    Substitute ("@PROCESSOR_OPTS@", buf);
+    Substitute ("@PROCESSOR_OPTS@", S(buf));
 
-    buf[0] = 0;
-    #if __GNUC__ >= 3
-	append (" -finline-limit=65535", buf);
-	#if __GNUC__ > 3 || __GNUC_MINOR__ >= 4
-	    append (" --param large-function-growth=65535", buf);
-	    append (" --param inline-unit-growth=1024", buf);
-	#endif
-	#if __GNUC__ >= 4
-	    append (" -fvisibility-inlines-hidden", buf);
-	#endif
+    #if __GNUC__ > 3 || __GNUC_MINOR__ >= 4
+	copy (" --param max-inline-insns-single=1024", &buf);
+	append (" \\\n\t\t--param large-function-growth=65535", &buf);
+	append (" \\\n\t\t--param inline-unit-growth=1024 @INLINE_OPTS@", &buf);
+    #else
+	copy ("-finline-limit=65535 @INLINE_OPTS@", &buf);
     #endif
-    Substitute ("@INLINE_OPTS@", buf);
+    Substitute ("@INLINE_OPTS@", S(buf));
+    #if __GNUC__ >= 4
+	Substitute ("@INLINE_OPTS@", " \\\n\t\t-fvisibility-inlines-hidden");
+    #else
+	Substitute ("@INLINE_OPTS@", "");
+    #endif
 
     #ifdef __i386__
 	Substitute ("-fPIC", "");
     #endif
+    buf_free (&buf);
 }
 
 static void SubstituteEnvironment (int bForce)
 {
-    strbuf_t match;
+    SBuf match = NULL_BUF;
     uint i;
     cpchar_t envval;
 
-    for (i = 0; i < VectorSize(g_EnvVars); ++ i) {
+    foreach (i, g_EnvVars) {
 	envval = getenv (g_EnvVars[i]);
 	if (!envval) {
 	    if (!bForce)
 		continue;
 	    envval = "";
 	}
-	MakeSubstString (g_EnvVars[i], match);
-	Substitute (match, envval);
+	MakeSubstString (g_EnvVars[i], &match);
+	Substitute (S(match), envval);
     }
+    buf_free (&match);
 }
 
 static void SubstitutePrograms (void)
 {
     uint i;
-    strbuf_t match;
-    for (i = 0; i < VectorSize(g_ProgLocs); ++ i) {
-	MakeSubstString (g_ProgVars [i * 4], match);
-	Substitute (match, g_ProgLocs [i]);
+    SBuf match = NULL_BUF;
+    foreach (i, g_ProgLocs) {
+	MakeSubstString (g_ProgVars [i * 4], &match);
+	Substitute (S(match), S(g_ProgLocs [i]));
     }
+    buf_free (&match);
+}
+
+#if defined(__GNUC__) && defined(__i386__)
+static uint cpuid_supported (void)
+{
+    uint forig, fnew;
+    /* Pop flags, toggle ID bit, push, pop. cpuid supported if changed. */
+    asm ("pushf\n\tpopl\t%0\n\t"
+	"mov\t%0, %1\n\txor\t$0x200000, %0\n\t"
+	"pushl\t%0\n\tpopf\n\tpushf\n\tpopl\t%0"
+	: "=r"(fnew), "=r"(forig));
+    return (fnew != forig);
 }
 
 static uint cpuid (void)
 {
-    uint caps = 0;
-#if defined(__GNUC__) && defined(__i386__)
-    const uint amdBits = 0xC9480000;
-    asm (
-	"pushf			\n\t"	/* First, test if cpuid instruction works */
-	"popl %%eax		\n\t"
-	"mov %%eax, %%ecx	\n\t"
-	"xor $0x200000, %%eax	\n\t"	/* Toggle the ID bit in one copy of eflags */
-	"pushl %%eax		\n\t"
-	"popf			\n\t"
-	"pushf			\n\t"
-	"popl %%eax		\n\t"	/* If the the flags are unchanged, cpuid is not supported */
-	"test %%eax, %%ecx	\n\t"
-	"jz 0f			\n\t"	/* This is a gcc local label jump */
-	"xor %%eax, %%eax	\n\t"	/* Ask whether feature list is supported */
-	"cpuid			\n\t"
-	"test %%eax,%%eax	\n\t"
-	"jz 0f			\n\t"
-	"mov $1, %%eax		\n\t"	/* Ask for feature list */
-	"cpuid			\n\t"
-	"and %1, %%edx		\n\t"	/* The inverse of the AMD bit constant below */
-	"and $1, %%ecx		\n\t"	/* Extract SSE3 bit from Intel extensions */
-	"shl $27, %%ecx		\n\t"
-	"or %%ecx, %%edx	\n\t"	/* ... and put it at bit 27 */
-	"mov %%edx, %0		\n\t"
-	"mov $0x80000000, %%eax	\n\t"
-	"cpuid			\n\t"
-	"test $0x80000000, %%eax\n\t"	/* Test for extended feature support */
-	"jz 0f			\n\t"
-	"mov $0x80000001, %%eax	\n\t"	/* AMD extensions */
-	"cpuid			\n\t"
-	"and %2, %%edx		\n\t"	/* Take only AMD specific bits */
-	"or %%edx, %0		\n\t"
-	"0:"
-	: "=m"(caps)
-	: "g"(~amdBits), "g"(amdBits)
-	: "cc", "%eax", "%ebx", "%ecx", "%edx");
-#endif
+    #define i_cpuid(a,r,c,d)	asm("cpuid":"=a"(r),"=c"(c),"=d"(d):"0"(a):"%ebx")
+    const uint amdBits = 0xC9480000, extFeatures = 0x80000000, amdExtensions = 0x80000001;
+    uint r, c, d, caps;
+    if (!cpuid_supported()) return (0);
+    i_cpuid (0, r, c, d);
+    if (!r) return (0);
+    i_cpuid (1, r, c, d);			/* Ask for feature list */
+    caps = (d & ~amdBits) | ((c & 1) << 27);	/* 27 is SSE3 bit */
+    i_cpuid (extFeatures, r, c, d);
+    if (r != extFeatures) {
+	i_cpuid (amdExtensions, r, c, d);
+	caps |= d & amdBits;
+    }
     return (caps);
 }
+#else
+static uint cpuid (void) { return (0); }
+#endif
 
 static void SubstituteCpuCaps (void)
 {
     uint i;
     g_CpuCapBits = cpuid();
-    for (i = 0; i < VectorSize(g_CpuCaps); ++ i)
+    foreach (i, g_CpuCaps)
 	if (g_CpuCapBits & (1 << g_CpuCaps[i].m_Bit))
 	    Substitute (g_CpuCaps[i].m_Disabled, g_CpuCaps[i].m_Enabled);
 }
 
 static void SubstituteHostOptions (void)
 {
-    strbuf_t buf;
+    char buf [128];
     if (g_SysType == sys_Mac)
 	Substitute ("@SYSWARNS@", "-Wno-long-double");
     else
@@ -698,12 +848,6 @@ static void SubstituteHostOptions (void)
     Substitute ("#undef LSTAT_FOLLOWS_SLASHED_SYMLINK", "#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1");
     Substitute ("#undef HAVE_STAT_EMPTY_STRING_BUG", "/* #undef HAVE_STAT_EMPTY_STRING_BUG */");
 
-    Substitute ("#undef PACKAGE_BUGREPORT",	"#define PACKAGE_BUGREPORT \"" PACKAGE_BUGREPORT "\"");
-    Substitute ("#undef PACKAGE_NAME",		"#define PACKAGE_NAME \"" PACKAGE_NAME "\"");
-    Substitute ("#undef PACKAGE_STRING",	"#define PACKAGE_STRING \"" PACKAGE_STRING "\"");
-    Substitute ("#undef PACKAGE_TARNAME",	"#define PACKAGE_TARNAME \"" PACKAGE_TARNAME "\"");
-    Substitute ("#undef PACKAGE_VERSION",	"#define PACKAGE_VERSION \"" PACKAGE_VERSION "\"");
-
     if (g_SysType == sys_Linux)
 	Substitute ("#undef HAVE_RINTF", "#define HAVE_RINTF 1");
 }
@@ -711,71 +855,75 @@ static void SubstituteHostOptions (void)
 static void SubstituteCustomVars (void)
 {
     uint i;
-    strbuf_t match;
-    for (i = 0; i < VectorSize(g_CustomVars) / 2; ++ i) {
-	MakeSubstString (g_CustomVars [i * 2], match);
-	Substitute (match, g_CustomVars [i * 2 + 1]);
+    SBuf match = NULL_BUF;
+    foreachN (i, g_CustomVars, 2) {
+	MakeSubstString (g_CustomVars [i * 2], &match);
+	Substitute (S(match), g_CustomVars [i * 2 + 1]);
     }
+    buf_free (&match);
 }
 
 static void SubstituteHeaders (void)
 {
     uint i;
     cpchar_t pi;
-    strbuf_t defaultPath;
-    strbuf_t match;
+    SBuf defaultPath = NULL_BUF, match = NULL_BUF;
 
-    copy (g_ConfigVV [vv_includedir], defaultPath);
-    append2 (":", g_ConfigVV [vv_oldincludedir], defaultPath);
-    append2 (":", g_ConfigVV [vv_gccincludedir], defaultPath);
-    for (i = 0; i < (uint) g_nCustomIncDirs; ++ i)
-	append2 (":", g_CustomIncDirs [i], defaultPath);
-    for (i = 0; i < VectorSize(g_Headers) / 3; ++ i) {
-	for (pi = defaultPath; pi; pi = CopyPathEntry (pi, match)) {
-	    append2 ("/", g_Headers [i * 3], match);
-	    if (access (match, R_OK) == 0)
+    copy (S(g_ConfigVV [vv_includedir]), &defaultPath);
+    append2 (":", S(g_ConfigVV [vv_oldincludedir]), &defaultPath);
+    append2 (":", S(g_ConfigVV [vv_gccincludedir]), &defaultPath);
+    for (i = 0; i != (uint) g_nCustomIncDirs; ++ i)
+	append2 (":", S(g_CustomIncDirs [i]), &defaultPath);
+    foreachN (i, g_Headers, 3) {
+	for (pi = S(defaultPath); pi; pi = CopyPathEntry (pi, &match)) {
+	    append2 ("/", g_Headers [i * 3], &match);
+	    if (access (S(match), R_OK) == 0)
 		Substitute (g_Headers [i * 3 + 1], g_Headers [i * 3 + 2]);
 	}
     }
+    buf_free (&match);
+    buf_free (&defaultPath);
 }
 
 static void SubstituteLibs (void)
 {
+    static const cpchar_t g_LibSuffixes[] = { ".a", ".so", ".la" };
     uint i, k, ok;
     cpchar_t pi;
-    char defaultPath [4096];
-    strbuf_t match;
+    SBuf defaultPath = NULL_BUF, match = NULL_BUF;
 
-    copy ("/lib:/usr/lib:/usr/local/lib", defaultPath);
+    copy ("/lib:/usr/lib:/usr/local/lib", &defaultPath);
     pi = getenv ("LD_LIBRARY_PATH");
     if (pi)
-	append (pi, defaultPath);
-    append2 (":", g_ConfigVV [vv_libdir], defaultPath);
-    append2 (":", g_ConfigVV [vv_gcclibdir], defaultPath);
-    for (i = 0; i < (uint) g_nCustomLibDirs; ++ i)
-	append2 (":", g_CustomLibDirs [i], defaultPath);
+	append2 (":", pi, &defaultPath);
+    append2 (":", S(g_ConfigVV [vv_libdir]), &defaultPath);
+    append2 (":", S(g_ConfigVV [vv_gcclibdir]), &defaultPath);
+    for (i = 0; i != (uint) g_nCustomLibDirs; ++ i)
+	append2 (":", S(g_CustomLibDirs [i]), &defaultPath);
 
-    for (i = 0; i < VectorSize(g_Libs) / 3; ++ i) {
+    foreachN (i, g_Libs, 3) {
 	ok = 0;
-	for (pi = defaultPath; pi; pi = CopyPathEntry (pi, match)) {
-	    for (k = 0; k < VectorSize(g_LibSuffixes); ++ k) {
-		CopyPathEntry (pi, match);
-		append2 ("/lib", g_Libs [i * 3], match);
-		append (g_LibSuffixes [k], match);
-		if (access (match, R_OK) == 0)
+	for (pi = S(defaultPath); pi; pi = CopyPathEntry (pi, &match)) {
+	    foreach (k, g_LibSuffixes) {
+		CopyPathEntry (pi, &match);
+		append2 ("/lib", g_Libs [i * 3], &match);
+		append (g_LibSuffixes [k], &match);
+		if (access (S(match), R_OK) == 0)
 		    ok = 1;
 	    }
 	}
-	copy ("@lib", match);
-	append2 (g_Libs[i * 3], "@", match);
-	Substitute (match, g_Libs [i * 3 + 1 + ok]);
+	copy ("@lib", &match);
+	append2 (g_Libs[i * 3], "@", &match);
+	Substitute (S(match), g_Libs [i * 3 + 1 + ok]);
     }
+    buf_free (&match);
+    buf_free (&defaultPath);
 }
 
 static void SubstituteFunctions (void)
 {
     uint i;
-    for (i = 0; i < VectorSize(g_Functions) / 3; ++ i)
+    foreachN (i, g_Functions, 3)
 	Substitute (g_Functions [i * 3 + 1], g_Functions [i * 3 + 2]);
     if (g_SysType == sys_Mac)
 	Substitute ("#define HAVE_STRSIGNAL 1", "#undef HAVE_STRSIGNAL");
@@ -786,7 +934,7 @@ static void SubstituteFunctions (void)
 static void SubstituteComponents (void)
 {
     uint i, isOn;
-    for (i = 0; i < VectorSize(g_Components) / 3; ++ i) {
+    foreachN (i, g_Components, 3) {
 	isOn = g_ComponentInfos[i].m_bDefaultOn;
 	Substitute (g_Components [i * 3 + 1 + !isOn], g_Components [i * 3 + 1 + isOn]);
     }
@@ -794,136 +942,28 @@ static void SubstituteComponents (void)
 
 /*--------------------------------------------------------------------*/
 
-static void Substitute (cpchar_t matchStr, cpchar_t replaceStr)
+int main (int argc, const char* const* argv)
 {
-    if (g_nSubs >= MAX_SUBSTITUTIONS)
-	FatalError ("substitution list is too long, increase MAX_SUBSTITUTIONS");
-    copy (matchStr, g_Subs[g_nSubs * 2]);
-    copy (replaceStr, g_Subs[g_nSubs * 2 + 1]);
-    ++ g_nSubs;
-}
+    InitGlobals();
+    GetConfigVarValues (--argc, ++argv);
+    FillInDefaultConfigVarValues();
 
-static void ExecuteSubstitutionList (void)
-{
-    uint i;
-    int rsl, taill, delta;
-    pchar_t cp;
+    FindPrograms();
+    SubstituteComponents();
+    SubstituteHostOptions();
+    SubstituteCpuCaps();
+    SubstituteCFlags();
+    SubstitutePaths();
+    SubstituteEnvironment (0);
+    SubstitutePrograms();
+    SubstituteHeaders();
+    SubstituteLibs();
+    SubstituteFunctions();
+    SubstituteCustomVars();
+    SubstituteEnvironment (1);
 
-    for (i = 0; i < g_nSubs; ++ i) {
-	rsl = StrLen (g_Subs[i * 2 + 1]);
-	delta = rsl - StrLen (g_Subs[i * 2]);
-	for (cp = g_Buf; cp < g_Buf + g_BufSize; ++ cp) {
-	    if (!compare (cp, g_Subs[i * 2]))
-		continue;
-	    if (g_BufSize + delta >= BUFSIZE)
-		FatalError ("buffer overflow");
-	    g_BufSize += delta;
-	    taill = g_BufSize - (cp - g_Buf);
-	    if (delta > 0)
-		copy_backward (cp, cp + delta, taill);
-	    else if (delta < 0)
-		copy_n (cp + (-delta), cp, taill);
-	    cp = copy_n (g_Subs[i * 2 + 1], cp, rsl);
-	}
-    }
-}
-
-static void MakeSubstString (cpchar_t str, pchar_t substString)
-{
-    copy ("@", substString);
-    append2 (str, "@", substString);
-}
-
-/*--------------------------------------------------------------------*/
-
-static void FatalError (cpchar_t errortext)
-{
-    perror (errortext);
-    exit(-1);
-}
-
-static int StrLen (cpchar_t str)
-{
-    int l;
-    for (l = 0; *str; ++ l, ++ str);
-    return (l);
-}
-
-static void Lowercase (pchar_t str)
-{
-    for (; *str; ++ str)
-	if (*str >= 'A' && *str <= 'Z')
-	    *str += 'a' - 'A';
-}
-
-static int compare (cpchar_t str1, cpchar_t str2)
-{
-    while (*str1 && *str2 && *str1 == *str2)
-	++ str1, ++ str2;
-    return (!*str2);
-}
-
-static pchar_t copy (cpchar_t src, pchar_t dest)
-{
-    while (*src) *dest++ = *src++;
-    *dest = 0;
-    return (dest);
-}
-
-static pchar_t copy_n (cpchar_t src, pchar_t dest, int n)
-{
-    while (n--)
-	*dest++ = *src++;
-    return (dest);
-}
-
-static pchar_t append (cpchar_t src, pchar_t dest)
-{
-    while (*dest) ++ dest;
-    return (copy (src, dest));
-}
-
-static pchar_t append2 (cpchar_t src1, cpchar_t src2, pchar_t dest)
-{
-    return (append (src2, append (src1, dest)));
-}
-
-static void fill_n (pchar_t str, int n, char v)
-{
-    while (n--)
-	*str++ = v;
-}
-
-static pchar_t copy_backward (cpchar_t src, pchar_t dest, int n)
-{
-    dest += n; src += n;
-    while (n--)
-	*--dest = *--src;
-    return (dest + n);
-}
-
-static void ReadFile (cpchar_t filename)
-{
-    FILE* fp = fopen (filename, "r");
-    if (!fp)
-	FatalError ("fopen");
-    fill_n (g_Buf, BUFSIZE, 0);
-    g_BufSize = fread (g_Buf, 1, BUFSIZE - 1, fp);
-    if (g_BufSize <= 0)
-	FatalError ("fread");
-    fclose (fp);
-}
-
-static void WriteFile (cpchar_t filename)
-{
-    int bw;
-    FILE* fp = fopen (filename, "w");
-    if (!fp)
-	FatalError ("fopen");
-    bw = fwrite (g_Buf, 1, g_BufSize, fp);
-    if (bw != g_BufSize)
-	FatalError ("fwrite");
-    if (fclose (fp))
-	FatalError ("fclose");
+    ApplySubstitutions();
+    FreeGlobals();
+    return (0);
 }
 

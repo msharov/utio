@@ -40,7 +40,7 @@ if [ ! -z "${PRIVATE_LIBDIR}" ]; then
     PRIVATE_PATHS="${PRIVATE_PATHS} --gcclibdir=${PRIVATE_LIBDIR}"
 fi
 
-if [ ! -x bsconf ]; then
+if [ ! -x bsconf ] || [ bsconf.c -nt bsconf ] || [ bsconf.h -nt bsconf ]; then
     ${CC} -o bsconf bsconf.c
 fi
 if [ -x bsconf ]; then

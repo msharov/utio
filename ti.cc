@@ -292,8 +292,11 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    case '!': PSPush (!PSPop());		break;
 	    case '~': PSPush (~PSPop());		break;
 	    case 't': bCondValue = PSPop();
-	    case 'e': if ((bCondValue = !bCondValue)) // this also supports elsif
-			  --(i = min (prgstr.find ("%e", i), prgstr.find ("%;", i)));
+	    case 'e': if ((bCondValue = !bCondValue)) { // this also supports elsif
+			  uoff_t elseLoc = prgstr.find ("%e", i - prgstr.begin());
+			  uoff_t endLoc = prgstr.find ("%;", i - prgstr.begin());
+			  --(i = prgstr.iat (min (elseLoc, endLoc)));
+		      }
 	    case '?':
 	    case ';': break;
 	    case 'p': PSPush (args [min (uoff_t(*++i - '1'), args.size() - 1)]); break; // %p[0-9] pushes numbered parameter.

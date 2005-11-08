@@ -12,7 +12,6 @@
 #define TICONST_H_668685586A306EC93FCA2A4B233066A9
 
 #include "config.h"
-#include <ustl.h>
 
 /// Terminal I/O Library namespace.
 namespace utio {

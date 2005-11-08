@@ -9,6 +9,15 @@
 #ifndef CONFIG_H_5A201634177A84A83E2E0B7C2674857D
 #define CONFIG_H_5A201634177A84A83E2E0B7C2674857D
 
+// Define to the one symbol short name of this package.
+#define UTIO_NAME	"@PACKAGE_NAME@"
+// Define to the full name and version of this package.
+#define UTIO_STRING	"@PACKAGE_NAME@ @PACKAGE_VERSION@"
+// Define to the version of this package.
+#define UTIO_VERSION	0x@LIB_MAJOR@@LIB_MINOR@@LIB_BUILD@
+// Define to the address where bug reports for this package should be sent.
+#define UTIO_BUGREPORT	"@PACKAGE_BUGREPORT@"
+
 /// Define to 1 if you want CKeyboard to have stdin reading code.
 #undef UTIO_WANT_GETKEY
 
@@ -18,6 +27,11 @@
 // Error messages for descriptive failure on missing components.
 #ifndef HAVE_USTL_H
     #error "You need the uSTL library to compile this project. http://sourceforge.net/projects/ustl"
+#else
+    #include <ustl.h>
+#endif
+#if USTL_VERSION < 0x080
+    #error "You need uSTL version 0.8.0 or above. http://sourceforge.net/projects/ustl"
 #endif
 
 #endif
