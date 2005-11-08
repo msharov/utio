@@ -151,8 +151,7 @@ void CGC::Text (Point2d p, const string& str)
     const canvas_t::iterator doutend = doutstart + (m_Size[0] - p[0]);
     assert (doutend >= doutstart);
     canvas_t::iterator dout (doutstart);
-    utf8in_iterator<string::const_iterator> si (str.begin());
-    for (; si.base() < str.end() && dout < doutend; ++ si) {
+    for (string::utf8_iterator si = str.utf8_begin(); si < str.utf8_end() && dout < doutend; ++ si) {
 	if (*si == '\t') {
 	    const size_t absX = p[0] + distance (doutstart, dout);
 	    size_t toTab = Align (absX + 1, m_TabSize) - absX;
