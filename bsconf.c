@@ -149,7 +149,6 @@ static const SCpuCaps g_CpuCaps [] = {
     { 24, "FXSAVE",	"#undef CPU_HAS_FXSAVE",	"#define CPU_HAS_FXSAVE 1"	},
     { 25, "SSE",	"#undef CPU_HAS_SSE ",		"#define CPU_HAS_SSE 1"		},
     { 26, "SSE2",	"#undef CPU_HAS_SSE2",		"#define CPU_HAS_SSE2 1"	},
-    { 27, "SSE3",	"#undef CPU_HAS_SSE3",		"#define CPU_HAS_SSE3 1"	},
     { 30, "3dNow!+",	"#undef CPU_HAS_EXT_3DNOW",	"#define CPU_HAS_EXT_3DNOW 1"	},
     { 31, "3dNow!",	"#undef CPU_HAS_3DNOW",		"#define CPU_HAS_3DNOW 1"	}
 };
@@ -672,8 +671,6 @@ static void SubstituteCFlags (void)
 		append (" -msse -mfpmath=sse", &buf);
 	if (g_CpuCapBits & (1 << 26))
 	    append (" -msse2", &buf);
-	if (g_CpuCapBits & (1 << 27))
-	    append (" -msse3", &buf);
 	if (g_CpuCapBits & ((1 << 30) | (1 << 31)))
 	    append (" -m3dnow", &buf);
     #endif
@@ -750,7 +747,7 @@ static uint cpuid (void)
     i_cpuid (0, r, c, d);
     if (!r) return (0);
     i_cpuid (1, r, c, d);			/* Ask for feature list */
-    caps = (d & ~amdBits) | ((c & 1) << 27);	/* 27 is SSE3 bit */
+    caps = (d & ~amdBits);
     i_cpuid (extFeatures, r, c, d);
     if (r != extFeatures) {
 	i_cpuid (amdExtensions, r, c, d);
