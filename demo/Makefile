@@ -5,9 +5,9 @@ SRCS	= ${DEMOCCS} stdmain.cc
 
 DEMOS	= $(DEMOCCS:.cc=)
 OBJS	= $(SRCS:.cc=.o)
-LIBS	+= -l${LIBNAME} -lustl -lsupc++
+LIBS	+= -l${LIBNAME}
 
-.PHONY:	all run clean depend
+.PHONY:	all clean depend
 
 all:	stdmain.o ${DEMOS}
 

@@ -66,6 +66,7 @@ static cpchar_t	g_Headers [] = {
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
 static cpchar_t g_Libs [] = {
+    "ustl",		"",				"-lustl",
     "supc++",		"",				"-lsupc++",
     "gcc",		"",				"-lgcc",
     "gcc_eh",		"-lgcc_s",			"-lgcc_eh",

@@ -4,7 +4,6 @@ SRCS	= $(wildcard *.cc)
 OBJS	= $(SRCS:.cc=.o)
 INCS	= $(filter-out bsconf.%,$(wildcard *.h))
 DOCT	= utiodoc.in
-LIBS	= -lustl
 
 ########################################################################
 

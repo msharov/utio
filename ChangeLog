@@ -1,7 +1,10 @@
 Release 1.1.0
 	Fixed crash when looking up keys in uninitialized CKeyboard.
-	Reset errno if EINTR is received in WaitForKeydata
-	Updated to ustl-0.8.0
+	Reset errno if EINTR is received in WaitForKeydata.
+	Added /usr/share/tabset as a possible terminfo location.
+	Updated configure to search for ustl library.
+	Updated demo Makefile to not link with libsupc++ if not needed.
+	Updated to ustl-0.8.0.
 
 Release 1.0.0
 	Initial release.

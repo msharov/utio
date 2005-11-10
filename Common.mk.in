@@ -48,8 +48,8 @@ ifdef DEBUG
     CFLAGS	+= -O0 -g
     CXXFLAGS	+= -O0 -g
 else
-    CFLAGS	+= -Os -DNDEBUG=1
-    CXXFLAGS	+= -Os -DNDEBUG=1
+    CFLAGS	+= -O3 -DNDEBUG=1
+    CXXFLAGS	+= -O3 -DNDEBUG=1
     LDFLAGS	+= 
 endif
 ifdef PROFILE
@@ -58,7 +58,7 @@ ifdef PROFILE
     LDFLAGS	+= -pg
 endif
 ifdef STANDALONE
-    LIBS	+= @libc@
+    LIBS	= @libustl@ @libsupc++@ @libc@
 endif
 ifdef BUILD_SHARED
     CFLAGS	+= -fPIC
