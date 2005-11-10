@@ -1,4 +1,4 @@
-Release 1.1.0
+2005-11-10 Release 1.1.0
 	Fixed crash when looking up keys in uninitialized CKeyboard.
 	Reset errno if EINTR is received in WaitForKeydata.
 	Support for reading terminfos on big-endian systems.
