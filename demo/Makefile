@@ -5,7 +5,7 @@ SRCS	= ${DEMOCCS} stdmain.cc
 
 DEMOS	= $(DEMOCCS:.cc=)
 OBJS	= $(SRCS:.cc=.o)
-LIBS	+= -l${LIBNAME}
+LIBS	+= -l${LIBNAME} -lustl
 
 .PHONY:	all clean depend
 
