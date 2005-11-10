@@ -12,6 +12,10 @@
 
 //----------------------------------------------------------------------
 
+#if defined(HAVE_BYTESWAP_H) && (__BYTE_ORDER == __BIG_ENDIAN)
+    #define NEED_TO_BYTESWAP 1
+#endif
+
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #define TERMINFO_MAGIC	0432
@@ -95,6 +99,14 @@ void CTerminfo::read (istream& is)
     // First the header.
     STerminfoHeader h;
     is >> h;
+#if NEED_TO_BYTESWAP
+    h.m_Magic = le_to_native (h.m_Magic);
+    h.m_NamesSize = le_to_native (h.m_NamesSize);
+    h.m_nBooleans = le_to_native (h.m_nBooleans);
+    h.m_nNumbers = le_to_native (h.m_nNumbers);
+    h.m_nStrings = le_to_native (h.m_nStrings);
+    h.m_StringTableSize = le_to_native (h.m_StringTableSize);
+#endif
     if (h.m_Magic != TERMINFO_MAGIC)
 	throw domain_error ("corrupt terminfo file");
 
@@ -117,6 +129,11 @@ void CTerminfo::read (istream& is)
     // The stringtable
     m_StringTable.resize (h.m_StringTableSize);
     is.read (m_StringTable.begin(), m_StringTable.size());
+
+#if NEED_TO_BYTESWAP
+    foreach (numvec_t::iterator, i, m_Numbers) *i = le_to_native (*i);
+    foreach (stroffvec_t::iterator, i, m_StringOffsets) *i = le_to_native (*i);
+#endif
 }
 
 /// Writes a terminfo entry into stream \p os
@@ -129,11 +146,24 @@ void CTerminfo::write (ostream& os) const
     h.m_nNumbers = m_Numbers.size();
     h.m_nStrings = m_StringOffsets.size();
     h.m_StringTableSize = m_StringTable.size();
+#if NEED_TO_BYTESWAP
+    h.m_Magic = native_to_le (h.m_Magic);
+    h.m_NamesSize = native_to_le (h.m_NamesSize);
+    h.m_nBooleans = native_to_le (h.m_nBooleans);
+    h.m_nNumbers = native_to_le (h.m_nNumbers);
+    h.m_nStrings = native_to_le (h.m_nStrings);
+    h.m_StringTableSize = native_to_le (h.m_StringTableSize);
+#endif
     os.write_strz (m_Name);
     nr_container_write (os, m_Booleans);
     os << ios::talign<number_t>();
+#if NEED_TO_BYTESWAP
+    foreach (numvec_t::iterator, i, m_Numbers) os << native_to_le (*i);
+    foreach (stroffvec_t::iterator, i, m_StringOffsets) os << native_to_le (*i);
+#else
     nr_container_write (os, m_Numbers);
     nr_container_write (os, m_StringOffsets);
+#endif
     os.write (m_StringTable.begin(), m_StringTable.size());
 }
 
