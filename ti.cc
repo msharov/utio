@@ -12,10 +12,6 @@
 
 //----------------------------------------------------------------------
 
-#if defined(HAVE_BYTESWAP_H) && (__BYTE_ORDER == __BIG_ENDIAN)
-    #define NEED_TO_BYTESWAP 1
-#endif
-
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #define TERMINFO_MAGIC	0432
@@ -85,9 +81,9 @@ void CTerminfo::LoadEntry (memblock& buf, const char* termname) const
 	    throw runtime_error ("could not find the terminfo database; please set $TERMINFO environment variable to point to it");
     }
     tipath.format ("%s/%c/%s", defTiPath, termname[0], termname);
-    if (access (tipath, R_OK)) {
+    if (access (tipath.c_str(), R_OK)) {
 	tipath.format ("%s/%s", defTiPath, termname);
-	if (access (tipath, R_OK))
+	if (access (tipath.c_str(), R_OK))
 	    throw runtime_error ("could not find the terminfo description for your terminal; please update your terminfo database");
     }
     buf.read_file (tipath.c_str());
@@ -99,7 +95,7 @@ void CTerminfo::read (istream& is)
     // First the header.
     STerminfoHeader h;
     is >> h;
-#if NEED_TO_BYTESWAP
+#if BYTE_ORDER == BIG_ENDIAN
     h.m_Magic = le_to_native (h.m_Magic);
     h.m_NamesSize = le_to_native (h.m_NamesSize);
     h.m_nBooleans = le_to_native (h.m_nBooleans);
@@ -130,7 +126,7 @@ void CTerminfo::read (istream& is)
     m_StringTable.resize (h.m_StringTableSize);
     is.read (m_StringTable.begin(), m_StringTable.size());
 
-#if NEED_TO_BYTESWAP
+#if BYTE_ORDER == BIG_ENDIAN
     foreach (numvec_t::iterator, i, m_Numbers) *i = le_to_native (*i);
     foreach (stroffvec_t::iterator, i, m_StringOffsets) *i = le_to_native (*i);
 #endif
@@ -140,30 +136,17 @@ void CTerminfo::read (istream& is)
 void CTerminfo::write (ostream& os) const
 {
     STerminfoHeader h;
-    h.m_Magic = TERMINFO_MAGIC;
-    h.m_NamesSize = m_Name.size() + 1;
-    h.m_nBooleans = m_Booleans.size();
-    h.m_nNumbers = m_Numbers.size();
-    h.m_nStrings = m_StringOffsets.size();
-    h.m_StringTableSize = m_StringTable.size();
-#if NEED_TO_BYTESWAP
-    h.m_Magic = native_to_le (h.m_Magic);
-    h.m_NamesSize = native_to_le (h.m_NamesSize);
-    h.m_nBooleans = native_to_le (h.m_nBooleans);
-    h.m_nNumbers = native_to_le (h.m_nNumbers);
-    h.m_nStrings = native_to_le (h.m_nStrings);
-    h.m_StringTableSize = native_to_le (h.m_StringTableSize);
-#endif
+    h.m_Magic = native_to_le (TERMINFO_MAGIC);
+    h.m_NamesSize = native_to_le (m_Name.size() + 1);
+    h.m_nBooleans = native_to_le (m_Booleans.size());
+    h.m_nNumbers = native_to_le (m_Numbers.size());
+    h.m_nStrings = native_to_le (m_StringOffsets.size());
+    h.m_StringTableSize = native_to_le (m_StringTable.size());
     os.write_strz (m_Name);
     nr_container_write (os, m_Booleans);
     os << ios::talign<number_t>();
-#if NEED_TO_BYTESWAP
-    foreach (numvec_t::iterator, i, m_Numbers) os << native_to_le (*i);
-    foreach (stroffvec_t::iterator, i, m_StringOffsets) os << native_to_le (*i);
-#else
-    nr_container_write (os, m_Numbers);
-    nr_container_write (os, m_StringOffsets);
-#endif
+    foreach (numvec_t::const_iterator, i, m_Numbers) os << native_to_le (*i);
+    foreach (stroffvec_t::const_iterator, i, m_StringOffsets) os << native_to_le (*i);
     os.write (m_StringTable.begin(), m_StringTable.size());
 }
 

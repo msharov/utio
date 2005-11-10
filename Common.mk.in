@@ -57,8 +57,9 @@ ifdef PROFILE
     CXXFLAGS	+= -pg
     LDFLAGS	+= -pg
 endif
+LIBS		= @libustl@
 ifdef STANDALONE
-    LIBS	= @libustl@ @libsupc++@ @libc@
+    LIBS	+= @libsupc++@ @libc@
 endif
 ifdef BUILD_SHARED
     CFLAGS	+= -fPIC
