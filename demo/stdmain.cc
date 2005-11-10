@@ -39,11 +39,10 @@ static void OnUnexpected (void)
 /// Installs OnSignal as handler for signals.
 extern "C" void InstallCleanupHandlers (void)
 {
-    static const int8_t c_Signals[] = {
-	SIGABRT, SIGALRM, SIGBUS, SIGCHLD, SIGFPE, SIGHUP, SIGILL, SIGINT,
-	SIGIO, SIGIOT, SIGPIPE, SIGPOLL, SIGPROF, SIGPWR, SIGQUIT, SIGSEGV,
-	SIGSYS, SIGTERM, SIGTRAP, SIGTSTP, SIGTTIN, SIGTTOU, SIGUSR1, SIGUSR2,
-	SIGVTALRM, SIGXCPU, SIGXFSZ
+    static const uint8_t c_Signals[] = {
+	SIGINT, SIGQUIT, SIGILL,  SIGTRAP, SIGABRT,
+	SIGIOT, SIGBUS,  SIGFPE,  SIGSEGV, SIGTERM,
+	SIGIO,  SIGCHLD
     };
     struct sigaction sa;
     sigemptyset (&sa.sa_mask);
