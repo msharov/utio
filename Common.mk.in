@@ -60,6 +60,10 @@ endif
 ifdef STANDALONE
     LIBS	+= @libc@
 endif
+ifdef BUILD_SHARED
+    CFLAGS	+= -fPIC
+    CXXFLAGS	+= -fPIC
+endif
 SHBLDFL		= @SHBLDFL@
 
 LIBA		= lib${LIBNAME}.a
