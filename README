@@ -10,7 +10,7 @@ terminal access.
 
 2. Compilation
 
-You will need the uSTL library to compile utio.
+You will need the uSTL library 0.8 or later to compile utio.
 uSTL can be downloaded from http://sourceforge.net/projects/ustl
 
 ./configure --help will list available configuration options.
@@ -23,6 +23,9 @@ Optionally, if you have doxygen, you can build a reference manual with:
 
 % make dox
 
+Running utio applications requires the terminfo database. No, termcap
+is not the same as terminfo; the latter is a collection of binary
+files under /usr/share/terminfo. Big-endian systems are not supported.
 
 3. Usage
 
