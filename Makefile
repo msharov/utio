@@ -82,7 +82,7 @@ uninstall-incs:
 clean:
 	@echo "Removing generated files ..."
 	@${RM} -f ${OBJS} ${TOCLEAN} *.rpo
-	@+make -C demo clean
+	@+${MAKE} -C demo clean
 
 depend: ${SRCS}
 	@${CXX} ${CXXFLAGS} -M ${SRCS} > .depend;
@@ -98,7 +98,7 @@ DISTTAR	= ${DISTNAM}-${BUILD}.tar.bz2
 dist:
 	mkdir ${TMPDIR}/${DISTNAM}
 	cp -r . ${TMPDIR}/${DISTNAM}
-	+make -C ${TMPDIR}/${DISTNAM} dist-clean
+	+${MAKE} -C ${TMPDIR}/${DISTNAM} dist-clean
 	(cd ${TMPDIR}/${DISTNAM}; rm -rf CVS; cd docs; rm -rf CVS)
 	(cd ${TMPDIR}; tar jcf ${DISTDIR}/${DISTTAR} ${DISTNAM}; rm -rf ${DISTNAM})
 
