@@ -72,20 +72,13 @@ void CTerminfo::LoadEntry (memblock& buf, const char* termname) const
     if (!termname)
 	termname = "linux";
     const char* defTiPath = getenv ("TERMINFO");
-    if (!defTiPath) {
-	if (!access ("/usr/share/terminfo", R_OK | X_OK))
-	    defTiPath = "/usr/share/terminfo";
-	else if (!access ("/usr/share/tabset", R_OK | X_OK))
-	    defTiPath = "/usr/share/tabset";
-	else
-	    throw runtime_error ("could not find the terminfo database; please set $TERMINFO environment variable to point to it");
-    }
+    if (!defTiPath)
+	defTiPath = "/usr/share/terminfo";
+    if (access (defTiPath, R_OK | X_OK))
+	throw runtime_error ("could not find the terminfo database; please set $TERMINFO environment variable to point to it");
     tipath.format ("%s/%c/%s", defTiPath, termname[0], termname);
-    if (access (tipath.c_str(), R_OK)) {
-	tipath.format ("%s/%s", defTiPath, termname);
-	if (access (tipath.c_str(), R_OK))
-	    throw runtime_error ("could not find the terminfo description for your terminal; please update your terminfo database");
-    }
+    if (access (tipath.c_str(), R_OK))
+	throw runtime_error ("could not find the terminfo description for your terminal; please update your terminfo database");
     buf.read_file (tipath.c_str());
 }
 

@@ -25,7 +25,8 @@ Optionally, if you have doxygen, you can build a reference manual with:
 
 Running utio applications requires the terminfo database. No, termcap
 is not the same as terminfo; the latter is a collection of binary
-files under /usr/share/terminfo.
+files under /usr/share/terminfo. No, files under /usr/share/tabset
+on BSD systems are not terminfo files either.
 
 3. Usage
 
