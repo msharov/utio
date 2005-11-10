@@ -7,7 +7,6 @@
 //
 
 #include "ti.h"
-#include <stdlib.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 
@@ -69,11 +68,24 @@ CTerminfo::CContext::CContext (void)
 /// Loads terminfo entry \p termname into \p buf
 void CTerminfo::LoadEntry (memblock& buf, const char* termname) const
 {
-    const char* defTiPath = getenv ("TERMINFO");
-    if (!defTiPath) defTiPath = "/usr/share/terminfo";
-    if (!termname)  termname = "linux";
     string tipath;
+    if (!termname)
+	termname = "linux";
+    const char* defTiPath = getenv ("TERMINFO");
+    if (!defTiPath) {
+	if (!access ("/usr/share/terminfo", R_OK | X_OK))
+	    defTiPath = "/usr/share/terminfo";
+	else if (!access ("/usr/share/tabset", R_OK | X_OK))
+	    defTiPath = "/usr/share/tabset";
+	else
+	    throw runtime_error ("could not find the terminfo database; please set $TERMINFO environment variable to point to it");
+    }
     tipath.format ("%s/%c/%s", defTiPath, termname[0], termname);
+    if (access (tipath, R_OK)) {
+	tipath.format ("%s/%s", defTiPath, termname);
+	if (access (tipath, R_OK))
+	    throw runtime_error ("could not find the terminfo description for your terminal; please update your terminfo database");
+    }
     buf.read_file (tipath.c_str());
 }
 
@@ -84,26 +96,23 @@ void CTerminfo::read (istream& is)
     STerminfoHeader h;
     is >> h;
     if (h.m_Magic != TERMINFO_MAGIC)
-	throw domain_error ("Corrupt terminfo file");
+	throw domain_error ("corrupt terminfo file");
 
     // The names section
     is.read_strz (m_Name);
 
     // The boolean section
     m_Booleans.resize (h.m_nBooleans);
-    foreach (boolvec_t::iterator, i, m_Booleans)
-	is >> *i;
-    is.align (sizeof(number_t));
+    nr_container_read (is, m_Booleans);
+    is >> ios::talign<number_t>();
 
     // The numbers section
     m_Numbers.resize (h.m_nNumbers);
-    foreach (numvec_t::iterator, i, m_Numbers)
-	is >> *i;
+    nr_container_read (is, m_Numbers);
 
     // The string offsets section
     m_StringOffsets.resize (h.m_nStrings);
-    foreach (stroffvec_t::iterator, i, m_StringOffsets)
-	is >> *i;
+    nr_container_read (is, m_StringOffsets);
 
     // The stringtable
     m_StringTable.resize (h.m_StringTableSize);
@@ -121,10 +130,10 @@ void CTerminfo::write (ostream& os) const
     h.m_nStrings = m_StringOffsets.size();
     h.m_StringTableSize = m_StringTable.size();
     os.write_strz (m_Name);
-    foreach (boolvec_t::const_iterator, i, m_Booleans) os << *i;
+    nr_container_write (os, m_Booleans);
     os << ios::talign<number_t>();
-    foreach (numvec_t::const_iterator, i, m_Numbers) os << *i;
-    foreach (stroffvec_t::const_iterator, i, m_StringOffsets) os << *i;
+    nr_container_write (os, m_Numbers);
+    nr_container_write (os, m_StringOffsets);
     os.write (m_StringTable.begin(), m_StringTable.size());
 }
 
