@@ -48,7 +48,7 @@ int RunDemo (void) throw()
     try {
 	T::Instance().Run();
 	rv = EXIT_SUCCESS;
-    } catch (exception& e) {
+    } catch (ustl::exception& e) {
 	cout.flush();
 	cerr << "Error: " << e << endl;
     } catch (...) {
