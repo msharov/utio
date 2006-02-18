@@ -76,7 +76,7 @@ uninstall-incs:
 	@echo "    Compiling $< to assembly ..."
 	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
 
-.PHONY:	gch clean depend dox dist dist-clean maintainer-clean
+.PHONY:	gch clean depend dox dist distclean maintainer-clean
 
 clean:
 	@echo "Removing generated files ..."
@@ -98,10 +98,10 @@ dist:
 	mkdir ${TMPDIR}/${DISTNAM}
 	cp -r . ${TMPDIR}/${DISTNAM}
 	+${MAKE} -C ${TMPDIR}/${DISTNAM} dist-clean
-	(cd ${TMPDIR}/${DISTNAM}; rm -rf CVS; cd docs; rm -rf CVS)
+	(cd ${TMPDIR}/${DISTNAM}; rm -rf CVS; cd docs; rm -rf CVS; cd style; rm -rf CVS; cd ../../demo; rm -rf CVS)
 	(cd ${TMPDIR}; tar jcf ${DISTDIR}/${DISTTAR} ${DISTNAM}; rm -rf ${DISTNAM})
 
-dist-clean:	clean
+distclean:	clean
 	@rm -f Common.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend demo/.depend
 
 maintainer-clean: dist-clean
