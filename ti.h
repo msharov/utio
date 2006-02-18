@@ -77,7 +77,7 @@ private:
     typedef tuple<acs_Last,char>	acsmap_t;
     typedef tuple<attr_Last,number_t>	progargs_t;
     /// Structure for describing alternate character set values.
-    struct SAcscInfo {
+    struct DLL_LOCAL SAcscInfo {
 	char		m_vt100Code;	///< vt100 code for this character.
 	char		m_Default;	///< Default value, if the terminfo does not specify.
 	uint16_t	m_Unicode;	///< Unicode equivalent character value.
@@ -86,7 +86,7 @@ private:
     static const SAcscInfo	c_AcscInfo [acs_Last];		///< Codes for all ACS characters.
     static const int16_t	c_KeyToStringMap [kv_nKeys];
     /// Current terminal state.
-    class CContext {
+    class DLL_LOCAL CContext {
     public:
 			CContext (void);
     public:
