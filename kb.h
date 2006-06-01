@@ -33,7 +33,6 @@ public:
     void		LeaveUIMode (void);
     void		LoadKeymap (const CTerminfo& rti);
     bool		DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const;
-    void		SetKeyboardEntry (uint8_t table, uint8_t keycode, uint16_t value, uint16_t* oldValue = NULL);
     inline bool		IsInUIMode (void) const	{ return (m_bTermInUIMode); }
 #if UTIO_WANT_GETKEY
     wchar_t		GetKey (metastate_t* pMeta = NULL, bool bBlock = true) const;
@@ -47,8 +46,6 @@ private:
     mutable string	m_Keydata;
 #endif
     struct termios	m_InitialTermios;
-    uint16_t		m_KbeScrollForward;
-    uint16_t		m_KbeScrollBackward;
     bool		m_bTermInUIMode;
 };
 

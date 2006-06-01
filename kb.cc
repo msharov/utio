@@ -13,20 +13,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#if linux
-    #include <linux/kd.h>
-#endif
 
 namespace utio {
-
-//----------------------------------------------------------------------
-
-// For some reason there is no header for these constants.
-#define SHIFT_TABLE		1
-#define PAGE_UP_KEYCODE		104
-#define PAGE_DOWN_KEYCODE	109
-#define PAGE_UP_ACTION		0x0118
-#define PAGE_DOWN_ACTION	0x0119
 
 //----------------------------------------------------------------------
 
@@ -37,8 +25,6 @@ CKeyboard::CKeyboard (void)
   m_Keydata (),
 #endif
   m_InitialTermios (),
-  m_KbeScrollForward (0),
-  m_KbeScrollBackward (0),
   m_bTermInUIMode (false)
 {
     fill_n ((void*) &m_InitialTermios, sizeof(struct termios), '\x0');
@@ -173,36 +159,6 @@ void CKeyboard::EnterUIMode (void)
     m_bTermInUIMode = true;		// Cleanup is needed after the next statement.
     if (-1 == tcsetattr (STDIN_FILENO, TCSAFLUSH, &tios))
 	throw libc_exception ("tcsetattr");
-    #ifdef NDEBUG
-	SetKeyboardEntry (SHIFT_TABLE, PAGE_UP_KEYCODE, PAGE_UP_ACTION, &m_KbeScrollBackward);
-	SetKeyboardEntry (SHIFT_TABLE, PAGE_DOWN_KEYCODE, PAGE_DOWN_ACTION, &m_KbeScrollForward);
-    #endif
-}
-
-/// Manipulates terminal keymap (what loadkeys does)
-void CKeyboard::SetKeyboardEntry (uint8_t table, uint8_t keycode, uint16_t value, uint16_t* oldValue)
-{
-#if linux
-    struct kbentry kbe;
-    kbe.kb_table = table;
-    kbe.kb_index = keycode;
-    if (oldValue)
-	*oldValue = 0;
-    if (ioctl (STDIN_FILENO, KDGKBENT, &kbe))
-	return;
-    if (oldValue && !*oldValue)
-	*oldValue = kbe.kb_value;
-    if (kbe.kb_value != value) {
-	kbe.kb_value = value;
-	if (ioctl (STDIN_FILENO, KDSKBENT, &kbe))
-	    throw file_exception ("KDGKBENT", "stdin");
-    }
-#else
-    table = keycode = 0;
-    value = 0;
-    if (oldValue)
-	*oldValue = 0;
-#endif
 }
 
 /// Leaves UI mode.
@@ -214,10 +170,6 @@ void CKeyboard::LeaveUIMode (void)
     if (tcsetattr (STDIN_FILENO, TCSANOW, &m_InitialTermios))
 	throw file_exception ("tcsetattr", "stdin");
     m_bTermInUIMode = false;
-    if (m_KbeScrollBackward)
-	SetKeyboardEntry (SHIFT_TABLE, PAGE_UP_KEYCODE, m_KbeScrollBackward);
-    if (m_KbeScrollForward)
-	SetKeyboardEntry (SHIFT_TABLE, PAGE_DOWN_KEYCODE, m_KbeScrollForward);
 }
 
 /// Reads the updated terminfo database.
