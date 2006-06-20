@@ -16,8 +16,8 @@ public:
 			DECLARE_SINGLETON (CKeyboardDemo)
     void		Run (void);
 private:
-    CTerminfo		m_TI;
-    CKeyboard		m_Kb;
+    CTerminfo		m_TI;	///< The terminfo database.
+    CKeyboard		m_Kb;	///< The keyboard driver.
 private:
     static const char*	c_KeyNameMap [kv_nKeys];
     static const char*	c_MetaBitNames [mksbit_Last];
@@ -35,7 +35,7 @@ CKeyboardDemo::CKeyboardDemo (void)
 /// Prints pressed keys until told to stop.
 void CKeyboardDemo::Run (void)
 {
-    m_TI.Load();	// Just loads the terminfo (using $TERM)
+    m_TI.Load();	// Loads the terminfo database (using $TERM)
     m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
 
     cout << "Keyboard demo. Press keys to print their value, 'q' to quit." << endl;

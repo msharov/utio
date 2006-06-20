@@ -42,21 +42,19 @@ CGCDemo::CGCDemo (void)
 /// Destructor to clean up UI state.
 CGCDemo::~CGCDemo (void)
 {
-    // Restores normal terminal state.
-    cout << m_TI.Color (lightgray, black);
-    cout << m_TI.ShowCursor() << endl;
+    cout << m_TI.Reset();	// Restores normal terminal state.
 }
 
 /// Draws a box with a hole on the screen.
 void CGCDemo::DrawBox (CGC& gc, Point2d pos)
 {
-    gc.Bar (pos[0], pos[1], 12, 4, acsv_Board);
+    gc.Bar (pos[0], pos[1], 12, 4, acsv_Board);		// acsv special character constants are in ticonst.h
     gc.Box (pos[0], pos[1], 12, 4);
     gc.Bar (pos[0], pos[1] + 4, 4, 4, acsv_Board);
     gc.Bar (pos[0] + 8, pos[1] + 4, 4, 4, acsv_Board);
     gc.Bar (pos[0], pos[1] + 8, 12, 4, acsv_Board);
     gc.Text (pos[0] + 1, pos[1] + 1, "GC demo");
-    gc.FgColor (lightcyan);
+    gc.FgColor (lightcyan);				// The background is set by the caller
     gc.Char (pos[0] + 1, pos[1] + 2, acsv_LeftArrow);
     gc.Char (pos[0] + 2, pos[1] + 2, acsv_DownArrow);
     gc.Char (pos[0] + 3, pos[1] + 2, acsv_UpArrow);
@@ -69,34 +67,30 @@ void CGCDemo::DrawBox (CGC& gc, Point2d pos)
 /// Draws two boxes on the screen, one moveable.
 void CGCDemo::Draw (CGC& gc)
 {
-    gc.BgColor (black);
-    gc.FgColor (green);
-    gc.Clear();
-    gc.BgColor (brown);
-    gc.FgColor (black);
-    DrawBox (gc, Point2d (10, 5));
-    gc.BgColor (m_Bg);
-    gc.FgColor (m_Fg);
-    DrawBox (gc, m_Pos);
+    gc.Color (green, black);
+    gc.Clear();				// Clears with current color; green on black.
+    gc.Color (black, brown);		// Stationary, background box is brown,
+    DrawBox (gc, Point2d (10, 5));	// ... and constantly at (10,5).
+    gc.Color (m_Fg, m_Bg);		// Moveable box is of custom color,
+    DrawBox (gc, m_Pos);		// ... wherever it currently is.
 }
 
 /// Runs the event loop for the demo.
 void CGCDemo::Run (void)
 {
-    m_TI.Load();	// Just loads the terminfo (using $TERM)
+    m_TI.Load();	// Loads the terminfo database (using $TERM)
     m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
 
     CGC gc;		// This is where the code draws.
     CGC screen;		// This contains the current contents of the screen.
-    gc.Resize (m_TI.Width(), m_TI.Height());
+    gc.Resize (m_TI.Width(), m_TI.Height());	// Full screen buffers.
     screen.Resize (m_TI.Width(), m_TI.Height());
 
-    // Don't want the cursor to blink unless in a text box.
-    cout << m_TI.HideCursor();
+    cout << m_TI.HideCursor();	// Don't want the cursor to blink unless in a text box.
 
     wchar_t key = 0;
     while (key != 'q') {
-	Draw (gc);
+	Draw (gc);		// Draws the boxes at current positions.
 
 	// Only the differences need to be written, so find them.
 	gc.MakeDiffFrom (screen);
