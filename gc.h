@@ -54,6 +54,7 @@ public:
     inline void			Text (coord_t x, coord_t y, const string& str)				{ Text (Point2d (x, y), str); }
     inline void			FgColor (EColor c)	{ m_Template.m_FgColor = c; }
     inline void			BgColor (EColor c)	{ m_Template.m_BgColor = c; }
+    inline void			Color (EColor fg, EColor bg = color_Preserve)	{ FgColor(fg); BgColor(bg); }
     inline void			AttrOn (EAttribute a)	{ m_Template.SetAttr (a); }
     inline void			AttrOff (EAttribute a)	{ m_Template.ClearAttr (a); }
     inline void			AllAttrsOff (void)	{ m_Template.m_Attrs = 0; }
