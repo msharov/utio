@@ -139,7 +139,8 @@ void CGC::MakeDiffFrom (const CGC& src)
 /// Prints character \p c.
 void CGC::Char (Point2d p, wchar_t c)
 {
-    *CanvasAt(p) = CCharCell (c, m_Template);
+    if (Clip (p))
+	*CanvasAt(p) = CCharCell (c, m_Template);
 }
 
 /// Prints string \p str at \p p.
