@@ -63,7 +63,7 @@ public:
     bool			Clip (Rect& r) const;
     bool			Clip (Point2d& r) const;
     inline void			SetTabSize (size_t nts = 8)	{ assert (nts && "Tab size can not be 0"); m_TabSize = nts; }
-    void			MakeDiffFrom (const CGC& src);
+    bool			MakeDiffFrom (const CGC& src);
 private:
     inline canvas_t::iterator		CanvasAt (Point2d p);
     inline canvas_t::const_iterator	CanvasAt (Point2d p) const;

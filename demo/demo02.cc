@@ -42,7 +42,7 @@ CGCDemo::CGCDemo (void)
 /// Destructor to clean up UI state.
 CGCDemo::~CGCDemo (void)
 {
-    cout << m_TI.Reset();	// Restores normal terminal state.
+    cout << m_TI.Reset() << m_TI.Clear();	// Restores normal terminal state.
 }
 
 /// Draws a box with a hole on the screen.
@@ -87,18 +87,20 @@ void CGCDemo::Run (void)
     screen.Resize (m_TI.Width(), m_TI.Height());
 
     cout << m_TI.HideCursor();	// Don't want the cursor to blink unless in a text box.
+    cout << m_TI.Clear();	// Avoid watching the screen scroll.
 
     wchar_t key = 0;
     while (key != 'q') {
 	Draw (gc);		// Draws the boxes at current positions.
 
 	// Only the differences need to be written, so find them.
-	gc.MakeDiffFrom (screen);
-	// gc now has only new stuff, the rest is zeroed out, and isn't drawn.
-	cout << m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
-	cout.flush();
-	screen.Image (gc);	// Now apply the same diff to the screen cache.
-	gc.Image (screen);	// ... and copy it back for a fresh start.
+	if (gc.MakeDiffFrom (screen)) {
+	    // gc now has only new stuff, the rest is zeroed out, and isn't drawn.
+	    cout << m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
+	    cout.flush();
+	    screen.Image (gc);	// Now apply the same diff to the screen cache.
+	    gc.Image (screen);	// ... and copy it back for a fresh start.
+	}
 
 	key = m_Kb.GetKey();	// Synchronous call.
 

@@ -124,16 +124,21 @@ void CGC::Image (Rect r, const canvas_t& cells)
 }
 
 /// Zeroes out cells which are identical to those in \p src.
-void CGC::MakeDiffFrom (const CGC& src)
+bool CGC::MakeDiffFrom (const CGC& src)
 {
     assert (src.Canvas().size() == m_Canvas.size() && "Diffs can only be made on equally sized canvasses");
     register canvas_t::pointer inew (Canvas().begin());
     register canvas_t::const_pointer iold (src.Canvas().begin());
     const canvas_t::const_pointer iend (src.Canvas().end());
     const CCharCell nullCell (0, color_Preserve, color_Preserve, 0);
-    for (; iold < iend; ++ iold, ++ inew)
-	if (*iold == *inew)
+    bool bHaveChanges = false;
+    for (; iold < iend; ++iold, ++inew) {
+	const bool bSameCell (*iold == *inew);
+	if (bSameCell)
 	    *inew = nullCell;
+	bHaveChanges |= !bSameCell;
+    }
+    return (bHaveChanges);
 }
 
 /// Prints character \p c.

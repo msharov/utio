@@ -71,14 +71,16 @@ enum EAttribute {
 /// Structure for character images
 class CCharCell {
 public:
-    inline		CCharCell (wchar_t v = ' ', EColor fg = lightgray, EColor bg = color_Preserve, uint16_t attrs = 0)
-			: m_Char (v), m_FgColor (fg), m_BgColor (bg), m_Attrs (attrs) {}
-    inline		CCharCell (wchar_t v, const CCharCell& t)
-			: m_Char (v), m_FgColor (t.m_FgColor), m_BgColor (t.m_BgColor), m_Attrs (t.m_Attrs) {}
-    inline bool	EqualFormat (const CCharCell& v) const
-			{ return (m_FgColor == v.m_FgColor && m_BgColor == v.m_BgColor && m_Attrs == v.m_Attrs); }
-    inline bool	operator== (const CCharCell& v) const
-			{ return (m_Char == v.m_Char && EqualFormat (v)); }
+    typedef const CCharCell&	rcself_t;
+public:
+    inline	CCharCell (wchar_t v = ' ', EColor fg = lightgray, EColor bg = color_Preserve, uint16_t attrs = 0)
+		    : m_Char (v), m_FgColor (fg), m_BgColor (bg), m_Attrs (attrs) {}
+    inline	CCharCell (wchar_t v, rcself_t t)
+		    : m_Char (v), m_FgColor (t.m_FgColor), m_BgColor (t.m_BgColor), m_Attrs (t.m_Attrs) {}
+    inline bool	EqualFormat (rcself_t v) const
+		    { return ((m_FgColor == v.m_FgColor) & (m_BgColor == v.m_BgColor) & (m_Attrs == v.m_Attrs)); }
+    inline bool	operator== (rcself_t v) const;
+    inline void	operator= (rcself_t v);
     inline bool	HasAttr (EAttribute a) const	{ return (m_Attrs & (1 << a)); }
     inline void	SetAttr (EAttribute a)		{ m_Attrs |= (1 << a); }
     inline void	ClearAttr (EAttribute a)	{ m_Attrs &= ~(1 << a); }
@@ -88,6 +90,29 @@ public:
     uint8_t	m_BgColor;	///< Background color. See #EColor for values.
     uint16_t	m_Attrs;	///< Attribute bits. See #EAttribute for values.
 };
+
+/// Returns true if equal to \p v.
+inline bool CCharCell::operator== (rcself_t v) const
+{
+    // Optimize to avoid word and byte comparisons, since it is basically a whole-object compare
+    // Original: return ((m_Char == v.m_Char) & EqualFormat (v));
+    const u_long* lps = (const u_long*)&v.m_Char;
+    const u_long* lpd = (const u_long*)&m_Char;
+    bool bEqual = true;
+    for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
+	bEqual &= (lpd[i] == lps[i]);
+    return (bEqual);
+}
+
+/// Assigns \p v to self.
+inline void CCharCell::operator= (rcself_t v)
+{
+    // Optimize to copy more than one item at once.
+    const u_long* lps = (const u_long*)&v.m_Char;
+    u_long* lpd = (u_long*)&m_Char;
+    for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
+	lpd[i] = lps[i];
+}
 
 /// Standard graphic characters supported by some terminals.
 enum EGraphicChar {
