@@ -1,4 +1,4 @@
-include ../Common.mk
+include ../Config.mk
 
 DEMOCCS	= $(wildcard demo*.cc)
 SRCS	= ${DEMOCCS} stdmain.cc

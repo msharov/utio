@@ -1,4 +1,4 @@
-include Common.mk
+include Config.mk
 
 SRCS	= $(wildcard *.cc)
 OBJS	= $(SRCS:.cc=.o)
@@ -102,7 +102,7 @@ dist:
 	(cd ${TMPDIR}; tar jcf ${DISTDIR}/${DISTTAR} ${DISTNAM}; rm -rf ${DISTNAM})
 
 distclean:	clean
-	@rm -f Common.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend demo/.depend
+	@rm -f Config.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend demo/.depend
 
 maintainer-clean: dist-clean
 	@rm -rf docs/html

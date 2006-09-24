@@ -26,7 +26,7 @@
 #define PACKAGE_BUGREPORT	"Mike Sharov <msharov@users.sourceforge.net>"
 
 static cpchar_t g_Files [] = {
-    "Common.mk",
+    "Config.mk",
     "config.h"
 };
 
