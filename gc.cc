@@ -50,6 +50,8 @@ void CGC::Clear (wchar_t c)
 void CGC::Box (Rect r)
 {
     Clip (r);
+    if ((r.Width() < 2) | (r.Height() < 2))
+	return;
     r[1] -= 1;
     Point2d trCorner (r[1][0], r[0][1]);
     Point2d blCorner (r[0][0], r[1][1]);
@@ -157,7 +159,7 @@ void CGC::Text (Point2d p, const string& str)
     const canvas_t::iterator doutend = doutstart + (m_Size[0] - p[0]);
     assert (doutend >= doutstart);
     canvas_t::iterator dout (doutstart);
-    for (string::utf8_iterator si = str.utf8_begin(); si < str.utf8_end() && dout < doutend; ++ si) {
+    for (string::utf8_iterator si = str.utf8_begin(); (si < str.utf8_end()) & (dout < doutend); ++si) {
 	if (*si == '\t') {
 	    const size_t absX = p[0] + distance (doutstart, dout);
 	    size_t toTab = Align (absX + 1, m_TabSize) - absX;
@@ -178,7 +180,7 @@ bool CGC::Clip (Point2d& pt) const
     bottomright -= 1;
     simd::pmax (c_ZeroPoint, pt);
     simd::pmin (bottomright, pt);
-    return (oldPoint == pt);
+    return ((oldPoint == pt) | !m_Size[0] | !m_Size[1]);
 }
 
 /// Clips rectangle \p r to the canvas.
@@ -194,6 +196,7 @@ bool CGC::Clip (Rect& r) const
 	swap (r[0], r[1]);
     if (r[0][0] > r[1][0])
 	swap (r[0][0], r[1][0]);
+    simd::pmax (r[0], r[1]);
     return (oldRect == r);
 }
 
