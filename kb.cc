@@ -18,14 +18,18 @@ namespace utio {
 
 //----------------------------------------------------------------------
 
+// One per process, just like the terminal.
+bool CKeyboard::s_bTermInUIMode = false;
+
+//----------------------------------------------------------------------
+
 /// Constructs node with id \p nodeId.
 CKeyboard::CKeyboard (void)
 : m_Keymap (),
 #if UTIO_WANT_GETKEY
   m_Keydata (),
 #endif
-  m_InitialTermios (),
-  m_bTermInUIMode (false)
+  m_InitialTermios ()
 {
     fill_n ((void*) &m_InitialTermios, sizeof(struct termios), '\x0');
     #if UTIO_WANT_GETKEY
@@ -132,7 +136,7 @@ bool CKeyboard::WaitForKeyData (long timeout) const
 ///
 void CKeyboard::EnterUIMode (void)
 {
-    if (m_bTermInUIMode)
+    if (s_bTermInUIMode)
 	return;
     if (!isatty (STDIN_FILENO))
 	throw domain_error ("This application only works on a tty.");
@@ -156,7 +160,7 @@ void CKeyboard::EnterUIMode (void)
     if (-1 == tcflush (STDIN_FILENO, TCIFLUSH))	// Flush the input queue; who knows what was pressed.
 	throw libc_exception ("tcflush");
 
-    m_bTermInUIMode = true;		// Cleanup is needed after the next statement.
+    s_bTermInUIMode = true;		// Cleanup is needed after the next statement.
     if (-1 == tcsetattr (STDIN_FILENO, TCSAFLUSH, &tios))
 	throw libc_exception ("tcsetattr");
 }
@@ -164,12 +168,12 @@ void CKeyboard::EnterUIMode (void)
 /// Leaves UI mode.
 void CKeyboard::LeaveUIMode (void)
 {
-    if (!m_bTermInUIMode)
+    if (!s_bTermInUIMode)
 	return;
     tcflush (STDIN_FILENO, TCIFLUSH);	// Should not leave any garbage for the shell
     if (tcsetattr (STDIN_FILENO, TCSANOW, &m_InitialTermios))
 	throw file_exception ("tcsetattr", "stdin");
-    m_bTermInUIMode = false;
+    s_bTermInUIMode = false;
 }
 
 /// Reads the updated terminfo database.

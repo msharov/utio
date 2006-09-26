@@ -174,9 +174,9 @@ void CTerminfo::CacheFrequentValues (void)
     // Color stuff.
     m_nColors = GetNumber (ti::max_colors);
     m_nPairs = GetNumber (ti::max_pairs);
-    if (m_nColors == size_t(ti::no_value))
+    if (m_nColors == uint16_t(ti::no_value))
 	m_nColors = color_Last;
-    if (m_nPairs == size_t(ti::no_value))
+    if (m_nPairs == uint16_t(ti::no_value))
 	m_nPairs = 64;
 
     // Decode the ACS capability, if present.

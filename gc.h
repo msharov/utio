@@ -71,7 +71,7 @@ private:
     canvas_t			m_Canvas;	///< The output buffer.
     CCharCell			m_Template;	///< Current drawing values.
     Size2d			m_Size;		///< Size of the output buffer.
-    size_t			m_TabSize;	///< Tab size as expanded by Text
+    uint32_t			m_TabSize;	///< Tab size as expanded by Text
 };
 
 } // namespace utio

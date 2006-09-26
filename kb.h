@@ -33,7 +33,7 @@ public:
     void		LeaveUIMode (void);
     void		LoadKeymap (const CTerminfo& rti);
     bool		DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const;
-    inline bool		IsInUIMode (void) const	{ return (m_bTermInUIMode); }
+    inline bool		IsInUIMode (void) const	{ return (s_bTermInUIMode); }
 #if UTIO_WANT_GETKEY
     wchar_t		GetKey (metastate_t* pMeta = NULL, bool bBlock = true) const;
     bool		WaitForKeyData (long timeout = 0) const;
@@ -41,12 +41,12 @@ private:
     void		ReadKeyData (void) const;
 #endif
 private:
-    keymap_t		m_Keymap;
+    keymap_t		m_Keymap;		///< Currently loaded keymap.
 #if UTIO_WANT_GETKEY
-    mutable string	m_Keydata;
+    mutable string	m_Keydata;		///< Buffered keydata.
 #endif
-    struct termios	m_InitialTermios;
-    bool		m_bTermInUIMode;
+    struct termios	m_InitialTermios;	///< What it was before we munged it.
+    static bool		s_bTermInUIMode;	///< Current terminal state, static because the terminal is process-global.
 };
 
 } // namespace utio

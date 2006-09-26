@@ -119,8 +119,8 @@ private:
     strtable_t		m_StringTable;		///< Actual string caps values.
     acsmap_t		m_AcsMap;		///< Decoded ACS characters.
     mutable CContext	m_Ctx;			///< Current state of the terminal.
-    size_t		m_nColors;		///< Number of available colors.
-    size_t		m_nPairs;		///< Number of available color pairs (unused).
+    uint16_t		m_nColors;		///< Number of available colors.
+    uint16_t		m_nPairs;		///< Number of available color pairs (unused).
     dim_t		m_nColumns;		///< Number of display columns.
     dim_t		m_nRows;		///< Number of display rows.
 };
