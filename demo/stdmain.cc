@@ -32,7 +32,7 @@ static void Terminate (void)
 /// Called when an exception violates a throw specification.
 static void OnUnexpected (void)
 {
-    cerr << "Fatal internal error: unexpected exception caught." << endl;
+    cerr << "Fatal internal error: unexpected exception caught.\n";
     Terminate();
 }
 
@@ -44,12 +44,8 @@ extern "C" void InstallCleanupHandlers (void)
 	SIGIOT, SIGBUS,  SIGFPE,  SIGSEGV, SIGTERM,
 	SIGIO,  SIGCHLD
     };
-    struct sigaction sa;
-    sigemptyset (&sa.sa_mask);
-    sa.sa_handler = OnSignal;
-    sa.sa_flags = SA_RESTART;
-    for (size_t i = 0; i < VectorSize(c_Signals); ++ i)
-	sigaction (c_Signals[i], &sa, NULL);
+    for (uoff_t i = 0; i < VectorSize(c_Signals); ++ i)
+	signal (c_Signals[i], OnSignal);
     std::set_terminate (Terminate);
     std::set_unexpected (OnUnexpected);
 }
