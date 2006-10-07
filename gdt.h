@@ -34,12 +34,16 @@ public:
 			    { at(0) = at(1) = tl; at(1) += wh; }
     inline size_t	Width (void) const		{ return (at(1)[0] - at(0)[0]); }
     inline size_t	Height (void) const		{ return (at(1)[1] - at(0)[1]); }
-    inline bool		Empty (void) const		{ return (!Width() || !Height()); }
+    inline bool		Empty (void) const		{ return (!Width() | !Height()); }
     inline Size2d	Size (void) const		{ return (at(1) - at(0)); }
     inline const Rect&	operator+= (const Point2d& d)	{ at(0) += d; at(1) += d; return (*this); }
     inline const Rect&	operator-= (const Point2d& d)	{ at(0) -= d; at(1) -= d; return (*this); }
     inline const Rect&	operator+= (const Size2d& d)	{ at(0) += d; at(1) += d; return (*this); }
     inline const Rect&	operator-= (const Size2d& d)	{ at(0) -= d; at(1) -= d; return (*this); }
+    inline Rect		operator+ (const Point2d& d) const	{ Rect r (*this); r += d; return (r); }
+    inline Rect		operator- (const Point2d& d) const	{ Rect r (*this); r -= d; return (r); }
+    inline Rect		operator+ (const Size2d& d) const	{ Rect r (*this); r += d; return (r); }
+    inline Rect		operator- (const Size2d& d) const	{ Rect r (*this); r -= d; return (r); }
 };
 
 } // namespace gdt
