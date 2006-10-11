@@ -36,6 +36,7 @@ public:
     inline size_t	Height (void) const		{ return (at(1)[1] - at(0)[1]); }
     inline bool		Empty (void) const		{ return (!Width() | !Height()); }
     inline Size2d	Size (void) const		{ return (at(1) - at(0)); }
+    inline void		Expand (coord_t d)		{ at(0) += d; at(1) -= d; }
     inline const Rect&	operator+= (const Point2d& d)	{ at(0) += d; at(1) += d; return (*this); }
     inline const Rect&	operator-= (const Point2d& d)	{ at(0) -= d; at(1) -= d; return (*this); }
     inline const Rect&	operator+= (const Size2d& d)	{ at(0) += d; at(1) += d; return (*this); }
