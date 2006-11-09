@@ -180,7 +180,7 @@ bool CGC::Clip (Point2d& pt) const
     bottomright -= 1;
     simd::pmax (c_ZeroPoint, pt);
     simd::pmin (bottomright, pt);
-    return ((oldPoint == pt) | !m_Size[0] | !m_Size[1]);
+    return ((oldPoint == pt) & (m_Size[0] > 0) & (m_Size[1] > 0));
 }
 
 /// Clips rectangle \p r to the canvas.
