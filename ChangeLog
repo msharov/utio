@@ -1,4 +1,4 @@
-Release 1.2.0
+2006-11-18 Release 1.2.0 (svn 98)
 	Removed scrollback disabling code.
 		In kernel 2.6+ you have to be root to change the keymap;
 		as a result, this feature no longer works for anyone but.

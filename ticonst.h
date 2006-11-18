@@ -708,7 +708,7 @@ enum EStrings {
 
 } // namespace ti
 
-/// Codes returned by #CKeyboard for special keys
+/// Codes returned by CKeyboard for special keys
 enum EKeyDataValue {
     kv_Space = ' ',
     kv_Tab = '\t',
@@ -864,7 +864,7 @@ enum EKeyDataValue {
     kv_nKeys = (kv_Last - kv_First)
 };
 
-/// Used by #CKeyboard to report meta key state.
+/// Used by CKeyboard to report meta key state.
 enum EMetaKeyBits {
     mksbit_Shift,
     mksbit_Alt,

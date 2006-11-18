@@ -76,7 +76,7 @@ uninstall-incs:
 	@echo "    Compiling $< to assembly ..."
 	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
 
-.PHONY:	gch clean depend dox dist distclean maintainer-clean
+.PHONY:	gch clean depend html dist distclean maintainer-clean
 
 clean:
 	@echo "Removing generated files ..."
@@ -86,25 +86,25 @@ clean:
 depend: ${SRCS}
 	@${CXX} ${CXXFLAGS} -M ${SRCS} > .depend;
 
-dox:
+html:
 	@${DOXYGEN} ${DOCT}
 
 TMPDIR	= /tmp
 DISTDIR	= ${HOME}/stored
 DISTNAM	= ${LIBNAME}-${MAJOR}.${MINOR}
-DISTTAR	= ${DISTNAM}-${BUILD}.tar.bz2
+DISTTAR	= ${DISTNAM}.${BUILD}.tar.bz2
 
 dist:
 	mkdir ${TMPDIR}/${DISTNAM}
 	cp -r . ${TMPDIR}/${DISTNAM}
-	+${MAKE} -C ${TMPDIR}/${DISTNAM} dist-clean
-	(cd ${TMPDIR}/${DISTNAM}; rm -rf CVS; cd docs; rm -rf CVS; cd style; rm -rf CVS; cd ../../demo; rm -rf CVS)
+	+${MAKE} -C ${TMPDIR}/${DISTNAM} distclean
+	(cd ${TMPDIR}/${DISTNAM}; rm -rf `find . -name .svn`)
 	(cd ${TMPDIR}; tar jcf ${DISTDIR}/${DISTTAR} ${DISTNAM}; rm -rf ${DISTNAM})
 
 distclean:	clean
 	@rm -f Config.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend demo/.depend
 
-maintainer-clean: dist-clean
+maintainer-clean: distclean
 	@rm -rf docs/html
 
 -include .depend
