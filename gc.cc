@@ -163,8 +163,8 @@ void CGC::Text (Point2d p, const string& str)
 	if (*si == '\t') {
 	    const size_t absX = p[0] + distance (doutstart, dout);
 	    size_t toTab = Align (absX + 1, m_TabSize) - absX;
-	    for (; toTab && dout < doutend; --toTab, ++dout)
-		*dout = CCharCell (' ', m_Template);
+	    toTab = min (toTab, size_t(distance (dout, doutend)));
+	    dout = fill_n (dout, toTab, CCharCell (' ', m_Template));
 	} else
 	    *dout++ = CCharCell (*si, m_Template);
     }
