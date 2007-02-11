@@ -33,14 +33,9 @@ static cpchar_t g_Files [] = {
 /* Values substitute @VARNAME@ */
 static cpchar_t g_EnvVars [] = {
     "CC",
-    "LD",
     "CXX",
-    "CPP",
-    "HOME",
     "CXXFLAGS",
-    "LDFLAGS",
-    "CPPFLAGS",
-    "CFLAGS"
+    "LDFLAGS"
 };
 
 /*  VARIABLE	PROGRAM		HOW TO CALL	IF NOT FOUND */
@@ -66,11 +61,7 @@ static cpchar_t	g_Headers [] = {
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
 static cpchar_t g_Libs [] = {
-    "ustl",		"",				"-lustl",
-    "supc++",		"",				"-lsupc++",
-    "gcc",		"",				"-lgcc",
-    "gcc_eh",		"-lgcc_s",			"-lgcc_eh",
-    "c",		"",				"-lc"
+    "ustl",		"",				"-lustl"
 };
 
 /*   NAME               IF NOT FOUND                    IF FOUND */
@@ -83,8 +74,6 @@ static cpchar_t g_Components [] = {
     "shared",		"#BUILD_SHARED\t= 1",			"BUILD_SHARED\t= 1 ",
     "static",		"#BUILD_STATIC\t= 1",			"BUILD_STATIC\t= 1 ",
     "debug",		"#DEBUG\t\t= 1",			"DEBUG\t\t= 1 ",
-    "libstdc++",	"#define WITHOUT_LIBSTDCPP 1",		"#undef WITHOUT_LIBSTDCPP",
-    "libstdc++",	"STANDALONE\t= -nodefaultlibs ",	"#STANDALONE\t= -nodefaultlibs",
     "getkey",		"#undef UTIO_WANT_GETKEY",		"#define UTIO_WANT_GETKEY 1"
 };
 
@@ -93,18 +82,17 @@ static SComponentInfo g_ComponentInfos [VectorSize(g_Components) / 3] = {
     { 1, "Builds the shared library (if supported by the OS)" },
     { 0, "Builds the static library" },
     { 0, "Compiles the library with debugging information" },
-#if (__GNUC__ >= 3)
-    { 0, "Link with libstdc++" },
-    { 0, "" },
-#else
-    { 1, "" },
-    { 1, "" },
-#endif
     { 1, "Removes support for CKeyboard::GetKey" }
 };
 
 /* Substitutes names like @PACKAGE_NAME@ with the second field */
 static cpchar_t g_CustomVars [] = {
+    "GCC4_SIZEOPTS",
+#if __GNUC__ >= 4
+				"-fno-threadsafe-statics -fno-enforce-eh-specs -fuse-cxa-atexit",
+#else
+				"",
+#endif
     "PACKAGE_NAME",		PACKAGE_NAME,
     "PACKAGE_VERSION",		PACKAGE_VERSION,
     "PACKAGE_TARNAME",		PACKAGE_TARNAME,

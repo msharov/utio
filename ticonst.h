@@ -68,36 +68,48 @@ enum EAttribute {
     attr_Last
 };
 
-/// Structure for character images
-class CCharCell {
-public:
-    typedef const CCharCell&	rcself_t;
-public:
-    inline	CCharCell (wchar_t v = ' ', EColor fg = lightgray, EColor bg = color_Preserve, uint16_t attrs = 0)
-		    : m_Char (v), m_FgColor (fg), m_BgColor (bg), m_Attrs (attrs) {}
-    inline	CCharCell (wchar_t v, rcself_t t)
-		    : m_Char (v), m_FgColor (t.m_FgColor), m_BgColor (t.m_BgColor), m_Attrs (t.m_Attrs) {}
-    inline bool	EqualFormat (rcself_t v) const
-		    { return ((m_FgColor == v.m_FgColor) & (m_BgColor == v.m_BgColor) & (m_Attrs == v.m_Attrs)); }
-    inline bool	operator== (rcself_t v) const;
-    inline void	operator= (rcself_t v);
-    inline bool	HasAttr (EAttribute a) const	{ return (m_Attrs & (1 << a)); }
-    inline void	SetAttr (EAttribute a)		{ m_Attrs |= (1 << a); }
-    inline void	ClearAttr (EAttribute a)	{ m_Attrs &= ~(1 << a); }
-public:
+//----------------------------------------------------------------------
+
+struct SCharCell {
     wchar_t	m_Char;		///< The character.
     uint8_t	m_FgColor;	///< Foreground color. See #EColor for values.
     uint8_t	m_BgColor;	///< Background color. See #EColor for values.
     uint16_t	m_Attrs;	///< Attribute bits. See #EAttribute for values.
 };
 
+/// Structure for character images
+class CCharCell : public SCharCell {
+public:
+    typedef const CCharCell&	rcself_t;
+public:
+    inline	CCharCell (wchar_t v = ' ', EColor fg = lightgray, EColor bg = color_Preserve, uint16_t attrs = 0)
+		    { m_Char = v; m_FgColor = fg; m_BgColor = bg; m_Attrs = attrs; }
+    inline	CCharCell (const SCharCell& sc);
+    inline	CCharCell (wchar_t v, rcself_t t);
+    inline bool	EqualFormat (rcself_t v) const
+		    { return (noalias(uint32_t(0),&m_FgColor) == noalias(uint32_t(0),&v.m_FgColor)); }
+    inline bool	operator== (rcself_t v) const;
+    inline void	operator= (rcself_t v);
+    inline bool	HasAttr (EAttribute a) const	{ return (m_Attrs & (1 << a)); }
+    inline void	SetAttr (EAttribute a)		{ m_Attrs |= (1 << a); }
+    inline void	ClearAttr (EAttribute a)	{ m_Attrs &= ~(1 << a); }
+};
+
+// These are required to tell the compiler that the fields ARE being changed.
+// The changes are not visible because the specializations below cast to long
+// and operate on those for efficiency.
+#define TOUCH_CHARCELL_VALUES_R(v)	asm(""::"m"(v.m_Char),"m"(v.m_FgColor),"m"(v.m_BgColor),"m"(v.m_Attrs))
+#define TOUCH_CHARCELL_VALUES_W(v)	asm("":"=m"(v.m_Char),"=m"(v.m_FgColor),"=m"(v.m_BgColor),"=m"(v.m_Attrs))
+
 /// Returns true if equal to \p v.
 inline bool CCharCell::operator== (rcself_t v) const
 {
+    TOUCH_CHARCELL_VALUES_R(v);
+    TOUCH_CHARCELL_VALUES_R((*this));
     // Optimize to avoid word and byte comparisons, since it is basically a whole-object compare
     // Original: return ((m_Char == v.m_Char) & EqualFormat (v));
-    const u_long* lps = (const u_long*)&v.m_Char;
-    const u_long* lpd = (const u_long*)&m_Char;
+    const u_long* lps = noalias_cast<const u_long*>(&v.m_Char);
+    const u_long* lpd = noalias_cast<const u_long*>(&m_Char);
     bool bEqual = true;
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	bEqual &= (lpd[i] == lps[i]);
@@ -107,12 +119,33 @@ inline bool CCharCell::operator== (rcself_t v) const
 /// Assigns \p v to self.
 inline void CCharCell::operator= (rcself_t v)
 {
+    TOUCH_CHARCELL_VALUES_R(v);
     // Optimize to copy more than one item at once.
-    const u_long* lps = (const u_long*)&v.m_Char;
-    u_long* lpd = (u_long*)&m_Char;
+    const u_long* lps = noalias_cast<const u_long*>(&v.m_Char);
+    u_long* lpd = noalias_cast<u_long*>(&m_Char);
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	lpd[i] = lps[i];
+    TOUCH_CHARCELL_VALUES_W((*this));
 }
+
+/// Creates a char \p v cell with other fields from \p t.
+inline CCharCell::CCharCell (wchar_t v, rcself_t t)
+{
+    operator= (t);
+    m_Char = v;
+}
+
+/// Creates a char cell from static description \p sc.
+inline CCharCell::CCharCell (const SCharCell& sc)
+{
+    TOUCH_CHARCELL_VALUES_R(sc);
+    operator= (*noalias_cast<const CCharCell*>(&sc));
+}
+
+#undef TOUCH_CHARCELL_VALUES_R
+#undef TOUCH_CHARCELL_VALUES_W
+
+//----------------------------------------------------------------------
 
 /// Standard graphic characters supported by some terminals.
 enum EGraphicChar {

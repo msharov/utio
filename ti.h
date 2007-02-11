@@ -86,7 +86,7 @@ private:
     static const SAcscInfo	c_AcscInfo [acs_Last];		///< Codes for all ACS characters.
     static const int16_t	c_KeyToStringMap [kv_nKeys];
     /// Current terminal state.
-    class DLL_LOCAL CContext {
+    class CContext {
     public:
 			CContext (void);
     public:

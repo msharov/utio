@@ -1,11 +1,15 @@
+################ Library version #####################################
+
 LIBNAME		= @LIBNAME@
 MAJOR		= @LIB_MAJOR@
 MINOR		= @LIB_MINOR@
 BUILD		= @LIB_BUILD@
 
+################ Progams #############################################
+
 CC		= @CC@ 
 CXX		= @CXX@ 
-LD		= @CXX@ 
+LD		= @CC@ 
 AR		= @AR@
 RANLIB		= @RANLIB@
 DOXYGEN		= @DOXYGEN@
@@ -13,46 +17,35 @@ INSTALL		= @INSTALL@
 RM		= @RM@
 LN		= @LN@
 
+################ Destination #########################################
+
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 BINDIR		= @bindir@
 INCDIR		= @includedir@
 LIBDIR		= @libdir@
 
-INSTALLDIR	= ${INSTALL} -d
-INSTALLLIB	= ${INSTALL} -p -m 644
-INSTALLEXE	= ${INSTALL} -p -m 755
-INSTALLDATA	= ${INSTALL} -p -m 644
+################ Compiler options ####################################
 
-CWARNOPTS	= -Werror -Wall -W -Wpointer-arith -Wno-cast-align \
-		-Wcast-qual -Wwrite-strings -Wshadow -Wredundant-decls @SYSWARNS@
-CXXWARNOPTS	= ${CWARNOPTS} -Wconversion -Wsign-promo -Wsynth -Woverloaded-virtual
-PROCESSOR_OPTS	=@PROCESSOR_OPTS@
-#INLINE_OPTS	=@INLINE_OPTS@
-CUSTOMINCDIR	=@CUSTOMINCDIR@
-CUSTOMLIBDIR	=@CUSTOMLIBDIR@
+CXXWARNOPTS	= -Werror -Wall -W -Wpointer-arith -Wno-cast-align \
+		-Wcast-qual -Wwrite-strings -Wshadow -Wredundant-decls \
+		-Wconversion -Wsign-promo -Wsynth -Woverloaded-virtual @SYSWARNS@ 
 
 #BUILD_SHARED	= 1
 #BUILD_STATIC	= 1
 #DEBUG		= 1
-#STANDALONE	= -nodefaultlibs
 
-CFLAGS		= ${CUSTOMINCDIR} ${PROCESSOR_OPTS} ${CWARNOPTS} ${STANDALONE}
-CXXFLAGS	= ${CUSTOMINCDIR} ${PROCESSOR_OPTS} ${INLINE_OPTS} \
-		${CXXWARNOPTS} ${STANDALONE} -fPIC
-LDFLAGS		= @LDFLAGS@ ${CUSTOMLIBDIR} ${STANDALONE} -fPIC
+CXXFLAGS	= ${CXXWARNOPTS} -fPIC @PROCESSOR_OPTS@ @GCC4_SIZEOPTS@ @CUSTOMINCDIR@
+LDFLAGS		= @LDFLAGS@ @CUSTOMLIBDIR@ -fPIC
 ifdef DEBUG
-    CFLAGS	+= -O0 -g
     CXXFLAGS	+= -O0 -g
 else
-    CFLAGS	+= -O3 -DNDEBUG=1
     CXXFLAGS	+= -O3 -DNDEBUG=1
 endif
 LIBS		= @libustl@
-ifdef STANDALONE
-    LIBS	+= @libsupc++@ @libc@
-endif
 SHBLDFL		= @SHBLDFL@
+
+################ Linker options ######################################
 
 LIBA		= lib${LIBNAME}.a
 LIBSO		= lib${LIBNAME}.so

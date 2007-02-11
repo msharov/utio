@@ -30,8 +30,8 @@
 #else
     #include <ustl.h>
 #endif
-#if USTL_VERSION < 0x080
-    #error "You need uSTL version 0.8.0 or above. http://sourceforge.net/projects/ustl"
+#if USTL_VERSION < 0x110
+    #error "You need uSTL version 1.1.0 or above. http://sourceforge.net/projects/ustl"
 #endif
 
 #endif

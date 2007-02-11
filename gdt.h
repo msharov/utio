@@ -31,10 +31,10 @@ typedef tuple<2, coord_t>	Point2d;	///< A geometric point.
 namespace ustl {
 #define GDT_SPECS(type)		\
 template <> inline tuple<2,type>::tuple (void)	\
-{ *(uint32_t*)(m_v) = 0; asm("":"=m"(m_v[0]),"=m"(m_v[1])); }	\
+{ *noalias_cast<uint32_t*>(m_v) = 0; asm("":"=m"(m_v[0]),"=m"(m_v[1])); }	\
 template<> inline void tuple<2,type>::swap (tuple<2,type>& v)	\
 { asm(""::"m"(m_v[0]),"m"(m_v[1]),"m"(v.m_v[0]),"m"(v.m_v[1]));	\
-  iter_swap ((uint32_t*)m_v, (uint32_t*)v.m_v);			\
+  iter_swap (noalias_cast<uint32_t*>(m_v), noalias_cast<uint32_t*>(v.m_v));			\
   asm("":"=m"(m_v[0]),"=m"(m_v[1]),"=m"(v.m_v[0]),"=m"(v.m_v[1])); }				\
 template <> inline const tuple<2,type>& operator+= (tuple<2,type>& t1, const tuple<2,type>& t2)	\
     { t1[0] += t2[0]; t1[1] += t2[0]; return (t1); }					\

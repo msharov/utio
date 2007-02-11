@@ -1,29 +1,31 @@
 include Config.mk
 
+################ Source files ##########################################
+
 SRCS	= $(wildcard *.cc)
 OBJS	= $(SRCS:.cc=.o)
 INCS	= $(filter-out bsconf.%,$(wildcard *.h))
 DOCT	= utiodoc.in
 
-########################################################################
+################ Library link names ####################################
 
-.PHONY:	all install uninstall install-incs uninstall-inst
+TOCLEAN	+= ${LIBSO} ${LIBA} ${LIBSOBLD}
 
+ALLINST	= install-incs
 ifdef BUILD_SHARED
+ALLLIBS	+= ${LIBSOBLD}
+ALLINST	+= install-shared
+endif
 ifdef BUILD_STATIC
-all:		${LIBA} ${LIBSOBLD}
-install:	install-static install-shared
-uninstall:	uninstall-static uninstall-shared
-else
-all:		${LIBSOBLD}
-install:	install-shared
-uninstall:	uninstall-shared
+ALLLIBS	+= ${LIBA}
+ALLINST	+= install-static
 endif
-else
-all:		${LIBA}
-install:	install-static
-uninstall:	uninstall-static
-endif
+
+################ Compilation ###########################################
+
+.PHONY:	all html
+
+all:	${ALLLIBS}
 
 ${LIBA}:	${OBJS}
 	@echo "Linking $@ ..."
@@ -34,7 +36,29 @@ ${LIBSOBLD}:	${OBJS}
 	@echo "Linking $@ ..."
 	@${LD} ${LDFLAGS} ${SHBLDFL} -o $@ $^ ${LIBS}
 
+%.o:	%.cc
+	@echo "    Compiling $< ..."
+	@${CXX} ${CXXFLAGS} -o $@ -c $<
+
+%.s:	%.cc
+	@echo "    Compiling $< to assembly ..."
+	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
+
+html:
+	@${DOXYGEN} ${DOCT}
+
+################ Installation ##########################################
+
+.PHONY: install uninstall install-incs uninstall-incs
 .PHONY: install-static install-shared uninstall-static uninstall-shared
+
+install:	${ALLINST}
+uninstall:	$(subst install,uninstall,${ALLINST})
+
+INSTALLDIR	= ${INSTALL} -d
+INSTALLLIB	= ${INSTALL} -p -m 644
+INSTALLEXE	= ${INSTALL} -p -m 755
+INSTALLDATA	= ${INSTALL} -p -m 644
 
 install-shared: ${LIBSOBLD} install-incs
 	@echo "Installing ${LIBSOBLD} to ${LIBDIR} ..."
@@ -67,27 +91,17 @@ uninstall-incs:
 	@echo "Removing headers from ${INCDIR} ..."
 	@${RM} -rf ${INCDIR}/${LIBNAME} ${INCDIR}/${LIBNAME}.h
 
+################ Maintenance ###########################################
 
-%.o:	%.cc
-	@echo "    Compiling $< ..."
-	@${CXX} ${CXXFLAGS} -o $@ -c $<
-
-%.s:	%.cc
-	@echo "    Compiling $< to assembly ..."
-	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
-
-.PHONY:	gch clean depend html dist distclean maintainer-clean
+.PHONY:	clean depend dist distclean maintainer-clean
 
 clean:
 	@echo "Removing generated files ..."
-	@${RM} -f ${OBJS} ${TOCLEAN} *.rpo
+	@${RM} -f ${OBJS} ${TOCLEAN}
 	@+${MAKE} -C demo clean
 
 depend: ${SRCS}
 	@${CXX} ${CXXFLAGS} -M ${SRCS} > .depend;
-
-html:
-	@${DOXYGEN} ${DOCT}
 
 TMPDIR	= /tmp
 DISTDIR	= ${HOME}/stored
