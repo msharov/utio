@@ -20,43 +20,6 @@ typedef uint16_t		dim_t;		///< A dimension.
 typedef tuple<2, dim_t>		Size2d;		///< A geometric size.
 typedef tuple<2, coord_t>	Point2d;	///< A geometric point.
 
-} // namespace gdt
-} // namespace utio
-// Definitions continued below, after simd specializations.
-
-//----------------------------------------------------------------------
-
-#if __GNUC__
-// Create simd optimizations for Point2d and Size2d
-namespace ustl {
-#define GDT_SPECS(type)		\
-template <> inline tuple<2,type>::tuple (void)	\
-{ asm(""::"m"(m_v[0]),"m"(m_v[1]));		\
-  *noalias_cast<uint32_t*>(m_v) = 0;		\
-  asm("":"=m"(m_v[0]),"=m"(m_v[1])); }	\
-template<> inline void tuple<2,type>::swap (tuple<2,type>& v)	\
-{ asm(""::"m"(m_v[0]),"m"(m_v[1]),"m"(v.m_v[0]),"m"(v.m_v[1]));	\
-  iter_swap (noalias_cast<uint32_t*>(m_v), noalias_cast<uint32_t*>(v.m_v));			\
-  asm("":"=m"(m_v[0]),"=m"(m_v[1]),"=m"(v.m_v[0]),"=m"(v.m_v[1])); }				\
-template <> inline const tuple<2,type>& operator+= (tuple<2,type>& t1, const tuple<2,type>& t2)	\
-    { t1[0] += t2[0]; t1[1] += t2[1]; return (t1); }						\
-template <> inline const tuple<2,type>& operator-= (tuple<2,type>& t1, const tuple<2,type>& t2)	\
-    { t1[0] -= t2[0]; t1[1] -= t2[1]; return (t1); }						\
-template <> inline const tuple<2,type> operator+ (const tuple<2,type>& t1, const tuple<2,type>& t2) \
-    { return (tuple<2,type> (t1[0] + t2[0], t1[1] + t2[1])); }					\
-template <> inline const tuple<2,type> operator- (const tuple<2,type>& t1, const tuple<2,type>& t2) \
-    { return (tuple<2,type> (t1[0] - t2[0], t1[1] - t2[1])); }
-GDT_SPECS(::utio::gdt::dim_t)
-GDT_SPECS(::utio::gdt::coord_t)
-#undef GDT_SPECS
-} // namespace ustl
-#endif // __GNUC__
-
-//----------------------------------------------------------------------
-
-namespace utio {
-namespace gdt {
-
 /// Represents a geometric rectangle.
 class Rect : public tuple<2, Point2d> {
 public:
