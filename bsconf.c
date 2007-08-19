@@ -26,16 +26,30 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 
-/*- Types and macros -------------------------------------------------*/
+/*- The configuration header and its types ---------------------------*/
 
 #define VectorSize(v)	(sizeof(v) / sizeof(*v))
-#define foreachN(i,v,n)	for (i = 0; i != VectorSize(v) / n; ++ i)
-#define foreach(i,v)	foreachN(i,v,1)
 
 /*#define const*/
 /*typedef unsigned int	uint;*/
 typedef char*		pchar_t;
 typedef const char*	cpchar_t;
+
+typedef struct {
+    int		m_bDefaultOn;
+    cpchar_t	m_Description;
+} SComponentInfo;
+
+#include "bsconf.h"
+#if !defined(BSCONF_VERSION) || BSCONF_VERSION < 0x03
+#error Your bsconf.h file is too old; please update its format.
+#endif
+
+/*- Internal types and macros ----------------------------------------*/
+
+#define foreachN(i,v,n)	for (i = 0; i != VectorSize(v) / n; ++ i)
+#define foreach(i,v)	foreachN(i,v,1)
+
 typedef struct {
     pchar_t	data;
     uint	allocated;
@@ -69,40 +83,7 @@ typedef enum {
     vv_last
 } EVV;
 
-typedef struct {
-    int		m_bDefaultOn;
-    cpchar_t	m_Description;
-} SComponentInfo;
-
-typedef struct {
-    uint	m_Bit;
-    cpchar_t	m_Description;
-    cpchar_t	m_Disabled;
-    cpchar_t	m_Enabled;
-} SCpuCaps;
-
-typedef enum {
-    sys_Unknown,
-    sys_Linux,
-    sys_Mac,
-    sys_Bsd,
-    sys_Sun,
-    sys_Alpha
-} ESysType;
-
-typedef struct {
-    cpchar_t	sysname;
-    ESysType	type;
-} SHostType;
-
-/*- Global variables -------------------------------------------------*/
-
-#include "bsconf.h"
-#if !defined(BSCONF_VERSION) || BSCONF_VERSION < 0x03
-#error Your bsconf.h file is too old; please update its format.
-#endif
-
-static cpchar_t g_ConfigV [vv_last] = {
+static char g_ConfigV [vv_last][16] = {
     "prefix",
     "exec_prefix",
     "bindir",
@@ -131,39 +112,17 @@ static SBuf g_CustomLibDirs [16], g_CustomIncDirs [16];
 static int g_nCustomLibDirs = 0, g_nCustomIncDirs = 0;
 static struct utsname g_Uname;
 static uint g_CpuCapBits = 0;
+
+typedef enum {
+    sys_Unknown,
+    sys_Linux,
+    sys_Mac,
+    sys_Bsd,
+    sys_Sun,
+    sys_Alpha
+} ESysType;
+
 static ESysType g_SysType = sys_Unknown;
-
-static const SCpuCaps g_CpuCaps [] = {
-    {  0, "FPU",	"#undef CPU_HAS_FPU",		"#define CPU_HAS_FPU 1"		},
-    {  2, "DEBUG",	"#undef CPU_HAS_EXT_DEBUG",	"#define CPU_HAS_EXT_DEBUG 1"	},
-    {  4, "TimeStamp",	"#undef CPU_HAS_TIMESTAMPC",	"#define CPU_HAS_TIMESTAMPC 1"	},
-    {  5, "MSR",	"#undef CPU_HAS_MSR",		"#define CPU_HAS_MSR 1"		},
-    {  8, "CMPXCHG8",	"#undef CPU_HAS_CMPXCHG8",	"#define CPU_HAS_CMPXCHG8 1"	},
-    {  9, "APIC",	"#undef CPU_HAS_APIC",		"#define CPU_HAS_APIC 1"	},
-    { 11, "SYSCALL",	"#undef CPU_HAS_SYSCALL",	"#define CPU_HAS_SYSCALL 1"	},
-    { 12, "MTRR",	"#undef CPU_HAS_MTRR",		"#define CPU_HAS_MTRR 1"	},
-    { 15, "CMOV",	"#undef CPU_HAS_CMOV",		"#define CPU_HAS_CMOV 1"	},
-    { 16, "FCMOV",	"#undef CPU_HAS_FCMOV",		"#define CPU_HAS_FCMOV 1"	},
-    { 22, "SSE",	"#undef CPU_HAS_SSE ",		"#define CPU_HAS_SSE 1"		},
-    { 23, "MMX",	"#undef CPU_HAS_MMX",		"#define CPU_HAS_MMX 1"		},
-    { 24, "FXSAVE",	"#undef CPU_HAS_FXSAVE",	"#define CPU_HAS_FXSAVE 1"	},
-    { 25, "SSE",	"#undef CPU_HAS_SSE ",		"#define CPU_HAS_SSE 1"		},
-    { 26, "SSE2",	"#undef CPU_HAS_SSE2",		"#define CPU_HAS_SSE2 1"	},
-    { 30, "3dNow!+",	"#undef CPU_HAS_EXT_3DNOW",	"#define CPU_HAS_EXT_3DNOW 1"	},
-    { 31, "3dNow!",	"#undef CPU_HAS_3DNOW",		"#define CPU_HAS_3DNOW 1"	}
-};
-
-static const SHostType g_HostTypes[] = {
-    { "linux",		sys_Linux },
-    { "sun",		sys_Sun },
-    { "solaris",	sys_Sun },
-    { "openbsd",	sys_Bsd },
-    { "netbsd",		sys_Bsd },
-    { "freebsd",	sys_Bsd },
-    { "osx",		sys_Mac },
-    { "darwin",		sys_Mac },
-    { "alpha",		sys_Alpha }
-};
 
 /*- Libc-like functions that might not exist -------------------------*/
 
@@ -424,9 +383,9 @@ static void PrintHelp (void)
 "System types:\n"
 "  --build=BUILD\t\tconfigure for building on BUILD [guessed]\n"
 "  --host=HOST\t\tcross-compile to build programs to run on HOST [BUILD]\n"
-"\n");
+);
     if (VectorSize(g_Components)) {
-	printf ("Options:\n");
+	printf ("\nOptions:\n");
 	foreach (i, g_ComponentInfos) {
 	    if (!g_ComponentInfos[i].m_Description[0])
 		continue;
@@ -435,10 +394,9 @@ static void PrintHelp (void)
 	    else
 		printf ("  --with-%-15s%s\n", g_Components[i * 3], g_ComponentInfos[i].m_Description);
 	}
-	printf ("\n");
     }
     printf (
-"Some influential environment variables:\n"
+"\nSome influential environment variables:\n"
 "  CC\t\tC compiler\t\tCFLAGS\n"
 "  CPP\t\tC preprocessor\t\tCPPFLAGS\n"
 "  CXX\t\tC++ compiler\t\tCXXFLAGS\n"
@@ -516,6 +474,21 @@ static void DefaultConfigVarValue (EVV v, EVV root, cpchar_t suffix)
 
 static void DetermineHost (void)
 {
+    typedef struct {
+	char		sysname[8];
+	char		type;
+    } SHostType;
+    static const SHostType g_HostTypes[] = {
+	{ "linux",	sys_Linux },
+	{ "sun",	sys_Sun },
+	{ "solaris",	sys_Sun },
+	{ "openbsd",	sys_Bsd },
+	{ "netbsd",	sys_Bsd },
+	{ "freebsd",	sys_Bsd },
+	{ "osx",	sys_Mac },
+	{ "darwin",	sys_Mac },
+	{ "alpha",	sys_Alpha }
+    };
     uint i;
     fill_n ((pchar_t) &g_Uname, sizeof(struct utsname), 0);
     uname (&g_Uname);
@@ -539,9 +512,9 @@ static void DetermineHost (void)
 static void FillInDefaultConfigVarValues (void)
 {
     typedef struct _SDefaultPathMap {
-	EVV		var;
-	EVV		base;
-	cpchar_t	path;
+	unsigned char	var;
+	unsigned char	base;
+	char		path[10];
     } SDefaultPathMap;
     static const SDefaultPathMap c_Defaults[] = {
 	{ vv_bindir,		vv_exec_prefix,	"/bin" },
@@ -595,10 +568,7 @@ static cpchar_t CopyPathEntry (cpchar_t pi, pbuf_t dest)
 
 static int IsBadInstallDir (cpchar_t match)
 {
-    static const char* c_BadDirs[] = {
-	"/etc", "/usr/sbin", "/c", "/C", "/usr/etc",
-	"/sbin", "/usr/ucb", "/usr/afsws/bin"
-    };
+    static const char c_BadDirs[][10] = { "/etc", "/c", "/C", "/usr/etc", "/sbin", "/usr/sbin", "/usr/ucb" };
     uint i;
     foreach (i, c_BadDirs)
 	if (compare (match, c_BadDirs[i]))
@@ -690,7 +660,7 @@ static void SubstituteCFlags (void)
     #endif
     Substitute ("@INLINE_OPTS@", S(buf));
 
-    #ifdef __i386__
+    #if __i386__
 	Substitute ("-fPIC", "");
     #endif
     buf_free (&buf);
@@ -726,21 +696,21 @@ static void SubstitutePrograms (void)
     buf_free (&match);
 }
 
-#if defined(__GNUC__) && defined(__i386__)
+#if defined(__GNUC__) && (__i386__ || __x86_64) && !defined(__PIC__)
 static uint cpuid_supported (void)
 {
-    uint forig, fnew;
+    unsigned long forig, fnew;
     /* Pop flags, toggle ID bit, push, pop. cpuid supported if changed. */
-    asm ("pushf\n\tpopl\t%0\n\t"
+    asm ("pushf\n\tpop\t%0\n\t"
 	"mov\t%0, %1\n\txor\t$0x200000, %0\n\t"
-	"pushl\t%0\n\tpopf\n\tpushf\n\tpopl\t%0"
+	"push\t%0\n\tpopf\n\tpushf\n\tpop\t%0"
 	: "=r"(fnew), "=r"(forig));
     return (fnew != forig);
 }
 
 static uint cpuid (void)
 {
-    #define i_cpuid(a,r,c,d)	asm("cpuid":"=a"(r),"=c"(c),"=d"(d):"0"(a):"%ebx")
+    #define i_cpuid(a,r,c,d)	asm("cpuid":"=a"(r),"=c"(c),"=d"(d):"0"(a):"ebx")
     const uint amdBits = 0xC9480000, extFeatures = 0x80000000, amdExtensions = 0x80000001;
     uint r, c, d, caps;
     if (!cpuid_supported()) return (0);
@@ -761,11 +731,35 @@ static uint cpuid (void) { return (0); }
 
 static void SubstituteCpuCaps (void)
 {
+    typedef struct {
+	char	m_Bit;
+	char	m_Disabled [26];
+	char	m_Enabled [29];
+    } SCpuCaps;
+    static const SCpuCaps s_CpuCaps [] = {
+	{  0, "#undef CPU_HAS_FPU",		"#define CPU_HAS_FPU 1"		},
+	{  2, "#undef CPU_HAS_EXT_DEBUG",	"#define CPU_HAS_EXT_DEBUG 1"	},
+	{  4, "#undef CPU_HAS_TIMESTAMPC",	"#define CPU_HAS_TIMESTAMPC 1"	},
+	{  5, "#undef CPU_HAS_MSR",		"#define CPU_HAS_MSR 1"		},
+	{  8, "#undef CPU_HAS_CMPXCHG8",	"#define CPU_HAS_CMPXCHG8 1"	},
+	{  9, "#undef CPU_HAS_APIC",		"#define CPU_HAS_APIC 1"	},
+	{ 11, "#undef CPU_HAS_SYSCALL",		"#define CPU_HAS_SYSCALL 1"	},
+	{ 12, "#undef CPU_HAS_MTRR",		"#define CPU_HAS_MTRR 1"	},
+	{ 15, "#undef CPU_HAS_CMOV",		"#define CPU_HAS_CMOV 1"	},
+	{ 16, "#undef CPU_HAS_FCMOV",		"#define CPU_HAS_FCMOV 1"	},
+	{ 22, "#undef CPU_HAS_SSE ",		"#define CPU_HAS_SSE 1"		},
+	{ 23, "#undef CPU_HAS_MMX",		"#define CPU_HAS_MMX 1"		},
+	{ 24, "#undef CPU_HAS_FXSAVE",		"#define CPU_HAS_FXSAVE 1"	},
+	{ 25, "#undef CPU_HAS_SSE ",		"#define CPU_HAS_SSE 1"		},
+	{ 26, "#undef CPU_HAS_SSE2",		"#define CPU_HAS_SSE2 1"	},
+	{ 30, "#undef CPU_HAS_EXT_3DNOW",	"#define CPU_HAS_EXT_3DNOW 1"	},
+	{ 31, "#undef CPU_HAS_3DNOW",		"#define CPU_HAS_3DNOW 1"	}
+    };
     uint i;
     g_CpuCapBits = cpuid();
-    foreach (i, g_CpuCaps)
-	if (g_CpuCapBits & (1 << g_CpuCaps[i].m_Bit))
-	    Substitute (g_CpuCaps[i].m_Disabled, g_CpuCaps[i].m_Enabled);
+    foreach (i, s_CpuCaps)
+	if (g_CpuCapBits & (1 << s_CpuCaps[i].m_Bit))
+	    Substitute (s_CpuCaps[i].m_Disabled, s_CpuCaps[i].m_Enabled);
 }
 
 static void SubstituteHostOptions (void)
@@ -773,33 +767,40 @@ static void SubstituteHostOptions (void)
     static const short int boCheck = 0x0001;
     static const char boNames[2][16] = { "BIG_ENDIAN", "LITTLE_ENDIAN" };
     char buf [128];
-    if (g_SysType == sys_Mac)
-	Substitute ("@SYSWARNS@", "-Wno-long-double");
-    else
-	Substitute ("@SYSWARNS@", "");
     #if __GNUC__ >= 3
-    if (g_SysType == sys_Mac) {
-	Substitute ("@libgcc@", "@libsupc++@ @libgcc@");
-	Substitute (" @libgcc_eh@", "");
-    }
     if (g_SysType == sys_Sun)
     #endif
 	Substitute ("-Wredundant-decls", "-Wno-redundant-decls");
 
     if (g_SysType == sys_Bsd) {
+	Substitute (" @libgcc_eh@", "");
+	Substitute ("#define WITHOUT_LIBSTDCPP 1", "#undef WITHOUT_LIBSTDCPP");
+	Substitute ("NOLIBSTDCPP\t= -nodefaultlibs ", "#NOLIBSTDCPP\t= -nodefaultlibs");
 	Substitute ("-Wredundant-decls", "-Wno-redundant-decls");
 	Substitute ("-Winline", "-Wno-inline");
     }
 
-    if (g_SysType != sys_Linux && g_SysType != sys_Sun) {
+    if ((g_SysType == sys_Linux) | (g_SysType == sys_Bsd))
+	Substitute ("@SHBLDFL@", "-shared -Wl,-soname=${LIBSOLNK}");
+    else if (g_SysType == sys_Mac)
+	Substitute ("@SHBLDFL@", "-Wl,-single_module -compatibility_version 1 -current_version 1 -install_name ${LIBSOLNK} -Wl,-Y,1455 -dynamiclib -mmacosx-version-min=10.4");
+    else if (g_SysType == sys_Sun)
+	Substitute ("@SHBLDFL@", "-G");
+    else {
 	Substitute ("BUILD_SHARED\t= 1 ", "#BUILD_SHARED\t= 1");
 	Substitute ("#BUILD_STATIC\t= 1", "BUILD_STATIC\t= 1 ");
     }
 
-    if (g_SysType == sys_Linux)
-	Substitute ("@SHBLDFL@", "-shared -Wl,-soname=${LIBSOLNK}");
-    else
-	Substitute ("@SHBLDFL@", "-G");
+    if (g_SysType == sys_Mac) {
+	Substitute (" @libgcc_eh@", "");
+	Substitute ("@libgcc@", "@libsupc++@ @libgcc@");
+	Substitute ("@SYSWARNS@", "-Wno-long-double");
+	Substitute ("lib${LIBNAME}.so", "lib${LIBNAME}.dylib");
+	Substitute ("${LIBSO}.${MAJOR}.${MINOR}.${BUILD}", "lib${LIBNAME}.${MAJOR}.${MINOR}.${BUILD}.dylib");
+	Substitute ("${LIBSO}.${MAJOR}.${MINOR}", "lib${LIBNAME}.${MAJOR}.${MINOR}.dylib");
+	Substitute ("${LIBSO}.${MAJOR}", "lib${LIBNAME}.${MAJOR}.dylib");
+    } else
+	Substitute ("@SYSWARNS@", "");
 
     if (g_SysType != sys_Sun)
 	Substitute ("#undef HAVE_THREE_CHAR_TYPES", "#define HAVE_THREE_CHAR_TYPES 1");
@@ -810,17 +811,17 @@ static void SubstituteHostOptions (void)
     Substitute ("#undef off_t", "/* typedef long off_t; */");
     Substitute ("#undef size_t", "/* typedef long size_t; */");
 
-    sprintf (buf, "#define SIZE_OF_CHAR %d", sizeof(char));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_CHAR %zd", sizeof(char));
     Substitute ("#undef SIZE_OF_CHAR", buf);
-    sprintf (buf, "#define SIZE_OF_SHORT %d", sizeof(short));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_SHORT %zd", sizeof(short));
     Substitute ("#undef SIZE_OF_SHORT", buf);
-    sprintf (buf, "#define SIZE_OF_INT %d", sizeof(int));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_INT %zd", sizeof(int));
     Substitute ("#undef SIZE_OF_INT", buf);
-    sprintf (buf, "#define SIZE_OF_LONG %d", sizeof(long));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_LONG %zd", sizeof(long));
     Substitute ("#undef SIZE_OF_LONG ", buf);
-    sprintf (buf, "#define SIZE_OF_POINTER %d", sizeof(void*));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_POINTER %zd", sizeof(void*));
     Substitute ("#undef SIZE_OF_POINTER ", buf);
-    sprintf (buf, "#define SIZE_OF_SIZE_T %d", sizeof(size_t));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_SIZE_T %zd", sizeof(size_t));
     Substitute ("#undef SIZE_OF_SIZE_T ", buf);
     if (g_SysType == sys_Alpha || g_SysType == sys_Mac)
 	Substitute ("#undef SIZE_OF_BOOL ", "#define SIZE_OF_BOOL SIZE_OF_LONG");
@@ -835,7 +836,7 @@ static void SubstituteHostOptions (void)
 #endif
 #if defined(__GNUC__) || defined(__GLIBC_HAVE_LONG_LONG)
     Substitute ("#undef HAVE_LONG_LONG", "#define HAVE_LONG_LONG 1");
-    sprintf (buf, "#define SIZE_OF_LONG_LONG %d", sizeof(long long));
+    snprintf (buf, VectorSize(buf), "#define SIZE_OF_LONG_LONG %zd", sizeof(long long));
     Substitute ("#undef SIZE_OF_LONG_LONG", buf);
 #endif
 #if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
@@ -888,7 +889,7 @@ static void SubstituteHeaders (void)
 
 static void SubstituteLibs (void)
 {
-    static const cpchar_t g_LibSuffixes[] = { ".a", ".so", ".la" };
+    static const char g_LibSuffixes[][8] = { ".a", ".so", ".la", ".dylib" };
     uint i, k, ok;
     cpchar_t pi;
     SBuf defaultPath = NULL_BUF, match = NULL_BUF;
@@ -926,7 +927,7 @@ static void SubstituteFunctions (void)
     uint i;
     foreachN (i, g_Functions, 3)
 	Substitute (g_Functions [i * 3 + 1], g_Functions [i * 3 + 2]);
-    if (g_SysType == sys_Mac)
+    if ((g_SysType == sys_Mac) | (g_SysType == sys_Bsd))
 	Substitute ("#define HAVE_STRSIGNAL 1", "#undef HAVE_STRSIGNAL");
     if (g_SysType == sys_Bsd)
 	Substitute ("#define HAVE_VA_COPY 1", "#undef HAVE_VA_COPY");
