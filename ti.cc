@@ -520,13 +520,14 @@ void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 	const uint16_t oldAttrs (m_Ctx.m_Attrs);
 	if (nToOff) {
 	    s += GetString (ti::exit_attribute_mode);
+	    s += GetString (ti::exit_alt_charset_mode);
 	    m_Ctx.m_FgColor = lightgray;
 	    m_Ctx.m_BgColor = black;
 	}
 	mask = 1;
 	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1)
 	    if ((a & mask) && (nToOff || !(oldAttrs & mask)))
-		s += AttrOn (EAttribute (a));
+		s += AttrOn (EAttribute (i));
     } else {
 	progargs_t pa;
 	for (uoff_t i = 0; i < pa.size(); ++ i)
@@ -605,7 +606,7 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     const uint16_t oldAttrs (m_Ctx.m_Attrs);
     const EColor oldFg (EColor(m_Ctx.m_FgColor)), oldBg (EColor(m_Ctx.m_BgColor));
 
-    m_Ctx.m_Output.clear();
+    m_Ctx.m_Output = GetString(ti::ena_acs);
     for (coord_t j = y; j < y + h; ++ j) {
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
 	    wchar_t dc = data->m_Char;
