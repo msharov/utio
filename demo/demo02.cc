@@ -48,15 +48,15 @@ CGCDemo::~CGCDemo (void)
 /// Draws a box with a hole on the screen.
 void CGCDemo::DrawBox (CGC& gc, Point2d pos)
 {
-    gc.Bar (pos[0], pos[1], 12, 4, acsv_Board);		// acsv special character constants are in ticonst.h
+    gc.Bar (pos[0], pos[1], 12, 4, ' ');
     gc.Box (pos[0], pos[1], 12, 4);
-    gc.Bar (pos[0], pos[1] + 4, 4, 4, acsv_Board);
-    gc.Bar (pos[0] + 8, pos[1] + 4, 4, 4, acsv_Board);
-    gc.Bar (pos[0], pos[1] + 8, 12, 4, acsv_Board);
+    gc.Bar (pos[0], pos[1] + 4, 4, 4, acsv_Checkerboard);	// acsv special character constants are in ticonst.h
+    gc.Bar (pos[0] + 8, pos[1] + 4, 4, 4, acsv_Checkerboard);	// Checkerboard is the one available in most terms;
+    gc.Bar (pos[0], pos[1] + 8, 12, 4, acsv_Checkerboard);	// Board works on the console only.
     gc.Text (pos[0] + 1, pos[1] + 1, "GC demo");
-    gc.FgColor (lightcyan);				// The background is set by the caller
-    gc.Char (pos[0] + 1, pos[1] + 2, acsv_LeftArrow);
-    gc.Char (pos[0] + 2, pos[1] + 2, acsv_DownArrow);
+    gc.FgColor (lightcyan);					// The background is set by the caller
+    gc.Char (pos[0] + 1, pos[1] + 2, acsv_LeftArrow);		// Arrow chars may or may not be available on your term.
+    gc.Char (pos[0] + 2, pos[1] + 2, acsv_DownArrow);		// xterm, for example doesn't have them.
     gc.Char (pos[0] + 3, pos[1] + 2, acsv_UpArrow);
     gc.Char (pos[0] + 4, pos[1] + 2, acsv_RightArrow);
     gc.FgColor (green);
