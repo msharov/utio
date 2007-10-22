@@ -26,15 +26,11 @@ bool CKeyboard::s_bTermInUIMode = false;
 /// Constructs node with id \p nodeId.
 CKeyboard::CKeyboard (void)
 : m_Keymap (),
-#if UTIO_WANT_GETKEY
   m_Keydata (),
-#endif
   m_InitialTermios ()
 {
     fill_n ((void*) &m_InitialTermios, sizeof(struct termios), '\x0');
-    #if UTIO_WANT_GETKEY
-	m_Keydata.reserve (64);
-    #endif
+    m_Keydata.reserve (64);
 }
 
 /// Destructor cleans up keyboard in case of abnormal termination.
@@ -50,42 +46,28 @@ void CKeyboard::Open (const CTerminfo& rti)
 {
     LoadKeymap (rti);
     EnterUIMode();
-    #if UTIO_WANT_GETKEY
-	int flag;
-	if ((flag = fcntl (STDIN_FILENO, F_GETFL)) < 0)
-	    throw file_exception ("fcntl", "stdin");
-	if ((flag = fcntl (STDIN_FILENO, F_SETFL, flag | O_NONBLOCK)) < 0)
-	    throw file_exception ("fcntl", "stdin");
-    #endif
+    cin.set_nonblock();
 }
 
 /// Leaves UI mode.
 void CKeyboard::Close (void)
 {
     LeaveUIMode();
-    #if UTIO_WANT_GETKEY
-	int flag;
-	if ((flag = fcntl (STDIN_FILENO, F_GETFL)) >= 0)
-	    fcntl (STDIN_FILENO, F_SETFL, flag & ~O_NONBLOCK);
-    #endif
+    cin.set_nonblock (false);
 }
 
-#if UTIO_WANT_GETKEY
 /// Reads a key from stdin.
-wchar_t CKeyboard::GetKey (metastate_t* pMeta, bool bBlock) const
+wchar_t CKeyboard::GetKey (bool bBlock) const
 {
     wchar_t key = 0;
-    metastate_t meta;
     istream is;
     do {
 	if (m_Keydata.empty() && bBlock)
 	    WaitForKeyData();
 	ReadKeyData();
 	is.link (m_Keydata);
-    } while (!DecodeKey (is, key, meta) && bBlock);
+    } while (!(key = DecodeKey(is)) && bBlock);
     m_Keydata.erase (m_Keydata.begin(), is.pos());
-    if (pMeta)
-	*pMeta = meta;
     return (key);
 }
 
@@ -124,7 +106,6 @@ bool CKeyboard::WaitForKeyData (long timeout) const
 	throw file_exception ("select", "stdin");
     return (rv);
 }
-#endif
 
 //----------------------------------------------------------------------
 
@@ -176,86 +157,50 @@ void CKeyboard::LeaveUIMode (void)
     s_bTermInUIMode = false;
 }
 
-/// Reads the updated terminfo database.
-void CKeyboard::LoadKeymap (const CTerminfo& rti)
-{
-    rti.LoadKeystrings (m_Keymap);
-}
-
 //----------------------------------------------------------------------
 
 /// Decodes a keystring in \p str that was read from stdin into an eventcode.
-bool CKeyboard::DecodeKey (istream& is, wchar_t& kv, metastate_t& kf) const
+wchar_t CKeyboard::DecodeKey (istream& is) const
 {
-    kf.reset();
-    kv = 0;
+    wchar_t kv = 0;
     if (!is.remaining())
-	return (false);
+	return (kv);
 
     // Find the longest match in the keymap.
-    size_t matchedSize = 0;
-    const string::const_iterator sfirst (is.ipos());
-    for (uoff_t i = 0; i < m_Keymap.size(); ++ i) {
-	const CTerminfo::capout_t ks = m_Keymap[i];
-	if (!ks)
-	    continue;
-	const size_t kss = strlen (ks);
-	if (kss > is.remaining() || kss < matchedSize)
-	    continue;
-	const string::const_iterator slast (is.ipos() + kss);
-	if (equal (sfirst, slast, ks)) {
-	    kv = i + kv_First;
+    size_t matchedSize = 0, kss, ki = 0;
+    for (const char* ks = m_Keymap.begin(); ki < kv_nKeys; ++ki, ks += kss + 1) {
+	if ((kss = strlen(ks)) <= is.remaining() && kss > matchedSize && strncmp (is.ipos(), ks, kss) == 0) {
+	    kv = ki + kv_First;
 	    matchedSize = kss;
 	}
     }
-
-    // Alt+key produces Esc plus that key. Sometimes.
-    if (kv == kv_Esc) {
-	kf.set (mksbit_Alt);
-	is.skip (matchedSize);
-	matchedSize = 0;
-    }
+    is.skip (matchedSize);
 
     // Read the keystring as UTF-8 if enough bytes are available,
-    if (!matchedSize && is.remaining()) {
-	matchedSize = Utf8SequenceBytes(*is.ipos());
-	if (matchedSize <= is.remaining())
-	    kv = *utf8in(is.ipos());
-	else { // it is some weird 8-bit value that is reported as is.
-	    kv = *is.ipos();
-	    matchedSize = 1;
-	}
-	// Ctrl+key produces key-0x60. Sometimes. Except for tab, which is useful as it is.
-	if (isalpha (kv + 0x60) && kv != '\t') {
-	    kf.set (mksbit_Ctrl);
-	    kv += 0x60;
-	}
-	if (isupper (kv))
-	    kf.set (mksbit_Shift);
-    }
-
-    // If it is really an ESC key, then reset variables.
-    if (!matchedSize && kv == kv_Esc) {
-	matchedSize = strlen (m_Keymap [kv - kv_First]);
-	is.seek (is.pos() - matchedSize);
-	kf.reset (mksbit_Alt);
-    }
-
-#if linux
-    // Try to report shift state.
-    if (matchedSize) {
-	// Warning: this is unreliable and only works on a vt.
-	#define TIOCL_GETSHIFTSTATE	6 // This is some internal kernel constant.
-	int sstate = TIOCL_GETSHIFTSTATE;
-	if (!ioctl (STDIN_FILENO, TIOCLINUX, &sstate)) {
-	    if (sstate & 1)	kf.set (mksbit_Shift);
-	    if (sstate & 4)	kf.set (mksbit_Ctrl);
-	    if (sstate & 10)	kf.set (mksbit_Alt);
-	}
+    if ((!kv || kv == kv_Esc) && is.remaining() && (matchedSize = min (Utf8SequenceBytes(*is.ipos()), is.remaining()))) {
+	char kc = *is.ipos();
+	if (isalpha (kc + 0x60) && kc != '\t' && kc != '\n') {
+	    kc += 0x60;
+	    kv = (isupper(kc) ? kf_Alt : kf_Ctrl) | tolower(kc);
+	} else
+	    kv = (((kv!=kv_Esc)-1) & kf_Alt) | *utf8in(is.ipos());
 	is.skip (matchedSize);
     }
-#endif
-    return (matchedSize);
+    if (kv == 0x7F)	// xterms are not always consistent with this...
+	kv = kv_Backspace;
+
+    // Decode mouse data
+    if (kv == kv_Mouse && is.remaining() >= 3) {
+	static uint8_t s_CurB = 0;
+	uint8_t x, y, b, bs;
+	b = is.ipos()[0]; x = is.ipos()[1]; y = is.ipos()[2];
+	x -= '!'; y -= '!'; b = (b + 1) & 3;			// Coordinates are '!'-based, buttons are 0,1,2 with motion and drag flags, which I mask off.
+	bs = b - s_CurB; bs = (bs != 0) + (int8_t(bs) < 0);	// Convert to "down" or "up" values.
+	kv = kf_Mouse | (bs << 18) | (max(b,s_CurB) << 16) | (x << 8) | y;	// Packing should match UMouseEvent structure (doing it manually here generates considerably less code)
+	s_CurB = b;
+	is.skip (3);
+    }
+    return (kv);
 }
 
 } // namespace utio

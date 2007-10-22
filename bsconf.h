@@ -73,16 +73,14 @@ static cpchar_t g_Functions [] = {
 static cpchar_t g_Components [] = {
     "shared",		"#BUILD_SHARED\t= 1",			"BUILD_SHARED\t= 1 ",
     "static",		"#BUILD_STATIC\t= 1",			"BUILD_STATIC\t= 1 ",
-    "debug",		"#DEBUG\t\t= 1",			"DEBUG\t\t= 1 ",
-    "getkey",		"#undef UTIO_WANT_GETKEY",		"#define UTIO_WANT_GETKEY 1"
+    "debug",		"#DEBUG\t\t= 1",			"DEBUG\t\t= 1 "
 };
 
 /* Parallel to g_Components */
 static SComponentInfo g_ComponentInfos [VectorSize(g_Components) / 3] = {
     { 1, "Builds the shared library (if supported by the OS)" },
     { 0, "Builds the static library" },
-    { 0, "Compiles the library with debugging information" },
-    { 1, "Removes support for CKeyboard::GetKey" }
+    { 0, "Compiles the library with debugging information" }
 };
 
 /* Substitutes names like @PACKAGE_NAME@ with the second field */

@@ -903,12 +903,27 @@ enum EMetaKeyBits {
     mksbit_Alt,
     mksbit_Ctrl,
     mksbit_Meta,
-    mksbit_Command,
+    mksbit_Mouse,
     mksbit_NumLock,
     mksbit_CapsLock,
     mksbit_ScrollLock,
     mksbit_Last
 };
+
+enum EMetaKeyFlag {
+    kf_MetaBit	= 24,
+    kf_Shift	= (1 << (kf_MetaBit + mksbit_Shift)),
+    kf_Alt	= (1 << (kf_MetaBit + mksbit_Alt)),
+    kf_Ctrl	= (1 << (kf_MetaBit + mksbit_Ctrl)),
+    kf_Meta	= (1 << (kf_MetaBit + mksbit_Meta)),
+    kf_Mouse	= (1 << (kf_MetaBit + mksbit_Mouse)),
+    kf_NumLock	= (1 << (kf_MetaBit + mksbit_NumLock)),
+    kf_CapsLock	= (1 << (kf_MetaBit + mksbit_CapsLock)),
+  kf_ScrollLock	= (1 << (kf_MetaBit + mksbit_ScrollLock))
+};
+
+#define KV_MASK		((1 << kf_MetaBit) - 1)
+#define KF_MASK		(~KV_MASK)
 
 } // namespace utio
 

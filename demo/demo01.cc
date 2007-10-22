@@ -43,10 +43,13 @@ void CKeyboardDemo::Run (void)
     wchar_t key = 0;
     while (key != 'q') {
 	cout.flush();
-	CKeyboard::metastate_t meta;
-	key = m_Kb.GetKey (&meta);
+	key = m_Kb.GetKey();
 
 	cout << "Got key: ";
+	for (uoff_t i = 0; i < mksbit_Last; ++ i)
+	    if (key & (1 << (i + kf_MetaBit)))
+		cout << c_MetaBitNames[i] << ", ";
+	key &= KV_MASK;
 	if (key >= kv_First && key < kv_Last)	// Special key
 	    cout << c_KeyNameMap [key - kv_First];
 	else if (key == kv_Tab)			// Tab is just the \t character
@@ -55,9 +58,6 @@ void CKeyboardDemo::Run (void)
 	    cout << "Space";
 	else					// Otherwise it's a normal key.
 	    cout << key;
-	for (uoff_t i = 0; i < mksbit_Last; ++ i)
-	    if (meta[i])
-		cout << ", " << c_MetaBitNames[i];
 	cout << endl;
     }
 }

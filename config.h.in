@@ -18,9 +18,6 @@
 // Define to the address where bug reports for this package should be sent.
 #define UTIO_BUGREPORT	"@PACKAGE_BUGREPORT@"
 
-/// Define to 1 if you want CKeyboard to have stdin reading code.
-#undef UTIO_WANT_GETKEY
-
 /// Define to 1 if you have the uSTL library
 #undef HAVE_USTL_H
 

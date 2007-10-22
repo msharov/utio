@@ -28,7 +28,7 @@ public:
     typedef const char*		capout_t;	///< Type of values returned by all capability output functions.
     typedef const string&	strout_t;
     typedef string&		rstrbuf_t;
-    typedef tuple<kv_nKeys,capout_t>	keystrings_t;		///< List of key strings corresponding to EKeyDataValue enum.
+    typedef string		keystrings_t;	///< List of key strings corresponding to EKeyDataValue enum.
     typedef gdt::coord_t	coord_t;
     typedef gdt::dim_t		dim_t;
 public:

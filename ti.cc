@@ -339,11 +339,18 @@ wchar_t CTerminfo::SubstituteChar (wchar_t c) const
 /// Loads terminal strings produced by special keys into \p ksv.
 void CTerminfo::LoadKeystrings (keystrings_t& ksv) const
 {
-    for (uoff_t i = 0; i < ksv.size(); ++ i)
-	ksv[i] = GetString (ti::EStrings (c_KeyToStringMap [i]));
-    ksv [kv_Esc - kv_First] = "\x1B";
-    if (ksv [kv_Enter - kv_First] == string::empty_string)
-	ksv [kv_Enter - kv_First] = "\n";
+    ksv.clear();
+    for (uoff_t i = 0; i < VectorSize(c_KeyToStringMap); ++i) {
+	const char* ksvp = GetString (ti::EStrings (c_KeyToStringMap [i]));
+	if (!*ksvp) {
+	    if (i == kv_Esc - kv_First)
+		ksvp = "\x1B";
+	    else if (i == kv_Enter - kv_First)
+		ksvp = "\n";
+	}
+	ksv += ksvp;
+	ksv += '\0';
+    }
 }
 
 //----------------------------------------------------------------------
