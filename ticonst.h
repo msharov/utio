@@ -922,7 +922,7 @@ enum EMetaKeyFlag {
   kf_ScrollLock	= (1 << (kf_MetaBit + mksbit_ScrollLock))
 };
 
-#define KV_MASK		((1 << kf_MetaBit) - 1)
+#define KV_MASK		((1 << ::utio::kf_MetaBit) - 1)
 #define KF_MASK		(~KV_MASK)
 
 } // namespace utio
