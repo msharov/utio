@@ -342,12 +342,8 @@ void CTerminfo::LoadKeystrings (keystrings_t& ksv) const
     ksv.clear();
     for (uoff_t i = 0; i < VectorSize(c_KeyToStringMap); ++i) {
 	const char* ksvp = GetString (ti::EStrings (c_KeyToStringMap [i]));
-	if (!*ksvp) {
-	    if (i == kv_Esc - kv_First)
-		ksvp = "\x1B";
-	    else if (i == kv_Enter - kv_First)
-		ksvp = "\n";
-	}
+	if (!*ksvp && i == kv_Esc - kv_First)
+	    ksvp = "\x1B";
 	ksv += ksvp;
 	ksv += '\0';
     }
@@ -708,7 +704,6 @@ const int16_t CTerminfo::c_KeyToStringMap [kv_nKeys] = {
     /* kv_DownLeft */		ti::key_c1,
     /* kv_DownRight */		ti::key_c3,
     /* kv_End */		ti::key_end,
-    /* kv_Enter */		ti::key_enter,
     /* kv_Exit */		ti::key_exit,
     /* kv_F0 */			ti::key_f0,
     /* kv_F1 */			ti::key_f1,

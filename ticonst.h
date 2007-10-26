@@ -745,6 +745,7 @@ enum EStrings {
 enum EKeyDataValue {
     kv_Space = ' ',
     kv_Tab = '\t',
+    kv_Enter = '\n',
     kv_First = 0xE000,		// 0xE000 - 0xF8FF private use unicode region
     kv_Esc = kv_First,
     kv_Backspace,
@@ -767,7 +768,6 @@ enum EKeyDataValue {
     kv_DownLeft,
     kv_DownRight,
     kv_End,
-    kv_Enter,
     kv_Exit,
     kv_F0,
     kv_F1,

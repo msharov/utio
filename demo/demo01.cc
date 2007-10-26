@@ -56,6 +56,8 @@ void CKeyboardDemo::Run (void)
 	    cout << "Tab";
 	else if (key == kv_Space)		// So is space.
 	    cout << "Space";
+	else if (key == kv_Enter)		// So is enter.
+	    cout << "Enter";
 	else					// Otherwise it's a normal key.
 	    cout << key;
 	cout << endl;
@@ -91,7 +93,6 @@ const char* CKeyboardDemo::c_KeyNameMap [kv_nKeys] = {
     /* kv_DownLeft */		"DownLeft",
     /* kv_DownRight */		"DownRight",
     /* kv_End */		"End",
-    /* kv_Enter */		"Enter",
     /* kv_Exit */		"Exit",
     /* kv_F0 */			"F0",
     /* kv_F1 */			"F1",
