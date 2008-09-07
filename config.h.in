@@ -14,7 +14,7 @@
 // Define to the full name and version of this package.
 #define UTIO_STRING	"@PKG_NAME@ @PKG_VERSTR@"
 // Define to the version of this package.
-#define UTIO_VERSION	@LIB_VERSION@
+#define UTIO_VERSION	@PKG_VERSION@
 // Define to the address where bug reports for this package should be sent.
 #define UTIO_BUGREPORT	"@PKG_BUGREPORT@"
 
