@@ -1,6 +1,6 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 //
 // config.h
@@ -10,13 +10,13 @@
 #define CONFIG_H_5A201634177A84A83E2E0B7C2674857D
 
 // Define to the one symbol short name of this package.
-#define UTIO_NAME	"@PACKAGE_NAME@"
+#define UTIO_NAME	"@PKG_NAME@"
 // Define to the full name and version of this package.
-#define UTIO_STRING	"@PACKAGE_NAME@ @PACKAGE_VERSION@"
+#define UTIO_STRING	"@PKG_NAME@ @PKG_VERSTR@"
 // Define to the version of this package.
-#define UTIO_VERSION	0x@LIB_MAJOR@@LIB_MINOR@@LIB_BUILD@
+#define UTIO_VERSION	@LIB_VERSION@
 // Define to the address where bug reports for this package should be sent.
-#define UTIO_BUGREPORT	"@PACKAGE_BUGREPORT@"
+#define UTIO_BUGREPORT	"@PKG_BUGREPORT@"
 
 /// Define to 1 if you have the uSTL library
 #undef HAVE_USTL_H
@@ -32,4 +32,3 @@
 #endif
 
 #endif
-

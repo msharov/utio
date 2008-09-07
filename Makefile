@@ -1,125 +1,151 @@
-include Config.mk
+-include Config.mk
 
 ################ Source files ##########################################
 
-SRCS	= $(wildcard *.cc)
-OBJS	= $(SRCS:.cc=.o)
-INCS	= $(filter-out bsconf.%,$(wildcard *.h))
-DOCT	= utiodoc.in
-
-################ Library link names ####################################
-
-TOCLEAN	+= ${LIBSO} ${LIBA} ${LIBSOBLD}
-
-ALLINST	= install-incs
-ifdef BUILD_SHARED
-ALLLIBS	+= ${LIBSOBLD}
-ALLINST	+= install-shared
-endif
-ifdef BUILD_STATIC
-ALLLIBS	+= ${LIBA}
-ALLINST	+= install-static
-endif
+SRCS	:= $(wildcard *.cc)
+INCS	:= $(wildcard *.h)
+OBJS	:= $(addprefix $O,$(SRCS:.cc=.o))
 
 ################ Compilation ###########################################
 
-.PHONY:	all html
+.PHONY: all clean html check dist distclean maintainer-clean
 
-all:	${ALLLIBS}
+all:	Config.mk config.h ${NAME}
+ALLTGTS	:= Config.mk config.h ${NAME}
 
+ifdef BUILD_SHARED
+SLIBL	:= $O$(call slib_lnk,${NAME})
+SLIBS	:= $O$(call slib_son,${NAME})
+SLIBT	:= $O$(call slib_tgt,${NAME})
+ALLTGTS	+= ${SLIBT} ${SLIBS} ${SLIBL}
+
+all:	${SLIBT} ${SLIBS} ${SLIBL}
+${SLIBT}:	${OBJS}
+	@echo "Linking $(notdir $@) ..."
+	@${LD} -fPIC ${LDFLAGS} $(call slib_flags,$(subst $O,,${SLIBS})) -o $@ $^ ${LIBS}
+${SLIBS} ${SLIBL}:	${SLIBT}
+	@(cd $(dir $@); rm -f $(notdir $@); ln -s $(notdir $<) $(notdir $@))
+
+endif
+ifdef BUILD_STATIC
+LIBA	:= $Olib${NAME}.a
+ALLTGTS	+= ${LIBA}
+
+all:	${LIBA}
 ${LIBA}:	${OBJS}
 	@echo "Linking $@ ..."
-	@${AR} r $@ $?
+	@${AR} rc $@ $?
 	@${RANLIB} $@
+endif
 
-${LIBSOBLD}:	${OBJS}
-	@echo "Linking $@ ..."
-	@${LD} ${LDFLAGS} ${SHBLDFL} -o $@ $^ ${LIBS}
-
-%.o:	%.cc
+$O%.o:	%.cc
 	@echo "    Compiling $< ..."
-	@${CXX} ${CXXFLAGS} -o $@ -c $<
+	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
+	@${CXX} ${CXXFLAGS} -MMD -MT "$(<:.cc=.s) $@" -o $@ -c $<
 
 %.s:	%.cc
 	@echo "    Compiling $< to assembly ..."
 	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
 
-html:
-	@${DOXYGEN} ${DOCT}
+include bvt/Module.mk
 
 ################ Installation ##########################################
 
-.PHONY: install uninstall install-incs uninstall-incs
-.PHONY: install-static install-shared uninstall-static uninstall-shared
+.PHONY:	install uninstall install-incs uninstall-incs
 
-install:	${ALLINST}
-uninstall:	$(subst install,uninstall,${ALLINST})
+####### Install headers
 
-INSTALLDIR	= ${INSTALL} -d
-INSTALLLIB	= ${INSTALL} -p -m 644
-INSTALLEXE	= ${INSTALL} -p -m 755
-INSTALLDATA	= ${INSTALL} -p -m 644
+ifdef INCDIR	# These ifdefs allow cold bootstrap to work correctly
+LIDIR	:= ${INCDIR}/${NAME}
+INCSI	:= $(addprefix ${LIDIR}/,$(filter-out ${NAME}.h,${INCS}))
+RINCI	:= ${LIDIR}.h
 
-install-shared: ${LIBSOBLD} install-incs
-	@echo "Installing ${LIBSOBLD} to ${LIBDIR} ..."
-	@${INSTALLDIR} ${LIBDIR}
-	@${INSTALLLIB} ${LIBSOBLD} ${LIBDIR}
-	@(cd ${LIBDIR}; ${LN} -sf ${LIBSOBLD} ${LIBSO}; ${LN} -sf ${LIBSOBLD} ${LIBSOLNK})
-
-uninstall-shared: uninstall-incs
-	@echo "Removing ${LIBSOBLD} from ${LIBDIR} ..."
-	@${RM} -f ${LIBDIR}/${LIBSO} ${LIBDIR}/${LIBSOLNK} ${LIBDIR}/${LIBSOBLD}
-
-install-static: ${LIBA} install-incs
-	@echo "Installing ${LIBA} to ${LIBDIR} ..."
-	@${INSTALLDIR} ${LIBDIR}
-	@${INSTALLLIB} ${LIBA} ${LIBDIR}
-
-uninstall-static: uninstall-incs
-	@echo "Removing ${LIBA} from ${LIBDIR} ..."
-	@${RM} -f ${LIBDIR}/${LIBA}
-
-install-incs: ${INCS}
-	@echo "Installing headers to ${INCDIR} ..."
-	@${INSTALLDIR} ${INCDIR}/${LIBNAME}
-	@for i in $(filter-out ${LIBNAME}.h,${INCS}); do	\
-	    ${INSTALLDATA} $$i ${INCDIR}/${LIBNAME}/$$i;	\
-	done;
-	@${INSTALLDATA} ${LIBNAME}.h ${INCDIR}
-
+install:	install-incs
+install-incs: ${INCSI} ${RINCI}
+${INCSI}: ${LIDIR}/%.h: %.h
+	@echo "Installing $@ ..."
+	@${INSTALLDATA} $< $@
+${RINCI}: ${NAME}.h
+	@echo "Installing $@ ..."
+	@${INSTALLDATA} $< $@
+uninstall:	uninstall-incs
 uninstall-incs:
-	@echo "Removing headers from ${INCDIR} ..."
-	@${RM} -rf ${INCDIR}/${LIBNAME} ${INCDIR}/${LIBNAME}.h
+	@echo "Removing ${LIDIR}/ and ${LIDIR}.h ..."
+	@(cd ${INCDIR}; rm -f ${INCSI} ${NAME}.h; rmdir ${NAME} &> /dev/null || true)
+endif
+
+####### Install libraries (shared and/or static)
+
+ifdef LIBDIR
+ifdef BUILD_SHARED
+LIBTI	:= ${LIBDIR}/$(notdir ${SLIBT})
+LIBLI	:= ${LIBDIR}/$(notdir ${SLIBS})
+LIBSI	:= ${LIBDIR}/$(notdir ${SLIBL})
+install:	${LIBTI} ${LIBLI} ${LIBSI}
+${LIBTI}:	${SLIBT}
+	@echo "Installing $@ ..."
+	@${INSTALLLIB} $< $@
+${LIBLI} ${LIBSI}: ${LIBTI}
+	@(cd ${LIBDIR}; rm -f $@; ln -s $(notdir $<) $(notdir $@))
+endif
+ifdef BUILD_STATIC
+LIBAI	:= ${LIBDIR}/$(notdir ${LIBA})
+install:	${LIBAI}
+${LIBAI}:	${LIBA}
+	@echo "Installing $@ ..."
+	@${INSTALLLIB} $< $@
+endif
+
+uninstall:
+	@echo "Removing library from ${LIBDIR} ..."
+	@rm -f ${LIBTI} ${LIBLI} ${LIBSI} ${LIBAI}
+endif
 
 ################ Maintenance ###########################################
 
-.PHONY:	clean depend dist distclean maintainer-clean
+clean:	bvt/clean
+	@rm -f ${OBJS} $(OBJS:.o=.d) ${LIBA} ${SLIBT} ${SLIBL} ${SLIBS}
+	@rmdir $O &> /dev/null || true
 
-clean:
-	@echo "Removing generated files ..."
-	@${RM} -f ${OBJS} ${TOCLEAN}
-	@+${MAKE} -C demo clean
+check:	bvt/run
 
-depend: ${SRCS}
-	@${CXX} ${CXXFLAGS} -M ${SRCS} > .depend;
+html:
+	@${DOXYGEN} ${NAME}doc.in
 
-TMPDIR	= /tmp
-DISTDIR	= ${HOME}/stored
-DISTNAM	= ${LIBNAME}-${MAJOR}.${MINOR}
-DISTTAR	= ${DISTNAM}.${BUILD}.tar.bz2
+ifdef MAJOR
+DISTVER	:= ${MAJOR}.${MINOR}
+DISTNAM	:= ${NAME}-${DISTVER}
+DISTLSM	:= ${DISTNAM}.lsm
+DISTTAR	:= ${DISTNAM}.tar.bz2
 
 dist:
-	mkdir ${TMPDIR}/${DISTNAM}
-	cp -r . ${TMPDIR}/${DISTNAM}
-	+${MAKE} -C ${TMPDIR}/${DISTNAM} distclean
-	(cd ${TMPDIR}/${DISTNAM}; rm -rf `find . -name .svn`)
-	(cd ${TMPDIR}; tar jcf ${DISTDIR}/${DISTTAR} ${DISTNAM}; rm -rf ${DISTNAM})
+	@echo "Generating ${DISTTAR} and ${DISTLSM} ..."
+	@mkdir .${DISTNAM}
+	@rm -f ${DISTTAR}
+	@cp -r * .${DISTNAM} && mv .${DISTNAM} ${DISTNAM}
+	@+${MAKE} -sC ${DISTNAM} maintainer-clean
+	@tar jcf ${DISTTAR} ${DISTNAM} && rm -rf ${DISTNAM}
+	@echo "s/@version@/${DISTVER}/" > ${DISTLSM}.sed
+	@echo "s/@date@/`date +%F`/" >> ${DISTLSM}.sed
+	@echo -n "s/@disttar@/`du -h --apparent-size ${DISTTAR}`/" >> ${DISTLSM}.sed;
+	@sed -f ${DISTLSM}.sed docs/${NAME}.lsm > ${DISTLSM} && rm -f ${DISTLSM}.sed
+endif
 
 distclean:	clean
-	@rm -f Config.mk config.h ${LIBNAME}.spec bsconf.o bsconf .depend demo/.depend
+	@rm -f Config.mk config.h config.status ${NAME}
 
 maintainer-clean: distclean
-	@rm -rf docs/html
+	@if [ -d docs/html ]; then rm -f docs/html/*; rmdir docs/html; fi
 
--include .depend
- 
+${NAME}:	.
+	@rm -f ${NAME}; ln -s . ${NAME}
+
+${OBJS} ${bvt/OBJS}:	Makefile Config.mk config.h
+${bvt/OBJS}:		bvt/Module.mk
+Config.mk:		Config.mk.in
+config.h:		config.h.in
+Config.mk config.h:	configure
+	@if [ -x config.status ]; then echo "Reconfiguring ..."; ./config.status; \
+	else echo "Running configure ..."; ./configure; fi
+
+-include ${OBJS:.o=.d} ${bvt/OBJS:.o=.d}
