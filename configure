@@ -36,8 +36,7 @@ HEADERS="ustl.h"
 LIBS="ustl"
 
 # First pair is used if nothing matches
-PROGS="CC=gcc CC=cc CXX=g++ CXX=c++ DOXYGEN=doxygen
-LD=ld AR=ar RANLIB=ranlib RANLIB=touch INSTALL=install"
+PROGS="CC=gcc CXX=g++ LD=ld AR=ar RANLIB=ranlib RANLIB=touch INSTALL=install DOXYGEN=doxygen"
 
 # Automatic vars
 [ -d .git ] && PKG_VERSTR=`git describe`

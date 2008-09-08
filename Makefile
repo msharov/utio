@@ -103,13 +103,11 @@ endif
 
 ################ Maintenance ###########################################
 
-clean:	bvt/clean
+clean:
 	@rm -f ${OBJS} $(OBJS:.o=.d) ${LIBA} ${SLIBT} ${SLIBL} ${SLIBS}
 	@rmdir $O &> /dev/null || true
 
-check:	bvt/run
-
-html:
+html:	${SRCS} ${INCS} ${NAME}doc.in
 	@${DOXYGEN} ${NAME}doc.in
 
 ifdef MAJOR
@@ -140,12 +138,11 @@ maintainer-clean: distclean
 ${NAME}:	.
 	@rm -f ${NAME}; ln -s . ${NAME}
 
-${OBJS} ${bvt/OBJS}:	Makefile Config.mk config.h
-${bvt/OBJS}:		bvt/Module.mk
+${OBJS}:		Makefile Config.mk config.h
 Config.mk:		Config.mk.in
 config.h:		config.h.in
 Config.mk config.h:	configure
 	@if [ -x config.status ]; then echo "Reconfiguring ..."; ./config.status; \
 	else echo "Running configure ..."; ./configure; fi
 
--include ${OBJS:.o=.d} ${bvt/OBJS:.o=.d}
+-include ${OBJS:.o=.d}

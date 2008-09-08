@@ -32,10 +32,14 @@ ${bvt/BVTS}: bvt/%: $Obvt/%.o ${ALLTGTS}
 
 ################ Maintenance ###########################################
 
+clean:	bvt/clean
 bvt/clean:
 	@rm -f ${bvt/BVTS} ${bvt/OBJS} $(bvt/OBJS:.o=.d)
 	@rmdir $O/bvt &> /dev/null || true
 
+check:		bvt/run
 bvt/check:	check
 
-${bvt/OBJS}: bvt/Module.mk ${NAME}
+${bvt/OBJS}: Makefile bvt/Module.mk Config.mk config.h ${NAME}
+
+-include ${bvt/OBJS:.o=.d}
