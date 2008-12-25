@@ -40,6 +40,6 @@ bvt/clean:
 check:		bvt/run
 bvt/check:	check
 
-${bvt/OBJS}: Makefile bvt/Module.mk Config.mk config.h ${NAME}
+${bvt/OBJS}: Makefile bvt/Module.mk Config.mk ${NAME}/config.h
 
 -include ${bvt/OBJS:.o=.d}

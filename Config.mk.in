@@ -30,18 +30,22 @@ LIBDIR		:= @libdir@
 
 ################ Compiler options ####################################
 
-WARNOPTS	:= -Wall -Wextra -Wpointer-arith -Wshadow -Wcast-qual \
-		-Wsynth -Wwrite-strings -Wno-overflow -Wno-cast-align \
-		-Wsign-promo -Wredundant-decls -Woverloaded-virtual @SYSWARNS@
-TGTOPTS		:= @PROCESSOR_OPTS@ \
-		@INLINE_OPTS@
+WARNOPTS	:= -Wall -Wextra -Wpointer-arith -Wcast-qual -Wsynth \
+		-Wwrite-strings -Wno-cast-align -Wno-strict-aliasing \
+		-Woverloaded-virtual -Wredundant-decls -Wno-overflow \
+		-Wsign-promo -Wshadow @SYSWARNS@
+TGTOPTS		:= @PROCESSOR_OPTS@
+INLINEOPTS	:= @INLINE_OPTS@
 
 CXXFLAGS	:= ${WARNOPTS} ${TGTOPTS} @CUSTOMINCDIR@ -fPIC
-LDFLAGS		:= ${CUSTOMLIBDIR} @CUSTOMLIBDIR@
+LDFLAGS		:= @CUSTOMLIBDIR@
+LIBS		:=
 ifdef DEBUG
     CXXFLAGS	+= -O0 -g
+    LDFLAGS	+= -rdynamic
 else
-    CXXFLAGS	+= -Os -g0 -DNDEBUG=1 -fomit-frame-pointer
+    CXXFLAGS	+= -Os -g0 -DNDEBUG=1 ${INLINEOPTS}
+    LDFLAGS	+= -s -Wl,-gc-sections
 endif
 LIBS		:= @libustl@
 O		:= .o/
