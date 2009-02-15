@@ -50,7 +50,7 @@ s/@PKG_VERSION@/"0x$PKG_MAJOR${PKG_MINOR}0"/g
 s/@PKG_VERSTR@/$PKG_VERSTR/g
 s/@PKG_TARNAME@/$PKG_NAME/g
 s/@PKG_STRING@/$PKG_STRING/g
-s/@PKG_UNAME@/`echo $PKG_NAME | tr [a-z] [A-Z]`/g
+s/@PKG_UNAME@/`echo $PKG_NAME | tr a-z A-Z`/g
 s/@PKG_BUGREPORT@/$PKG_BUGREPORT/g
 s/@PKG_MAJOR@/$PKG_MAJOR/g
 s/@PKG_MINOR@/$PKG_MINOR/g"
@@ -227,8 +227,8 @@ $CC -o config.cpu config.cpu.c
 
 #### Set host-dependent options ######################################
 
-SYSNAME=`uname|tr "[A-Z]" "[a-z]"`
-[ "`uname -m|tr '[A-Z]' '[a-z]'`" = "alpha" ] && SYSNAME="alpha"
+SYSNAME=`uname|tr A-Z a-z`
+[ "`uname -m|tr A-Z a-z`" = "alpha" ] && SYSNAME="alpha"
 case "$SYSNAME" in
     *solaris*| *sun*)	SYSNAME="sun";;
     *darwin*| *osx*)	SYSNAME="mac";;
