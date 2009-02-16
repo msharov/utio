@@ -142,24 +142,21 @@ int main (void)
     };
     uint i, caps;
 
+    printf ("s/ \\?@INLINE_OPTS@/");
 #if __GNUC__ >= 3
-    printf ("s/@INLINE_OPTS@/");
-    #if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
-	printf ("--param max-inline-insns-single=1024"
+    #if __GNUC__ >= 4
+	printf (" -fvisibility-inlines-hidden -fno-threadsafe-statics -fno-enforce-eh-specs");
+    #elif __GNUC_MINOR__ >= 4
+	printf (" --param max-inline-insns-single=1024"
 		" \\\\\\n\\t\\t--param large-function-growth=65535"
 		" \\\\\\n\\t\\t--param inline-unit-growth=1024");
     #else
-	printf ("-finline-limit=65535");
+	printf (" -finline-limit=65535");
     #endif
-    #if __GNUC__ >= 4
-	printf (" \\\\\\n\\t\\t-fvisibility-inlines-hidden"
-		" \\\\\\n\\t\\t-fno-threadsafe-statics -fno-enforce-eh-specs");
-    #endif
-    printf ("/g\n");
 #else
-    printf ("s/ \\?@INLINE_OPTS@//g\n"
-	"s/-Wredundant-decls/-Wno-redundant-decls/g\n");
+    printf ("/g\ns/-Wredundant-decls/-Wno-redundant-decls");
 #endif
+    printf ("/g\n");
 #if __GNUC__ != 3
     printf ("s/ \\?@libgcc_eh@//g\n");
 #endif
