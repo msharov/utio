@@ -14,20 +14,20 @@ PKG_BUGREPORT="Mike Sharov <msharov@users.sourceforge.net>"
 FILES="Config.mk config.h"
 
 # Package options
-COMPONENTS="
+COMPONENTS='
 {
 name=[without-shared]
 desc=[Builds the shared library (if supported by the OS)]
-seds=[s/BUILD_SHARED\t:= 1/#BUILD_SHARED\t:= 1/]
+seds=[s/^\(BUILD_SHARED\)/#\1/]
 }{
 name=[with-static]
 desc=[	Builds the static library]
-seds=[s/#BUILD_STATIC\t:= 1/BUILD_STATIC\t:= 1/]
+seds=[s/^#\(BUILD_STATIC\)/\1/]
 }{
 name=[with-debug]
-desc=[	Compiles $PKG_NAME with debugging information]
-seds=[s/#DEBUG\t\t:= 1/DEBUG\t\t:= 1/]
-}";
+desc=[	Compile for debugging]
+seds=[s/^#\(DEBUG\)/\1/]
+}';
 
 # Header files
 HEADERS="ustl.h"
@@ -50,7 +50,7 @@ s/@PKG_VERSION@/"0x$PKG_MAJOR${PKG_MINOR}0"/g
 s/@PKG_VERSTR@/$PKG_VERSTR/g
 s/@PKG_TARNAME@/$PKG_NAME/g
 s/@PKG_STRING@/$PKG_STRING/g
-s/@PKG_UNAME@/`echo $PKG_NAME | tr a-z A-Z`/g
+s/@PKG_UNAME@/`echo $PKG_NAME|tr a-z A-Z`/g
 s/@PKG_BUGREPORT@/$PKG_BUGREPORT/g
 s/@PKG_MAJOR@/$PKG_MAJOR/g
 s/@PKG_MINOR@/$PKG_MINOR/g"
@@ -112,16 +112,14 @@ static uint cpuid (void)
 #else
 static uint cpuid (void) { return (0); }
 #endif
+#define SET(c,v) "s/#undef \\(" #c "\\)/#define \\1 " #v "/g\n"
 
 int main (void)
 {
-    typedef struct {
-	char	m_Bit;
-	char	m_Sub [11];
-    } SCpuCaps;
-    static const short int boCheck = 0x0001;
-    static const char boNames[2][16] = { "BIG", "LITTLE" };
-    static const SCpuCaps s_CpuCaps [] = {
+    typedef struct { char bit, name[11]; } SCpuCaps;
+    static const short int boCheck=0x0001;
+    static const char boNames[2][16]={"BIG","LITTLE"};
+    static const SCpuCaps s_CpuCaps[]={
 	{  0, "FPU"		},
 	{  2, "EXT_DEBUG"	},
 	{  4, "TIMESTAMPC"	},
@@ -164,53 +162,51 @@ int main (void)
     printf ("s/ \\?-fPIC//g\n");
 #endif
 #if defined(__GNUC__) || defined(__GLIBC_HAVE_LONG_LONG)
-    printf ("s/#undef HAVE_LONG_LONG/#define HAVE_LONG_LONG 1/g\n"
-	"s/#undef SIZE_OF_LONG_LONG/#define SIZE_OF_LONG_LONG %zd/g\n", sizeof(long long));
+    printf (SET(HAVE_LONG_LONG,1) SET(SIZE_OF_LONG_LONG,%zd), sizeof(long long));
 #endif
 #if defined(__GNUC__) || (__WORDSIZE == 64) || defined(__ia64__)
 #ifndef BSD
-    printf ("s/#undef HAVE_INT64_T/#define HAVE_INT64_T 1/g\n");
+    printf (SET(HAVE_INT64_T,1));
 #endif
 #endif
 #ifndef __APPLE__
     if (sizeof(size_t) == sizeof(unsigned long) && sizeof(size_t) != sizeof(uint))
 #endif
-	printf ("s/#undef SIZE_T_IS_LONG/#define SIZE_T_IS_LONG 1/g\n");
+	printf (SET(SIZE_T_IS_LONG,1));
 #if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
-    printf ("s/#undef HAVE_VECTOR_EXTENSIONS/#define HAVE_VECTOR_EXTENSIONS 1/g\n");
+    printf (SET(HAVE_VECTOR_EXTENSIONS,1));
 #else
     printf ("s/ \\?-Wshadow//g\n");
 #endif
     printf ("s/@BYTE_ORDER@/%s_ENDIAN/g\n"
-	"s/#undef RETSIGTYPE/#define RETSIGTYPE void/g\n"
+	SET(RETSIGTYPE,void)
 	"s/#undef const/\\/\\* #define const \\*\\//g\n"
 	"s/#undef inline/\\/\\* #define inline __inline \\*\\//g\n"
 	"s/#undef off_t/\\/\\* typedef long off_t; \\*\\//g\n"
 	"s/#undef size_t/\\/\\* typedef long size_t; \\*\\//g\n"
-	"s/#undef SIZE_OF_CHAR/#define SIZE_OF_CHAR %zd/g\n"
-	"s/#undef SIZE_OF_SHORT/#define SIZE_OF_SHORT %zd/g\n"
-	"s/#undef SIZE_OF_INT/#define SIZE_OF_INT %zd/g\n"
-	"s/#undef SIZE_OF_LONG/#define SIZE_OF_LONG %zd/g\n"
-	"s/#undef SIZE_OF_POINTER/#define SIZE_OF_POINTER %zd/g\n"
-	"s/#undef SIZE_OF_SIZE_T/#define SIZE_OF_SIZE_T %zd/g\n"
-	"s/#undef LSTAT_FOLLOWS_SLASHED_SYMLINK/#define LSTAT_FOLLOWS_SLASHED_SYMLINK 1/g\n"
-	"s/#undef HAVE_STAT_EMPTY_STRING_BUG/\\/* #undef HAVE_STAT_EMPTY_STRING_BUG *\\//g\n",
+	SET(SIZE_OF_CHAR,%zd)
+	SET(SIZE_OF_SHORT,%zd)
+	SET(SIZE_OF_INT,%zd)
+	SET(SIZE_OF_LONG,%zd)
+	SET(SIZE_OF_POINTER,%zd)
+	SET(SIZE_OF_SIZE_T,%zd)
+	SET(LSTAT_FOLLOWS_SLASHED_SYMLINK,1),
 	boNames [(uint)(*((const char*)&boCheck))], sizeof(char),
 	sizeof(short), sizeof(int), sizeof(long), sizeof(void*), sizeof(size_t));
 
     caps = cpuid();
     for (i = 0; i < sizeof(s_CpuCaps)/sizeof(SCpuCaps); ++i)
-	if (caps & (1 << s_CpuCaps[i].m_Bit))
-	    printf ("s/#undef CPU_HAS_%s/#define CPU_HAS_%s 1/g\n", s_CpuCaps[i].m_Sub, s_CpuCaps[i].m_Sub);
+	if (caps & (1 << s_CpuCaps[i].bit))
+	    printf (SET(CPU_HAS_%s,1), s_CpuCaps[i].name);
 #if __GNUC__ >= 3
     printf ("s/ \\?@PROCESSOR_OPTS@/");
-    if (caps & (1 << 23))
+    if (caps & (1<<23))
 	printf (" -mmmx");
-    if (caps & ((1 << 22) | (1 << 25)))
+    if (caps & ((1<<22)|(1<<25)))
 	printf (" -msse -mfpmath=sse");
-    if (caps & (1 << 26))
+    if (caps & (1<<26))
 	printf (" -msse2");
-    if (caps & ((1 << 30) | (1 << 31)))
+    if (caps & ((1<<30)|(1<<31)))
 	printf (" -m3dnow");
     printf ("/g\n");
 #else
@@ -238,45 +234,45 @@ if [ "$SYSNAME" = "sun" ]; then
     echo "s/-Wredundant-decls/-Wno-redundant-decls/g
 	s/@SHBLDFL@/-G/g" >>config.sed
 else
-    echo "s/#undef HAVE_THREE_CHAR_TYPES/#define HAVE_THREE_CHAR_TYPES 1/g" >>config.sed
+    echo 's/#undef \(HAVE_THREE_CHAR_TYPES\)/#define \1 1/g' >>config.sed
 fi
 if [ "$SYSNAME" = "bsd" ]; then
-    echo "s/ \\?@libgcc_eh@//g
+    echo 's/ \?@libgcc_eh@//g
 	s/#define WITHOUT_LIBSTDCPP 1/#undef WITHOUT_LIBSTDCPP/g
-	s/NOLIBSTDCPP\\t= -nodefaultlibs /#NOLIBSTDCPP\\t= -nodefaultlibs/g
+	s/NOLIBSTDCPP	= -nodefaultlibs /#NOLIBSTDCPP	= -nodefaultlibs/g
 	s/-Wredundant-decls/-Wno-redundant-decls/g
 	s/-Winline/-Wno-inline/g
-	s/#define HAVE_VA_COPY 1/#undef HAVE_VA_COPY/g" >>config.sed
+	s/#define HAVE_VA_COPY 1/#undef HAVE_VA_COPY/g' >>config.sed
 fi
 if [ "$SYSNAME" = "linux" -o "$SYSNAME" = "bsd" ]; then
-    echo "s/@SHBLDFL@/-shared -Wl,-soname=\$1/g" >>config.sed
+    echo 's/@SHBLDFL@/-shared -Wl,-soname=$1/g' >>config.sed
 elif [ "$SYSNAME" = "alpha" ]; then
-    echo "s/BUILD_SHARED\\t= 1 /#BUILD_SHARED\\t= 1/g
-	s/#BUILD_STATIC\\t= 1/BUILD_STATIC\\t= 1 /g" >>config.sed
+    echo "s/BUILD_SHARED	= 1 /#BUILD_SHARED	= 1/g
+	s/#BUILD_STATIC	= 1/BUILD_STATIC	= 1 /g" >>config.sed
 fi
 if [ "$SYSNAME" = "mac" ]; then
-    echo "s/ \\?@libgcc_eh@//g
+    echo 's/ \?@libgcc_eh@//g
 	s/@SYSWARNS@/-Wno-long-double/g
-	s/lib\$1.so/lib\$1.dylib/g
-	s/lib\$1.so.\$\{MAJOR\}.\$\{MINOR\}.\$\{BUILD\}/lib\$1.\$\{MAJOR\}.\$\{MINOR\}.\$\{BUILD\}.dylib/g
-	s/lib\$1.so.\$\{MAJOR\}.\$\{MINOR\}/lib\$1.\$\{MAJOR\}.\$\{MINOR\}.dylib/g
-	s/lib\$1.so.\$\{MAJOR\}/lib\$1.\$\{MAJOR\}.dylib/g
-	s/@SHBLDFL@/-Wl,-single_module -compatibility_version 1 -current_version 1 -install_name \$1 -Wl,-Y,1455 -dynamiclib -mmacosx-version-min=10.4/g" >>config.sed
+	s/lib$1.so/lib$1.dylib/g
+	s/lib$1.so.${MAJOR}.${MINOR}.${BUILD}/lib$1.${MAJOR}.${MINOR}.${BUILD}.dylib/g
+	s/lib$1.so.${MAJOR}.${MINOR}/lib$1.${MAJOR}.${MINOR}.dylib/g
+	s/lib$1.so.${MAJOR}/lib$1.${MAJOR}.dylib/g
+	s/@SHBLDFL@/-Wl,-single_module -compatibility_version 1 -current_version 1 -install_name $1 -Wl,-Y,1455 -dynamiclib -mmacosx-version-min=10.4/g' >>config.sed
 else
-    echo "s/ \\?@SYSWARNS@//g" >>config.sed
+    echo 's/ \?@SYSWARNS@//g' >>config.sed
 fi
 if [ "$SYSNAME" = "alpha" -o "$SYSNAME" = "mac" ]; then
-    echo "s/#undef SIZE_OF_BOOL/#define SIZE_OF_BOOL SIZE_OF_LONG/g" >>config.sed
+    echo 's/#undef \(SIZE_OF_BOOL\)/#define \1 SIZE_OF_LONG/g' >>config.sed
 else
-    echo "s/#undef SIZE_OF_BOOL/#define SIZE_OF_BOOL SIZE_OF_CHAR/g" >>config.sed
+    echo 's/#undef \(SIZE_OF_BOOL\)/#define \1 SIZE_OF_CHAR/g' >>config.sed
 fi
 if [ "$SYSNAME" = "linux" ]; then
-    echo "s/#undef HAVE_RINTF/#define HAVE_RINTF 1/g" >>config.sed
+    echo 's/#undef \(HAVE_RINTF\)/#define \1 1/g' >>config.sed
 else
-    echo "s/ \\?-mfpmath=sse//g" >>config.sed
+    echo 's/ \?-mfpmath=sse//g' >>config.sed
 fi
 if [ "$SYSNAME" = "mac" -o "$SYSNAME" = "bsd" ]; then
-    echo "s/#define HAVE_STRSIGNAL 1/#undef HAVE_STRSIGNAL/g" >>config.sed
+    echo 's/#define \(HAVE_STRSIGNAL\) 1/#undef \1/g' >>config.sed
 fi
 
 #### Printing helper functions #######################################
@@ -402,8 +398,7 @@ INCPATH=`echo $INCPATH | sed 's/\\\\//g'`
 for i in $HEADERS; do
     for p in $INCPATH; do
 	if [ -r "$p/$i" ]; then
-	    local hmacn=`echo $i | tr "a-z/.-" "A-Z___"`
-	    echo "s/#undef HAVE_$hmacn/#define HAVE_$hmacn 1/" >>config.sed
+	    echo 's/#undef \(HAVE_'`echo $i|tr a-z/.- A-Z___`'\)/#define \1 1/' >>config.sed
 	    break
 	fi
     done
@@ -454,12 +449,10 @@ for i in $FILES; do
     sed -f config.sed $i.in > $i
 done
 
-touch config.status
-cp config.status config.status.old
 echo "#! /bin/sh
 $0 $*
-`tail -n+3 config.status.old`" > config.status
-chmod u+x config.status
-rm -f config.status.old
+`tail -n+3 config.status`" > config.status.new
+chmod u+x config.status.new
+mv config.status.new config.status
 
 die

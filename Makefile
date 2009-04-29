@@ -72,7 +72,7 @@ ${RINCI}: ${NAME}.h
 uninstall:	uninstall-incs
 uninstall-incs:
 	@echo "Removing ${LIDIR}/ and ${LIDIR}.h ..."
-	@(cd ${INCDIR}; rm -f ${INCSI} ${NAME}.h; rmdir ${NAME} &> /dev/null || true)
+	@(cd ${INCDIR}; rm -f ${INCSI} ${NAME}.h; [ ! -d ${NAME} ] || rm -rf ${NAME})
 endif
 
 ####### Install libraries (shared and/or static)
@@ -105,8 +105,7 @@ endif
 ################ Maintenance ###########################################
 
 clean:
-	@rm -f ${OBJS} $(OBJS:.o=.d) ${LIBA} ${SLIBT} ${SLIBL} ${SLIBS}
-	@rmdir $O &> /dev/null || true
+	@[ ! -d ./$O ] || rm -rf ./$O
 
 html:	${SRCS} ${INCS} ${NAME}doc.in
 	@${DOXYGEN} ${NAME}doc.in
