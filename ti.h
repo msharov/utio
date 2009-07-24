@@ -31,6 +31,7 @@ public:
     typedef string		keystrings_t;	///< List of key strings corresponding to EKeyDataValue enum.
     typedef gdt::coord_t	coord_t;
     typedef gdt::dim_t		dim_t;
+    static const char no_value[1];
 public:
 			CTerminfo (void);
     void		Load (const char* termname = NULL);

@@ -34,6 +34,8 @@ namespace utio {
 
 //----------------------------------------------------------------------
 
+const char CTerminfo::no_value[1] = "";
+
 /// Default constructor.
 CTerminfo::CTerminfo (void)
 : m_Name (),
@@ -240,7 +242,7 @@ CTerminfo::number_t CTerminfo::GetNumber (ti::ENumbers i) const
 CTerminfo::capout_t CTerminfo::GetString (ti::EStrings i) const
 {
     if (size_t(i) >= m_StringOffsets.size() || m_StringOffsets[i] == stroffset_t(ti::no_value))
-	return (string::empty_string);
+	return (no_value);
     return (m_StringTable.begin() + m_StringOffsets[i]);
 }
 
@@ -477,7 +479,7 @@ CTerminfo::capout_t CTerminfo::AttrOn (EAttribute a) const
 	/* a_superscript */	ti::enter_superscript_mode,
     };
     m_Ctx.m_Attrs |= (1 << a);
-    return (a < attr_Last ? GetString (as[a]) : string::empty_string);
+    return (a < attr_Last ? GetString (as[a]) : no_value);
 }
 
 /// \brief Stops attribute \p a.
@@ -501,7 +503,7 @@ CTerminfo::capout_t CTerminfo::AttrOff (EAttribute a) const
 	/* a_superscript */	ti::exit_superscript_mode,
     };
     const uint16_t newAttrs (m_Ctx.m_Attrs & ~(1 << a));
-    if (a >= attr_Last || (as[a] == ti::exit_attribute_mode && GetString(ti::set_attributes) != string::empty_string))
+    if (a >= attr_Last || (as[a] == ti::exit_attribute_mode && GetString(ti::set_attributes) != no_value))
 	return (Attrs (newAttrs));
     m_Ctx.m_Attrs = newAttrs;
     return (GetString (as[a]));
@@ -513,7 +515,7 @@ void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
     if (m_Ctx.m_Attrs == a)
 	return;
     const capout_t sgr = GetString (ti::set_attributes);
-    if (sgr == string::empty_string) {
+    if (sgr == no_value) {
 	size_t nToOff (0), nToOn (0);
 	uint16_t mask (1);
 	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1) {
