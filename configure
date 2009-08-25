@@ -77,7 +77,7 @@ PLIBDIR=`dirname $PINCDIR`
 if [ -d $PLIBDIR/lib ]; then PLIBDIR=$PLIBDIR/lib; fi
 
 # Create and build the C configurator
-echo '#include <stdio.h>
+echo -E '#include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
 
