@@ -77,7 +77,8 @@ PLIBDIR=`dirname $PINCDIR`
 if [ -d $PLIBDIR/lib ]; then PLIBDIR=$PLIBDIR/lib; fi
 
 # Create and build the C configurator
-echo -E '#include <stdio.h>
+cat>config.cpu.c<<\SRC
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
 
@@ -213,7 +214,8 @@ int main (void)
     printf ("s/ \\?@PROCESSOR_OPTS@//g\n");
 #endif
     return (0);
-}' >config.cpu.c
+}
+SRC
 $CC -o config.cpu config.cpu.c
 [ ! -x config.cpu ] && echo "Configurator build failed" && die
 ./config.cpu > config.sed
@@ -278,11 +280,12 @@ fi
 #### Printing helper functions #######################################
 
 PrintComponents() {
-    local cc=$COMPONENTS
+    local cc name desc
+    cc=$COMPONENTS
     echo "Options:"
     while [ ! -z "$cc" ]; do
-	local name=`expr "$cc" : '[^}]*name=\[\([^]]*\)\]'`
-	local desc=`expr "$cc" : '[^}]*desc=\[\([^]]*\)\]'`
+	name=`expr "$cc" : '[^}]*name=\[\([^]]*\)\]'`
+	desc=`expr "$cc" : '[^}]*desc=\[\([^]]*\)\]'`
 	echo "  --$name	$desc"
 	cc=`expr "$cc" : '[^}]*}\(.*\)'`
     done
@@ -328,17 +331,19 @@ PrintVersion() {
 }
 
 SubVar() {
-    local esc2=`echo $2 | sed 's/\//\\\&/g'`
+    local esc2
+    esc2=`echo $2 | sed 's/\//\\\&/g'`
     eval ac_var_$1='$esc2';
     echo "s/@$1@/$esc2/g" >>config.sed
 }
 
 SubComp() {
-    local cc=$COMPONENTS
+    local cc name seds
+    cc=$COMPONENTS
     while [ ! -z "$cc" ]; do
-	local name=`expr "$cc" : '[^}]*name=\[\([^]]*\)\]'`
-	local seds=`expr "$cc" : '[^}]*seds=\[\([^]]*\)\]'`
-	[ "$name" = "$1" ] && echo -e $seds >>config.sed
+	name=`expr "$cc" : '[^}]*name=\[\([^]]*\)\]'`
+	seds=`expr "$cc" : '[^}]*seds=\[\([^]]*\)\]'`
+	[ "$name" = "$1" ] && echo $seds >>config.sed
 	cc=`expr "$cc" : '[^}]*}\(.*\)'`
     done
 }
@@ -393,7 +398,8 @@ fi
 #### Find headers, libs, programs, and subs ##########################
 
 SubHeadLibsProgs() {
-local INCPATH="$ac_var_oldincludedir $ac_var_includedir $ac_var_gccincludedir $ac_var_customincdir"
+local INCPATH LIBPATH LIBSUFFIX found pname pcall esciv
+INCPATH="$ac_var_oldincludedir $ac_var_includedir $ac_var_gccincludedir $ac_var_customincdir"
 INCPATH=`echo $INCPATH | sed 's/\\\\//g'`
 for i in $HEADERS; do
     for p in $INCPATH; do
@@ -404,11 +410,11 @@ for i in $HEADERS; do
     done
 done
 
-local LIBPATH="`echo $LD_LIBRARY_PATH | tr ':' ' '` $ac_var_libdir $ac_var_gcclibdir $ac_var_customlibdir /usr/lib /usr/local/lib /lib"
+LIBPATH="`echo $LD_LIBRARY_PATH | tr ':' ' '` $ac_var_libdir $ac_var_gcclibdir $ac_var_customlibdir /usr/lib /usr/local/lib /lib"
 LIBPATH=`echo $LIBPATH | sed 's/\\\\//g'`
-local LIBSUFFIX="so a la dylib"
+LIBSUFFIX="so a la dylib"
 for i in $LIBS; do
-    local found=
+    found=
     for p in $LIBPATH; do
 	for s in $LIBSUFFIX; do
 	    if [ -r "$p/lib$i.$s" ]; then
@@ -422,20 +428,19 @@ for i in $LIBS; do
 done
 
 for i in $PROGS; do
-    local pname=`expr "$i" : '\([^=]*\)=[^=]*'`
-    local pcall=`expr "$i" : '[^=]*=\([^=]*\)'`
+    pname=`expr "$i" : '\([^=]*\)=[^=]*'`
+    pcall=`expr "$i" : '[^=]*=\([^=]*\)'`
     [ -x `which $pcall` ] && echo "s/@$pname@/$pcall/g" >>config.sed
 done
 # If nothing found in first loop, set the first pair anyway.
 for i in $PROGS; do
-    local pname=`expr "$i" : '\([^=]*\)=[^=]*'`
-    local pcall=`expr "$i" : '[^=]*=\([^=]*\)'`
+    pname=`expr "$i" : '\([^=]*\)=[^=]*'`
+    pcall=`expr "$i" : '[^=]*=\([^=]*\)'`
     echo "s/@$pname@/$pcall/g" >>config.sed
 done
 # And, finally, the environment variables
 for i in $ENVIRONS; do
-    local esciv=`eval echo '"'\$\{$i\}'"'`
-    esciv="`echo $esciv | sed 's/\//\\\&/g'`"
+    esciv="`eval echo '"'\$\{$i\}'"'|sed 's/\//\\\&/g'`"
     [ ! -z "$esciv" ] && esciv=" $esciv"
     echo "s/ \?@$i@/$esciv/g" >>config.sed
 done
