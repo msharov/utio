@@ -454,6 +454,7 @@ for i in $FILES; do
     sed -f config.sed $i.in > $i
 done
 
+touch config.status
 echo "#! /bin/sh
 $0 $*
 `tail -n+3 config.status`" > config.status.new
