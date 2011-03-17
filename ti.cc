@@ -89,6 +89,11 @@ void CTerminfo::read (istream& is)
 {
     // First the header.
     STerminfoHeader h;
+#if WANT_STREAM_BOUNDS_CHECKING
+    memset (&h, 0, sizeof(h));
+#else
+    is.verify_remaining ("read","terminfo",stream_size_of(h));
+#endif
     is >> h;
 #if BYTE_ORDER == BIG_ENDIAN
     h.m_Magic = le_to_native (h.m_Magic);
@@ -105,19 +110,23 @@ void CTerminfo::read (istream& is)
     is.read_strz (m_Name);
 
     // The boolean section
+    is.verify_remaining ("read","terminfo",sizeof(boolvec_t::size_type)+h.m_nBooleans*sizeof(boolvec_t::value_type));
     m_Booleans.resize (h.m_nBooleans);
     nr_container_read (is, m_Booleans);
     is >> ios::talign<number_t>();
 
     // The numbers section
+    is.verify_remaining ("read","terminfo",sizeof(numvec_t::size_type)+h.m_nNumbers*sizeof(numvec_t::value_type));
     m_Numbers.resize (h.m_nNumbers);
     nr_container_read (is, m_Numbers);
 
     // The string offsets section
+    is.verify_remaining ("read","terminfo",sizeof(stroffvec_t::size_type)+h.m_nStrings*sizeof(stroffvec_t::value_type));
     m_StringOffsets.resize (h.m_nStrings);
     nr_container_read (is, m_StringOffsets);
 
     // The stringtable
+    is.verify_remaining ("read","terminfo",h.m_StringTableSize);
     m_StringTable.resize (h.m_StringTableSize);
     is.read (m_StringTable.begin(), m_StringTable.size());
 
@@ -162,7 +171,7 @@ void CTerminfo::Load (const char* termname)
 	termname = getenv ("TERM");
     if (!termname || !*termname)
 	termname = "linux";
-    memblock tibuf;
+    string tibuf;
     LoadEntry (tibuf, termname);
     istream is (tibuf);
     read (is);
