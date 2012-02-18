@@ -146,6 +146,7 @@ void CTerminfo::write (ostream& os) const
     h.m_nNumbers = native_to_le (m_Numbers.size());
     h.m_nStrings = native_to_le (m_StringOffsets.size());
     h.m_StringTableSize = native_to_le (m_StringTable.size());
+    os << h;
     os.write_strz (m_Name);
     nr_container_write (os, m_Booleans);
     os << ios::talign<number_t>();

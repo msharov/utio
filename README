@@ -7,7 +7,6 @@
 utio is an alternative (to curses) implementation for terminfo-described
 terminal access.
 
-
 2. Compilation
 
 You will need the uSTL library 0.8 or later to compile utio.
@@ -21,7 +20,7 @@ uSTL can be downloaded from http://sourceforge.net/projects/ustl
 
 Optionally, if you have doxygen, you can build a reference manual with:
 
-% make dox
+% make html
 
 Running utio applications requires the terminfo database. No, termcap
 is not the same as terminfo; the latter is a collection of binary
@@ -31,7 +30,6 @@ on BSD systems are not terminfo files either.
 3. Usage
 
 See docs/index.html for API description.
-
 
 4. Bug reporting
 
