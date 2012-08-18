@@ -87,7 +87,7 @@ public:
     inline	CCharCell (const SCharCell& sc);
     inline	CCharCell (wchar_t v, rcself_t t);
     inline bool	EqualFormat (rcself_t v) const
-		    { return (noalias(uint32_t(0),&m_FgColor) == noalias(uint32_t(0),&v.m_FgColor)); }
+		    { return (*noalias_cast<const uint32_t*>(&m_FgColor) == *noalias_cast<const uint32_t*>(&v.m_FgColor)); }
     inline bool	operator== (rcself_t v) const;
     inline void	operator= (rcself_t v);
     inline bool	HasAttr (EAttribute a) const	{ return (m_Attrs & (1 << a)); }
