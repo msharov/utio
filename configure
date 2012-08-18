@@ -17,15 +17,15 @@ FILES="Config.mk config.h"
 COMPONENTS='
 {
 name=[without-shared]
-desc=[Builds the shared library (if supported by the OS)]
+desc=[do not build shared library]
 seds=[s/^\(BUILD_SHARED\)/#\1/]
 }{
 name=[with-static]
-desc=[	Builds the static library]
-seds=[s/^#\(BUILD_STATIC\)/\1/]
+desc=[	build the static library]
+seds=[s/^#\(BUILD_STATIC\)/\1/;s/-fno-enforce-eh-specs/-fno-enforce-eh-specs -ffunction-sections -fdata-sections/;s/-gc-sections/-gc-sections -static-libgcc/;s/@libustl@/@libustl@ -lsupc++/]
 }{
 name=[with-debug]
-desc=[	Compile for debugging]
+desc=[	compile for debugging]
 seds=[s/^#\(DEBUG\)/\1/]
 }';
 
@@ -430,7 +430,7 @@ done
 for i in $PROGS; do
     pname=`expr "$i" : '\([^=]*\)=[^=]*'`
     pcall=`expr "$i" : '[^=]*=\([^=]*\)'`
-    [ -x `which $pcall` ] && echo "s/@$pname@/$pcall/g" >>config.sed
+    [ -x `which $pcall 2>/dev/null` ] && echo "s/@$pname@/$pcall/g" >>config.sed
 done
 # If nothing found in first loop, set the first pair anyway.
 for i in $PROGS; do
