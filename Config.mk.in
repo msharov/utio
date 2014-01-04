@@ -14,7 +14,6 @@ CXX		:= @CXX@
 LD		:= @CC@
 AR		:= @AR@
 RANLIB		:= @RANLIB@
-DOXYGEN		:= @DOXYGEN@
 INSTALL		:= @INSTALL@
 
 INSTALLDATA	:= ${INSTALL} -D -p -m 644
@@ -23,23 +22,17 @@ INSTALLLIB	:= ${INSTALLDATA}
 ################ Destination #########################################
 
 prefix		:= @prefix@
-exec_prefix	:= @exec_prefix@
-BINDIR		:= @bindir@
 INCDIR		:= @includedir@
 LIBDIR		:= @libdir@
 
 ################ Compiler options ####################################
 
-WARNOPTS	:= -Wall -Wextra -Wpointer-arith -Wcast-qual -Wsynth \
+CXXFLAGS	:= -Wall -Wextra -Wpointer-arith -Wcast-qual -Wsynth \
 		-Wwrite-strings -Wno-cast-align -Wno-strict-aliasing \
 		-Woverloaded-virtual -Wredundant-decls -Wno-overflow \
-		-Wsign-promo -Wshadow @SYSWARNS@
-TGTOPTS		:= @PROCESSOR_OPTS@
-INLINEOPTS	:= @INLINE_OPTS@
-
-CXXFLAGS	:= ${WARNOPTS} ${TGTOPTS} @CUSTOMINCDIR@ -fPIC
+		-Wsign-promo -Wshadow -fPIC @SYSWARNS@ @CUSTOMINCDIR@
 LDFLAGS		:= @CUSTOMLIBDIR@
-LIBS		:=
+LIBS		:= @libustl@
 ifdef DEBUG
     CXXFLAGS	+= -O0 -g
     LDFLAGS	+= -rdynamic
@@ -47,7 +40,6 @@ else
     CXXFLAGS	+= -Os -g0 -DNDEBUG=1 ${INLINEOPTS}
     LDFLAGS	+= -s -Wl,-gc-sections
 endif
-LIBS		:= @libustl@
 O		:= .o/
 
 slib_lnk	= lib$1.so

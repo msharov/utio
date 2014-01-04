@@ -1,11 +1,13 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Useful Terminal I/O Library</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
     <meta http-equiv="Content-Type" content="text/xhtml+xml; charset=ISO-8859-1" />
-    <link href="style/default.css" rel="stylesheet" type="text/css" />
-    <link href="style/style.css" rel="stylesheet" type="text/css" />
+    <title>Useful Terminal I/O Library</title>
+    <meta name="Description" content="An alternative terminfo-using terminal output library" />
+    <meta name="Keywords" content="terminal, terminfo, curses" />
+    <meta name="author" content="Mike Sharov" />
+    <meta name="date" content="2014-01-04" />
 </head>
 <body id="bodyStyle">
 <div class="banner">
@@ -23,12 +25,10 @@
     <li><a href="#CKeyboard">CKeyboard</a></li>
     <li><a href="#Build">How to build it</a></li>
     <li><a href="#Support">What if it doesn't work?</a></li>
-    <li><a href="html/index.html">Doxygen reference?</a></li>
 </ul>
 <hr class="banner" />
 
 <h2><a name="Overview">Overview</a></h2>
-
 <p>
 "But I want this text to be green!" So began my complaint about the lack
 of console capabilities in Linux. Many people have made this complaint
@@ -93,13 +93,11 @@ remember where the dirty areas are. <var>CTerminfo</var> answers this problem wi
 a simple stream-based interface that lets you directly print terminal
 capabilities, taking care of all those little details, like having to
 set the bold attribute to get all 16 colors. Here's a simple example:
-</p>
-<pre>
+</p><pre>
     CTerminfo ti;
     ti.Load();
     cout &lt;&lt; ti.Color(red) &lt;&lt; "Error: can't open file x" &lt;&lt; endl;
-</pre>
-<p>
+</pre><p>
 The second (optional) argument to Color sets the background color. See
 EColor enum in <tt>ticonst.h</tt> for available color values. With
 color_Preserve value you can keep the fancy backgrounds provided by
@@ -170,10 +168,9 @@ have finished writing into it, it can be blitted to the screen with
 the <var>Image</var> command in <var>CTerminfo</var>. The intended use,
 however is a triple-buffer rotating system that writes only differences
 between updates. Here is an example of how it might work:
-</p>
-<pre>
-    CGC gc;			// This is where the code draws.
-    CGC scr;			// This contains the current contents of the screen.
+</p><pre>
+    CGC gc;		// This is where the code draws.
+    CGC scr;		// This contains the current contents of the screen.
 
     // Make both the same size as the screen.
     gc.Resize (m_TI.Width(), m_TI.Height());
@@ -213,8 +210,7 @@ the keyboard layout has to be manually loaded and interpreted, which
 would greatly increase the code size of this library.  Thankfully,
 it is possible to run in semi-normal "cooked" mode and still interpret
 keycodes correctly. That is what <var>CKeyboard</var> is for.
-</p>
-<pre>
+</p><pre>
     m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
     wchar_t key = 0;
     CKeyboard::metastate_t meta;
@@ -222,8 +218,7 @@ keycodes correctly. That is what <var>CKeyboard</var> is for.
 	key = m_Kb.GetKey (&amp;meta);	// Synchronous call.
 	// ... do whatever with key ...
     }
-</pre>
-<p>
+</pre><p>
 Look in <tt>ticonst.h</tt> for EKeyDataValue enum of possible return codes.
 They are what will be returned instead of the escape sequences. Metakey
 state is in <var>meta</var> (which is an optional argument, in case you
@@ -264,22 +259,16 @@ original terminfo. I am not interested in doing it due to the amount
 of work involved, but you are, of course, welcome to try. If you do,
 you may want to take over this project. Anyway...
 </p><p>
-Building this library is a fairly standard procedure. Download the package,
-unpack it into its directory. If you like living dangerously, you can get the
-current development branch by git at
-<a href="http://utio.git.sourceforge.net/git/gitweb.cgi?p=utio">git://utio.git.sourceforge.net/gitroot/utio/utio</a>.
-Make sure you have the necessary dependencies:
+Building this library is a fairly standard procedure. Download the package from
+<a href="https://github.com/msharov/utio/releases/latest">https://github.com/msharov/utio/releases/latest</a>.
+Make sure you have the necessary dependencies: C++11 compiler, such as gcc 4.6+, the
+<a href="https://github.com/msharov/ustl/releases/latest">uSTL</a> library
+version 1.1 or higher, and the terminfo database, available in the
+<a href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a>
+package, if your distribution doesn't provide it separately.
 </p>
-<ul>
-    <li><a href="http://gcc.gnu.org">gcc compiler</a> with C++ support. Version 3 or later is highly recommended.</li>
-    <li>POSIX-compatible libc. Anything made in the last 5 years should work.</li>
-    <li>The <a href="http://sourceforge.net/projects/ustl">uSTL</a> library version 1.0 or higher.</li>
-    <li>The terminfo database. In the <a href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a> package, if your distribution doesn't provide it.</li>
-</ul>
 <pre>
-% ./configure
-% make
-% make install
+% ./configure &amp;&amp; make &amp;&amp; make install
 </pre>
 <p>
 <kbd>./configure --help</kbd> lists configuration options, like setting an
@@ -290,26 +279,9 @@ that is known to work.
 </p>
 
 <h2><a name="Support">What if it doesn't work?</a></h2>
-
 <p>
-Problems should be reported using
-<a href="https://sourceforge.net/tracker/?atid=752280&amp;group_id=142338&amp;func=browse">
-    SourceForge project trackers
-</a>
-reachable on the
-<a href="http://sourceforge.net/projects/utio">
-    library project page.
-</a>
+Problems should be reported using <a href="https://github.com/msharov/utio/issues">Github project trackers</a>
+reachable from the <a href="https://github.com/msharov/utio">library project page.</a>
 </p>
-<hr />
-<div style="align: right">
-    <a href="http://sourceforge.net">
-	<img src="http://sourceforge.net/sflogo.php?group_id=142338&amp;type=4" width="127" height="37" alt="Hosted on SourceForge.net" />
-    </a> 
-    <a href="http://validator.w3.org/check?uri=referer">
-	<img src="style/valid-xhtml10.png" height="31" width="88" alt="Valid XHTML 1.0!" />
-    </a>
-</div>
 </body>
 </html>
-

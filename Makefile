@@ -5,18 +5,19 @@
 SRCS	:= $(wildcard *.cc)
 INCS	:= $(wildcard *.h)
 OBJS	:= $(addprefix $O,$(SRCS:.cc=.o))
+DEPS	:= ${OBJS:.o=.d}
 
 ################ Compilation ###########################################
 
-.PHONY: all clean html check dist distclean maintainer-clean
+.PHONY: all clean check distclean maintainer-clean
 
 all:	Config.mk config.h ${NAME}/config.h
 ALLTGTS	:= Config.mk config.h ${NAME}/config.h
 
-ifdef BUILD_SHARED
 SLIBL	:= $O$(call slib_lnk,${NAME})
 SLIBS	:= $O$(call slib_son,${NAME})
 SLIBT	:= $O$(call slib_tgt,${NAME})
+ifdef BUILD_SHARED
 ALLTGTS	+= ${SLIBT} ${SLIBS} ${SLIBL}
 
 all:	${SLIBT} ${SLIBS} ${SLIBL}
@@ -71,8 +72,11 @@ ${RINCI}: ${NAME}.h
 	@${INSTALLDATA} $< $@
 uninstall:	uninstall-incs
 uninstall-incs:
-	@echo "Removing ${LIDIR}/ and ${LIDIR}.h ..."
-	@(cd ${INCDIR}; rm -f ${INCSI} ${NAME}.h; [ ! -d ${NAME} ] || rm -rf ${NAME})
+	@if [ -d ${LIDIR} -o -f ${RINCI} ]; then\
+	    echo "Removing ${LIDIR}/ and ${LIDIR}.h ...";\
+	    rm -f ${INCSI} ${RINCI};\
+	    rmdir ${LIDIR};\
+	fi
 endif
 
 ####### Install libraries (shared and/or static)
@@ -105,35 +109,15 @@ endif
 ################ Maintenance ###########################################
 
 clean:
-	@[ ! -d ./$O ] || rm -rf ./$O
-
-html:	${SRCS} ${INCS} ${NAME}doc.in
-	@${DOXYGEN} ${NAME}doc.in
-
-ifdef MAJOR
-DISTVER	:= ${MAJOR}.${MINOR}
-DISTNAM	:= ${NAME}-${DISTVER}
-DISTLSM	:= ${DISTNAM}.lsm
-DISTTAR	:= ${DISTNAM}.tar.bz2
-
-dist:
-	@echo "Generating ${DISTTAR} and ${DISTLSM} ..."
-	@mkdir .${DISTNAM}
-	@rm -f ${DISTTAR}
-	@cp -r * .${DISTNAM} && mv .${DISTNAM} ${DISTNAM}
-	@+${MAKE} -sC ${DISTNAM} maintainer-clean
-	@tar jcf ${DISTTAR} ${DISTNAM} && rm -rf ${DISTNAM}
-	@echo "s/@version@/${DISTVER}/" > ${DISTLSM}.sed
-	@echo "s/@date@/`date +%F`/" >> ${DISTLSM}.sed
-	@echo -n "s/@disttar@/`du -h --apparent-size ${DISTTAR}`/" >> ${DISTLSM}.sed;
-	@sed -f ${DISTLSM}.sed docs/${NAME}.lsm > ${DISTLSM} && rm -f ${DISTLSM}.sed
-endif
+	@if [ -d $O ]; then\
+	    rm -f ${SLIBS} ${SLIBT} ${SLIBL} ${LIBA} ${OBJS} ${DEPS};\
+	    rmdir $O;\
+	fi
 
 distclean:	clean
 	@rm -f Config.mk config.h config.status ${NAME}
 
 maintainer-clean: distclean
-	@if [ -d docs/html ]; then rm -f docs/html/*; rmdir docs/html; fi
 
 INPLACE_INCS := $(addprefix ${NAME}/,$(filter-out config.h,${INCS}))
 ${INPLACE_INCS}: ${NAME}/%:	${NAME}/config.h
@@ -148,4 +132,4 @@ Config.mk config.h:	configure
 	@if [ -x config.status ]; then echo "Reconfiguring ..."; ./config.status; \
 	else echo "Running configure ..."; ./configure; fi
 
--include ${OBJS:.o=.d}
+-include ${DEPS}

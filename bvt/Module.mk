@@ -3,6 +3,7 @@
 bvt/SRCS	:= $(wildcard bvt/*.cc)
 bvt/BVTS	:= $(bvt/SRCS:.cc=)
 bvt/OBJS	:= $(addprefix $O,$(bvt/SRCS:.cc=.o))
+bvt/DEPS	:= ${bvt/OBJS:.o=.d}
 bvt/LIBS	:= -L$(abspath $O.) -l${NAME}
 ifdef BUILD_SHARED
 bvt/LIBS	:= -Wl,--rpath=$(abspath $O.) ${bvt/LIBS}
@@ -34,12 +35,13 @@ ${bvt/BVTS}: bvt/%: $Obvt/%.o ${ALLTGTS}
 
 clean:	bvt/clean
 bvt/clean:
-	@rm -f ${bvt/BVTS} ${bvt/OBJS} $(bvt/OBJS:.o=.d)
-	@rmdir $O/bvt &> /dev/null || true
-
+	@if [ -d $Obvt ]; then\
+	    rm -f ${bvt/BVTS} ${bvt/OBJS} ${bvt/DEPS};\
+	    rmdir $Obvt;\
+	fi
 check:		bvt/run
 bvt/check:	check
 
 ${bvt/OBJS}: Makefile bvt/Module.mk Config.mk ${NAME}/config.h
 
--include ${bvt/OBJS:.o=.d}
+-include ${bvt/DEPS}
