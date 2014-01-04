@@ -1,3 +1,4 @@
+// q
 // This file is part of the utio library, a terminal I/O library.
 //
 // Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>

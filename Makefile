@@ -49,7 +49,7 @@ $O%.o:	%.cc
 	@echo "    Compiling $< to assembly ..."
 	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
 
-include bvt/Module.mk
+include test/Module.mk
 
 ################ Installation ##########################################
 
