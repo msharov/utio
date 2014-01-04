@@ -1,10 +1,7 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// gc.cc
-//
 
 #include "gc.h"
 #include "ti.h"
@@ -202,5 +199,4 @@ bool CGC::Clip (Rect& r) const
 
 //----------------------------------------------------------------------
 
-} // namespace usio
-
+} // namespace utio

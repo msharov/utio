@@ -1,16 +1,9 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-/// \file ticonst.h
-///
-/// \brief Constants used by CTerminfo to interpret the terminfo database.
-///
 
-#ifndef TICONST_H_668685586A306EC93FCA2A4B233066A9
-#define TICONST_H_668685586A306EC93FCA2A4B233066A9
-
+#pragma once
 #include "config.h"
 
 /// Terminal I/O Library namespace.
@@ -935,6 +928,3 @@ CAST_STREAMABLE (utio::ti::ENumbers, uint16_t)
 CAST_STREAMABLE (utio::ti::EStrings, uint16_t)
 CAST_STREAMABLE (utio::EKeyDataValue, uint16_t)
 INTEGRAL_STREAMABLE (utio::CCharCell)
-
-#endif
-

@@ -1,10 +1,7 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// kb.cc
-//
 
 #include "kb.h"
 #include <sys/ioctl.h>
@@ -19,7 +16,7 @@ namespace utio {
 //----------------------------------------------------------------------
 
 // One per process, just like the terminal.
-bool CKeyboard::s_bTermInUIMode = false;
+/*static*/ bool CKeyboard::s_bTermInUIMode = false;
 
 //----------------------------------------------------------------------
 
@@ -204,4 +201,3 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 }
 
 } // namespace utio
-

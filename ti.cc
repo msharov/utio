@@ -1,10 +1,7 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// ti.cc
-//
 
 #include "ti.h"
 #include <unistd.h>
@@ -12,9 +9,7 @@
 
 //----------------------------------------------------------------------
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-#define TERMINFO_MAGIC	0432
+enum { TERMINFO_MAGIC = 0432 };
 
 /// The header of the terminfo file
 struct STerminfoHeader {
@@ -27,8 +22,6 @@ struct STerminfoHeader {
 };
 
 INTEGRAL_STREAMABLE(STerminfoHeader);
-
-#endif
 
 namespace utio {
 
@@ -846,4 +839,3 @@ const int16_t CTerminfo::c_KeyToStringMap [kv_nKeys] = {
 //----------------------------------------------------------------------
 
 } // namespace utio
-

@@ -1,25 +1,15 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// kb.h
-//
 
-#ifndef KB_H_70C9E93B05A3B0D527D942E351FEEE4B
-#define KB_H_70C9E93B05A3B0D527D942E351FEEE4B
-
+#pragma once
 #include "ti.h"
 #include <termios.h>
 
 namespace utio {
 
-/// \class CKeyboard kb.h utio/kb.h
-///
-/// \brief Keyboard code preprocessor for terminals.
-///
 /// Takes raw codes from the input port and translates them into keycode events.
-///
 class CKeyboard {
 public:
     typedef CTerminfo::keystrings_t	keymap_t;
@@ -43,7 +33,4 @@ private:
     struct termios	m_InitialTermios;	///< What it was before we munged it.
     static bool		s_bTermInUIMode;	///< Current terminal state, static because the terminal is process-global.
 };
-
 } // namespace utio
-
-#endif

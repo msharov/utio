@@ -1,22 +1,15 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// ti.h
-//
 
-#ifndef TI_H_2B8E70FA3501DD2B50EF36C24E2DC717
-#define TI_H_2B8E70FA3501DD2B50EF36C24E2DC717
-
+#pragma once
 #include "ticonst.h"
 #include "gdt.h"
 
 namespace utio {
 
-/// \class CTerminfo ti.h utio/ti.h
-///
-/// \brief An interface to a terminfo entry.
+/// An interface to a terminfo entry.
 ///
 /// This object reads and interprets terminfo files and can be used to set
 /// colors and attributes, draw ACS characters, and decode keystrings, taking
@@ -144,7 +137,4 @@ inline CTerminfo::capout_t CTerminfo::ShowCursor (void) const
 
 } // namespace utio
 
-STD_STREAMABLE(utio::CTerminfo);
-
-#endif
-
+STD_STREAMABLE (utio::CTerminfo);

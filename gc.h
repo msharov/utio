@@ -1,24 +1,16 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// gc.h
-//
 
-#ifndef GC_H_2E08A62D1060EA48355708BC7A3C12AF
-#define GC_H_2E08A62D1060EA48355708BC7A3C12AF
-
+#pragma once
 #include "ticonst.h"
 #include "gdt.h"
 
 namespace utio {
 
-/// \brief Graphics context.
-///
-/// Can be used to draw into a character cell array. Quite useful for
-/// internal buffer (Canvas()).
-///
+/// Graphics context. Can be used to draw into a character cell array.
+/// Quite useful for internal buffer (Canvas()).
 class CGC {
 public:
     typedef vector<CCharCell>	canvas_t;	///< Type of the output buffer.
@@ -73,8 +65,4 @@ private:
     Size2d			m_Size;		///< Size of the output buffer.
     uint32_t			m_TabSize;	///< Tab size as expanded by Text
 };
-
 } // namespace utio
-
-#endif
-

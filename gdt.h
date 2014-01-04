@@ -1,14 +1,9 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
-// gdt.h
-//
 
-#ifndef GDT_H_10D99A7949ED8990743247ED3E6897DC
-#define GDT_H_10D99A7949ED8990743247ED3E6897DC
-
+#pragma once
 #include "ticonst.h"
 
 namespace utio {
@@ -49,5 +44,3 @@ public:
 
 } // namespace gdt
 } // namespace utio
-
-#endif
