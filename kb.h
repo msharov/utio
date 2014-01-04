@@ -22,15 +22,15 @@ public:
     void		LeaveUIMode (void);
     wchar_t		DecodeKey (istream& is) const;
     inline bool		IsInUIMode (void) const			{ return (s_bTermInUIMode); }
-    inline void		LoadKeymap (const CTerminfo& rti)	{ rti.LoadKeystrings (m_Keymap); }
+    inline void		LoadKeymap (const CTerminfo& rti)	{ rti.LoadKeystrings (_keymap); }
     wchar_t		GetKey (bool bBlock = true) const;
     bool		WaitForKeyData (long timeout = 0) const;
 private:
     void		ReadKeyData (void) const;
 private:
-    keymap_t		m_Keymap;		///< Currently loaded keymap.
-    mutable string	m_Keydata;		///< Buffered keydata.
-    struct termios	m_InitialTermios;	///< What it was before we munged it.
+    keymap_t		_keymap;		///< Currently loaded keymap.
+    mutable string	_keydata;		///< Buffered keydata.
+    struct termios	_initialTermios;	///< What it was before we munged it.
     static bool		s_bTermInUIMode;	///< Current terminal state, static because the terminal is process-global.
 };
 } // namespace utio

@@ -22,12 +22,12 @@ namespace utio {
 
 /// Constructs node with id \p nodeId.
 CKeyboard::CKeyboard (void)
-: m_Keymap (),
-  m_Keydata (),
-  m_InitialTermios ()
+:_keymap()
+,_keydata()
+,_initialTermios()
 {
-    fill_n ((void*) &m_InitialTermios, sizeof(struct termios), '\x0');
-    m_Keydata.reserve (64);
+    fill_n ((void*) &_initialTermios, sizeof(struct termios), '\x0');
+    _keydata.reserve (64);
 }
 
 /// Destructor cleans up keyboard in case of abnormal termination.
@@ -59,19 +59,19 @@ wchar_t CKeyboard::GetKey (bool bBlock) const
     wchar_t key = 0;
     istream is;
     do {
-	if (m_Keydata.empty() && bBlock)
+	if (_keydata.empty() && bBlock)
 	    WaitForKeyData();
 	ReadKeyData();
-	is.link (m_Keydata);
+	is.link (_keydata);
     } while (!(key = DecodeKey(is)) && bBlock);
-    m_Keydata.erase (m_Keydata.begin(), is.pos());
+    _keydata.erase (_keydata.begin(), is.pos());
     return (key);
 }
 
 /// Reads all available stdin data (nonblocking)
 void CKeyboard::ReadKeyData (void) const
 {
-    ostream os (m_Keydata.end(), m_Keydata.capacity() - m_Keydata.size());
+    ostream os (_keydata.end(), _keydata.capacity() - _keydata.size());
     errno = 0;
     while (os.remaining()) {
 	ssize_t br = read (STDIN_FILENO, os.ipos(), os.remaining());
@@ -82,7 +82,7 @@ void CKeyboard::ReadKeyData (void) const
 	else
 	    break;
     }
-    m_Keydata.resize (m_Keydata.size() + os.pos());
+    _keydata.resize (_keydata.size() + os.pos());
 }
 
 /// Blocks until something is available on stdin. Returns false on \p timeout.
@@ -125,9 +125,9 @@ void CKeyboard::EnterUIMode (void)
     if (fcntl (STDIN_FILENO, F_SETFL, flag | O_NONBLOCK))
 	throw file_exception ("F_SETFL", "stdin");
 
-    if (-1 == tcgetattr (STDIN_FILENO, &m_InitialTermios))
+    if (-1 == tcgetattr (STDIN_FILENO, &_initialTermios))
 	throw libc_exception ("tcgetattr");
-    struct termios tios (m_InitialTermios);
+    struct termios tios (_initialTermios);
     tios.c_lflag &= ~(ICANON | ECHO);	// No by-line buffering, no echo.
     tios.c_iflag &= ~(IXON | IXOFF);	// No ^s scroll lock (whose dumb idea was it?)
     tios.c_cc[VMIN] = 1;		// Read at least 1 character on each read().
@@ -149,7 +149,7 @@ void CKeyboard::LeaveUIMode (void)
     if (!s_bTermInUIMode)
 	return;
     tcflush (STDIN_FILENO, TCIFLUSH);	// Should not leave any garbage for the shell
-    if (tcsetattr (STDIN_FILENO, TCSANOW, &m_InitialTermios))
+    if (tcsetattr (STDIN_FILENO, TCSANOW, &_initialTermios))
 	throw file_exception ("tcsetattr", "stdin");
     s_bTermInUIMode = false;
 }
@@ -165,7 +165,7 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 
     // Find the longest match in the keymap.
     size_t matchedSize = 0, kss, ki = 0;
-    for (const char* ks = m_Keymap.begin(); ki < kv_nKeys; ++ki, ks += kss + 1) {
+    for (const char* ks = _keymap.begin(); ki < kv_nKeys; ++ki, ks += kss + 1) {
 	if ((kss = strlen(ks)) <= is.remaining() && kss > matchedSize && strncmp (is.ipos(), ks, kss) == 0) {
 	    kv = ki + kv_First;
 	    matchedSize = kss;

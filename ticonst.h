@@ -64,10 +64,10 @@ enum EAttribute {
 //----------------------------------------------------------------------
 
 struct SCharCell {
-    wchar_t	m_Char;		///< The character.
-    uint8_t	m_FgColor;	///< Foreground color. See #EColor for values.
-    uint8_t	m_BgColor;	///< Background color. See #EColor for values.
-    uint16_t	m_Attrs;	///< Attribute bits. See #EAttribute for values.
+    wchar_t	c;	///< The character.
+    uint8_t	fg;	///< Foreground color. See #EColor for values.
+    uint8_t	bg;	///< Background color. See #EColor for values.
+    uint16_t	attrs;	///< Attribute bits. See #EAttribute for values.
 };
 
 /// Structure for character images
@@ -75,24 +75,24 @@ class CCharCell : public SCharCell {
 public:
     typedef const CCharCell&	rcself_t;
 public:
-    inline	CCharCell (wchar_t v = ' ', EColor fg = lightgray, EColor bg = color_Preserve, uint16_t attrs = 0)
-		    { m_Char = v; m_FgColor = fg; m_BgColor = bg; m_Attrs = attrs; }
+    inline	CCharCell (wchar_t nv = ' ', EColor nfg = lightgray, EColor nbg = color_Preserve, uint16_t nattrs = 0)
+		    { c = nv; fg = nfg; bg = nbg; attrs = nattrs; }
     inline	CCharCell (const SCharCell& sc);
     inline	CCharCell (wchar_t v, rcself_t t);
     inline bool	EqualFormat (rcself_t v) const
-		    { return (*noalias_cast<const uint32_t*>(&m_FgColor) == *noalias_cast<const uint32_t*>(&v.m_FgColor)); }
+		    { return (*noalias_cast<const uint32_t*>(&fg) == *noalias_cast<const uint32_t*>(&v.fg)); }
     inline bool	operator== (rcself_t v) const;
     inline void	operator= (rcself_t v);
-    inline bool	HasAttr (EAttribute a) const	{ return (m_Attrs & (1 << a)); }
-    inline void	SetAttr (EAttribute a)		{ m_Attrs |= (1 << a); }
-    inline void	ClearAttr (EAttribute a)	{ m_Attrs &= ~(1 << a); }
+    inline bool	HasAttr (EAttribute a) const	{ return (attrs & (1 << a)); }
+    inline void	SetAttr (EAttribute a)		{ attrs |= (1 << a); }
+    inline void	ClearAttr (EAttribute a)	{ attrs &= ~(1 << a); }
 };
 
 // These are required to tell the compiler that the fields ARE being changed.
 // The changes are not visible because the specializations below cast to long
 // and operate on those for efficiency.
-#define TOUCH_CHARCELL_VALUES_R(v)	asm(""::"m"(v.m_Char),"m"(v.m_FgColor),"m"(v.m_BgColor),"m"(v.m_Attrs))
-#define TOUCH_CHARCELL_VALUES_W(v)	asm("":"=m"(v.m_Char),"=m"(v.m_FgColor),"=m"(v.m_BgColor),"=m"(v.m_Attrs))
+#define TOUCH_CHARCELL_VALUES_R(v)	asm(""::"m"(v.c),"m"(v.fg),"m"(v.bg),"m"(v.attrs))
+#define TOUCH_CHARCELL_VALUES_W(v)	asm("":"=m"(v.c),"=m"(v.fg),"=m"(v.bg),"=m"(v.attrs))
 
 /// Returns true if equal to \p v.
 inline bool CCharCell::operator== (rcself_t v) const
@@ -100,9 +100,9 @@ inline bool CCharCell::operator== (rcself_t v) const
     TOUCH_CHARCELL_VALUES_R(v);
     TOUCH_CHARCELL_VALUES_R((*this));
     // Optimize to avoid word and byte comparisons, since it is basically a whole-object compare
-    // Original: return ((m_Char == v.m_Char) & EqualFormat (v));
-    const u_long* lps = noalias_cast<const u_long*>(&v.m_Char);
-    const u_long* lpd = noalias_cast<const u_long*>(&m_Char);
+    // Original: return ((c == v.c) & EqualFormat (v));
+    const u_long* lps = noalias_cast<const u_long*>(&v.c);
+    const u_long* lpd = noalias_cast<const u_long*>(&c);
     bool bEqual = true;
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	bEqual &= (lpd[i] == lps[i]);
@@ -114,8 +114,8 @@ inline void CCharCell::operator= (rcself_t v)
 {
     TOUCH_CHARCELL_VALUES_R(v);
     // Optimize to copy more than one item at once.
-    const u_long* lps = noalias_cast<const u_long*>(&v.m_Char);
-    u_long* lpd = noalias_cast<u_long*>(&m_Char);
+    const u_long* lps = noalias_cast<const u_long*>(&v.c);
+    u_long* lpd = noalias_cast<u_long*>(&c);
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	lpd[i] = lps[i];
     TOUCH_CHARCELL_VALUES_W((*this));
@@ -125,7 +125,7 @@ inline void CCharCell::operator= (rcself_t v)
 inline CCharCell::CCharCell (wchar_t v, rcself_t t)
 {
     operator= (t);
-    m_Char = v;
+    c = v;
 }
 
 /// Creates a char cell from static description \p sc.

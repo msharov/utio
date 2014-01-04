@@ -1,8 +1,7 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
 
 #include "stdmain.h"
 
@@ -20,29 +19,29 @@ private:
     void	Draw (CGC& gc);
     void	DrawBox (CGC& gc, Point2d pos);
 private:
-    CTerminfo	m_TI;	///< Terminfo access object.
-    CKeyboard	m_Kb;	///< Keyboard driver.
-    EColor	m_Fg;	///< Foreground color of the moveable box.
-    EColor	m_Bg;	///< Background color of the moveable box.
-    Point2d	m_Pos;	///< Position of the moveable box.
+    CTerminfo	_ti;	///< Terminfo access object.
+    CKeyboard	_kb;	///< Keyboard driver.
+    EColor	_fg;	///< Foreground color of the moveable box.
+    EColor	_bg;	///< Background color of the moveable box.
+    Point2d	_pos;	///< Position of the moveable box.
 };
 
 //----------------------------------------------------------------------
 
 /// Default constructor.
 CGCDemo::CGCDemo (void)
-: m_TI (),
-  m_Kb (),
-  m_Fg (green),
-  m_Bg (black),
-  m_Pos (0, 0)
+:_ti()
+,_kb()
+,_fg (green)
+,_bg (black)
+,_pos (0, 0)
 {
 }
 
 /// Destructor to clean up UI state.
 CGCDemo::~CGCDemo (void)
 {
-    cout << m_TI.Reset() << m_TI.Clear();	// Restores normal terminal state.
+    cout << _ti.Reset() << _ti.Clear();	// Restores normal terminal state.
 }
 
 /// Draws a box with a hole on the screen.
@@ -71,23 +70,23 @@ void CGCDemo::Draw (CGC& gc)
     gc.Clear();				// Clears with current color; green on black.
     gc.Color (black, brown);		// Stationary, background box is brown,
     DrawBox (gc, Point2d (10, 5));	// ... and constantly at (10,5).
-    gc.Color (m_Fg, m_Bg);		// Moveable box is of custom color,
-    DrawBox (gc, m_Pos);		// ... wherever it currently is.
+    gc.Color (_fg, _bg);		// Moveable box is of custom color,
+    DrawBox (gc, _pos);			// ... wherever it currently is.
 }
 
 /// Runs the event loop for the demo.
 void CGCDemo::Run (void)
 {
-    m_TI.Load();	// Loads the terminfo database (using $TERM)
-    m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
+    _ti.Load();		// Loads the terminfo database (using $TERM)
+    _kb.Open (_ti);	// Also places the terminal in UI-friendly mode.
 
     CGC gc;		// This is where the code draws.
     CGC screen;		// This contains the current contents of the screen.
-    gc.Resize (m_TI.Width(), m_TI.Height());	// Full screen buffers.
-    screen.Resize (m_TI.Width(), m_TI.Height());
+    gc.Resize (_ti.Width(), _ti.Height());	// Full screen buffers.
+    screen.Resize (_ti.Width(), _ti.Height());
 
-    cout << m_TI.HideCursor();	// Don't want the cursor to blink unless in a text box.
-    cout << m_TI.Clear();	// Avoid watching the screen scroll.
+    cout << _ti.HideCursor();	// Don't want the cursor to blink unless in a text box.
+    cout << _ti.Clear();	// Avoid watching the screen scroll.
 
     wchar_t key = 0;
     while (key != 'q') {
@@ -96,28 +95,28 @@ void CGCDemo::Run (void)
 	// Only the differences need to be written, so find them.
 	if (gc.MakeDiffFrom (screen)) {
 	    // gc now has only new stuff, the rest is zeroed out, and isn't drawn.
-	    cout << m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
+	    cout << _ti.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
 	    cout.flush();
 	    screen.Image (gc);	// Now apply the same diff to the screen cache.
 	    gc.Image (screen);	// ... and copy it back for a fresh start.
 	}
 
-	key = m_Kb.GetKey();	// Synchronous call.
+	key = _kb.GetKey();	// Synchronous call.
 
 	// Moving one of the boxes with bounds checking.
-	if ((key == kv_Up || key == 'k') && m_Pos[1] > 0)
-	    -- m_Pos[1];
-	else if ((key == kv_Down || key == 'j') && m_Pos[1] < gc.Height() - 12)
-	    ++ m_Pos[1];
-	else if ((key == kv_Left || key == 'h') && m_Pos[0] > 0)
-	    -- m_Pos[0];
-	else if ((key == kv_Right || key == 'l') && m_Pos[0] < gc.Width() - 12)
-	    ++ m_Pos[0];
+	if ((key == kv_Up || key == 'k') && _pos[1] > 0)
+	    -- _pos[1];
+	else if ((key == kv_Down || key == 'j') && _pos[1] < gc.Height() - 12)
+	    ++ _pos[1];
+	else if ((key == kv_Left || key == 'h') && _pos[0] > 0)
+	    -- _pos[0];
+	else if ((key == kv_Right || key == 'l') && _pos[0] < gc.Width() - 12)
+	    ++ _pos[0];
 	// And color cycling to verify they all work.
 	else if (key == 'f')
-	    m_Fg = EColor ((m_Fg + 1) % color_Last);
+	    _fg = EColor ((_fg + 1) % color_Last);
 	else if (key == 'b')
-	    m_Bg = EColor ((m_Bg + 1) % color_Last);
+	    _bg = EColor ((_bg + 1) % color_Last);
     }
 }
 
@@ -126,4 +125,3 @@ void CGCDemo::Run (void)
 StdDemoMain (CGCDemo)
 
 //----------------------------------------------------------------------
-

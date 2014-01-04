@@ -36,8 +36,8 @@ public:
     capout_t		AttrOff (EAttribute a) const;
     strout_t		Attrs (uint16_t a) const;
     capout_t		AllAttrsOff (void) const;
-    inline capout_t	HideCursor (void) const;
-    inline capout_t	ShowCursor (void) const;
+    inline capout_t	HideCursor (void) const			{ return (GetString (ti::cursor_invisible)); }
+    inline capout_t	ShowCursor (void) const			{ return (GetString (ti::cursor_normal)); }
     strout_t		Image (coord_t x, coord_t y, dim_t w, dim_t h, const CCharCell* data) const;
     strout_t		Box (coord_t x, coord_t y, dim_t w, dim_t h) const;
     strout_t		Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c = ' ') const;
@@ -45,12 +45,12 @@ public:
     strout_t		VLine (coord_t x, coord_t y, dim_t h) const;
     capout_t		Reset (void) const;
     void		ResetState (void) const;
-    inline strout_t	Name (void) const			{ return (m_Name); }
-    inline dim_t	Width (void) const			{ return (m_nColumns); }
-    inline dim_t	Height (void) const			{ return (m_nRows); }
-    inline size_t	Colors (void) const			{ return (m_nColors); }
-    inline size_t	ColorPairs (void) const			{ return (m_nPairs); }
-    inline char		AcsChar (EGraphicChar c) const		{ return (m_AcsMap[c]); }
+    inline strout_t	Name (void) const			{ return (_name); }
+    inline dim_t	Width (void) const			{ return (_nColumns); }
+    inline dim_t	Height (void) const			{ return (_nRows); }
+    inline size_t	Colors (void) const			{ return (_nColors); }
+    inline size_t	ColorPairs (void) const			{ return (_nPairs); }
+    inline char		AcsChar (EGraphicChar c) const		{ return (_acsMap[c]); }
     bool		GetBool (ti::EBooleans i) const;
     number_t		GetNumber (ti::ENumbers i) const;
     capout_t		GetString (ti::EStrings i) const;
@@ -84,12 +84,12 @@ private:
     public:
 			CContext (void);
     public:
-	string		m_Output;		///< Output string buffer.
-	progstack_t	m_ProgStack;		///< Stack for running ti programs.
-	gdt::Point2d	m_Pos;			///< Current cursor position.
-	uint16_t	m_Attrs;		///< Text attributes.
-	uint8_t		m_FgColor;		///< Foreground (text) color.
-	uint8_t		m_BgColor;		///< Background color.
+	string		output;		///< Output string buffer.
+	progstack_t	progStack;	///< Stack for running ti programs.
+	gdt::Point2d	pos;		///< Current cursor position.
+	uint16_t	attrs;		///< Text attributes.
+	uint8_t		fg;		///< Foreground (text) color.
+	uint8_t		bg;		///< Background color.
     };
 public:
     static inline wchar_t AcsUnicodeValue (EGraphicChar c)	{ return (c_AcscInfo[c].m_Unicode); }
@@ -106,34 +106,18 @@ private:
     inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return (v ? v : 1); }
     void		PSPush (progvalue_t v) const;
 private:
-    string		m_Name;			///< Name of the terminfo entry.
-    boolvec_t		m_Booleans;		///< Boolean caps.
-    numvec_t		m_Numbers;		///< Numeric caps.
-    stroffvec_t		m_StringOffsets;	///< String caps (offsets into m_StringTable)
-    strtable_t		m_StringTable;		///< Actual string caps values.
-    acsmap_t		m_AcsMap;		///< Decoded ACS characters.
-    mutable CContext	m_Ctx;			///< Current state of the terminal.
-    uint16_t		m_nColors;		///< Number of available colors.
-    uint16_t		m_nPairs;		///< Number of available color pairs (unused).
-    dim_t		m_nColumns;		///< Number of display columns.
-    dim_t		m_nRows;		///< Number of display rows.
+    string		_name;		///< Name of the terminfo entry.
+    boolvec_t		_booleans;	///< Boolean caps.
+    numvec_t		_numbers;	///< Numeric caps.
+    stroffvec_t		_stringOffsets;	///< String caps (offsets into _stringTable)
+    strtable_t		_stringTable;	///< Actual string caps values.
+    acsmap_t		_acsMap;	///< Decoded ACS characters.
+    mutable CContext	_ctx;		///< Current state of the terminal.
+    uint16_t		_nColors;	///< Number of available colors.
+    uint16_t		_nPairs;	///< Number of available color pairs (unused).
+    dim_t		_nColumns;	///< Number of display columns.
+    dim_t		_nRows;		///< Number of display rows.
 };
-
-//----------------------------------------------------------------------
-
-/// Makes the cursor invisible.
-inline CTerminfo::capout_t CTerminfo::HideCursor (void) const
-{
-    return (GetString (ti::cursor_invisible));
-}
-
-/// Makes the cursor visible.
-inline CTerminfo::capout_t CTerminfo::ShowCursor (void) const
-{
-    return (GetString (ti::cursor_normal));
-}
-
-//----------------------------------------------------------------------
 
 } // namespace utio
 

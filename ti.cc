@@ -13,12 +13,12 @@ enum { TERMINFO_MAGIC = 0432 };
 
 /// The header of the terminfo file
 struct STerminfoHeader {
-    uint16_t	m_Magic;		///< Equal to TERMINFO_MAGIC constant above.
-    uint16_t	m_NamesSize;
-    uint16_t	m_nBooleans;
-    uint16_t	m_nNumbers;
-    uint16_t	m_nStrings;
-    uint16_t	m_StringTableSize;
+    uint16_t	magic;		///< Equal to TERMINFO_MAGIC constant above.
+    uint16_t	namesSize;
+    uint16_t	nBooleans;
+    uint16_t	nNumbers;
+    uint16_t	nStrings;
+    uint16_t	strtableSize;
 };
 
 INTEGRAL_STREAMABLE(STerminfoHeader);
@@ -31,28 +31,28 @@ const char CTerminfo::no_value[1] = "";
 
 /// Default constructor.
 CTerminfo::CTerminfo (void)
-: m_Name (),
-  m_Booleans (),
-  m_Numbers (),
-  m_StringOffsets (),
-  m_StringTable (),
-  m_AcsMap (),
-  m_Ctx (),
-  m_nColors (16),
-  m_nPairs (64),
-  m_nColumns (80),
-  m_nRows (24)
+:_name()
+,_booleans()
+,_numbers()
+,_stringOffsets()
+,_stringTable()
+,_acsMap()
+,_ctx()
+,_nColors (16)
+,_nPairs (64)
+,_nColumns (80)
+,_nRows (24)
 {
 }
 
 /// Default constructor.
 CTerminfo::CContext::CContext (void)
-: m_Output (),
-  m_ProgStack (),
-  m_Pos (-1, -1),
-  m_Attrs (0),
-  m_FgColor (lightgray),
-  m_BgColor (black)
+: output()
+, progStack()
+, pos (-1, -1)
+, attrs (0)
+, fg (lightgray)
+, bg (black)
 {
 }
 
@@ -89,43 +89,43 @@ void CTerminfo::read (istream& is)
 #endif
     is >> h;
 #if BYTE_ORDER == BIG_ENDIAN
-    h.m_Magic = le_to_native (h.m_Magic);
-    h.m_NamesSize = le_to_native (h.m_NamesSize);
-    h.m_nBooleans = le_to_native (h.m_nBooleans);
-    h.m_nNumbers = le_to_native (h.m_nNumbers);
-    h.m_nStrings = le_to_native (h.m_nStrings);
-    h.m_StringTableSize = le_to_native (h.m_StringTableSize);
+    h.magic = le_to_native (h.magic);
+    h.namesSize = le_to_native (h.namesSize);
+    h.nBooleans = le_to_native (h.nBooleans);
+    h.nNumbers = le_to_native (h.nNumbers);
+    h.nStrings = le_to_native (h.nStrings);
+    h.strtableSize = le_to_native (h.strtableSize);
 #endif
-    if (h.m_Magic != TERMINFO_MAGIC)
+    if (h.magic != TERMINFO_MAGIC)
 	throw domain_error ("corrupt terminfo file");
 
     // The names section
-    is.read_strz (m_Name);
+    is.read_strz (_name);
 
     // The boolean section
-    is.verify_remaining ("read","terminfo",sizeof(boolvec_t::size_type)+h.m_nBooleans*sizeof(boolvec_t::value_type));
-    m_Booleans.resize (h.m_nBooleans);
-    nr_container_read (is, m_Booleans);
+    is.verify_remaining ("read","terminfo",sizeof(boolvec_t::size_type)+h.nBooleans*sizeof(boolvec_t::value_type));
+    _booleans.resize (h.nBooleans);
+    nr_container_read (is, _booleans);
     is >> ios::talign<number_t>();
 
     // The numbers section
-    is.verify_remaining ("read","terminfo",sizeof(numvec_t::size_type)+h.m_nNumbers*sizeof(numvec_t::value_type));
-    m_Numbers.resize (h.m_nNumbers);
-    nr_container_read (is, m_Numbers);
+    is.verify_remaining ("read","terminfo",sizeof(numvec_t::size_type)+h.nNumbers*sizeof(numvec_t::value_type));
+    _numbers.resize (h.nNumbers);
+    nr_container_read (is, _numbers);
 
     // The string offsets section
-    is.verify_remaining ("read","terminfo",sizeof(stroffvec_t::size_type)+h.m_nStrings*sizeof(stroffvec_t::value_type));
-    m_StringOffsets.resize (h.m_nStrings);
-    nr_container_read (is, m_StringOffsets);
+    is.verify_remaining ("read","terminfo",sizeof(stroffvec_t::size_type)+h.nStrings*sizeof(stroffvec_t::value_type));
+    _stringOffsets.resize (h.nStrings);
+    nr_container_read (is, _stringOffsets);
 
     // The stringtable
-    is.verify_remaining ("read","terminfo",h.m_StringTableSize);
-    m_StringTable.resize (h.m_StringTableSize);
-    is.read (m_StringTable.begin(), m_StringTable.size());
+    is.verify_remaining ("read","terminfo",h.strtableSize);
+    _stringTable.resize (h.strtableSize);
+    is.read (_stringTable.begin(), _stringTable.size());
 
 #if BYTE_ORDER == BIG_ENDIAN
-    foreach (numvec_t::iterator, i, m_Numbers) *i = le_to_native (*i);
-    foreach (stroffvec_t::iterator, i, m_StringOffsets) *i = le_to_native (*i);
+    foreach (numvec_t::iterator, i, _numbers) *i = le_to_native (*i);
+    foreach (stroffvec_t::iterator, i, _stringOffsets) *i = le_to_native (*i);
 #endif
 }
 
@@ -133,29 +133,29 @@ void CTerminfo::read (istream& is)
 void CTerminfo::write (ostream& os) const
 {
     STerminfoHeader h;
-    h.m_Magic = native_to_le (TERMINFO_MAGIC);
-    h.m_NamesSize = native_to_le (m_Name.size() + 1);
-    h.m_nBooleans = native_to_le (m_Booleans.size());
-    h.m_nNumbers = native_to_le (m_Numbers.size());
-    h.m_nStrings = native_to_le (m_StringOffsets.size());
-    h.m_StringTableSize = native_to_le (m_StringTable.size());
+    h.magic = native_to_le<uint16_t> (TERMINFO_MAGIC);
+    h.namesSize = native_to_le (_name.size() + 1);
+    h.nBooleans = native_to_le (_booleans.size());
+    h.nNumbers = native_to_le (_numbers.size());
+    h.nStrings = native_to_le (_stringOffsets.size());
+    h.strtableSize = native_to_le (_stringTable.size());
     os << h;
-    os.write_strz (m_Name);
-    nr_container_write (os, m_Booleans);
+    os.write_strz (_name);
+    nr_container_write (os, _booleans);
     os << ios::talign<number_t>();
-    foreach (numvec_t::const_iterator, i, m_Numbers) os << native_to_le (*i);
-    foreach (stroffvec_t::const_iterator, i, m_StringOffsets) os << native_to_le (*i);
-    os.write (m_StringTable.begin(), m_StringTable.size());
+    foreach (numvec_t::const_iterator, i, _numbers) os << native_to_le (*i);
+    foreach (stroffvec_t::const_iterator, i, _stringOffsets) os << native_to_le (*i);
+    os.write (_stringTable.begin(), _stringTable.size());
 }
 
 /// Returns the written size of the terminfo entry.
 size_t CTerminfo::stream_size (void) const
 {
     return (stream_size_of(STerminfoHeader()) +
-	    Align (m_Name.size() + m_Booleans.size(), __alignof__(number_t)) +
-	    m_Numbers.size() * sizeof(number_t) +
-	    m_StringOffsets.size() * sizeof(stroffset_t) +
-	    m_StringTable.size());
+	    Align (_name.size() + _booleans.size(), __alignof__(number_t)) +
+	    _numbers.size() * sizeof(number_t) +
+	    _stringOffsets.size() * sizeof(stroffset_t) +
+	    _stringTable.size());
 }
 
 /// Loads the terminfo entry \p termname.
@@ -177,51 +177,51 @@ void CTerminfo::Load (const char* termname)
 void CTerminfo::CacheFrequentValues (void)
 {
     // Color stuff.
-    m_nColors = GetNumber (ti::max_colors);
-    m_nPairs = GetNumber (ti::max_pairs);
-    if (m_nColors == uint16_t(ti::no_value))
-	m_nColors = color_Last;
-    if (m_nPairs == uint16_t(ti::no_value))
-	m_nPairs = 64;
+    _nColors = GetNumber (ti::max_colors);
+    _nPairs = GetNumber (ti::max_pairs);
+    if (_nColors == uint16_t(ti::no_value))
+	_nColors = color_Last;
+    if (_nPairs == uint16_t(ti::no_value))
+	_nPairs = 64;
 
     // Decode the ACS capability, if present.
     const string acsString (GetString (ti::acs_chars));
     for (uoff_t i = 0; i < acs_Last; ++ i)
-	m_AcsMap[i] = c_AcscInfo[i].m_Default;
+	_acsMap[i] = c_AcscInfo[i].m_Default;
     if (!acsString.empty()) {
 	const SAcscInfo* cFirst = c_AcscInfo;
 	const SAcscInfo* cLast = cFirst + acs_Last;
 	for (string::const_iterator i = acsString.begin(); i < acsString.end(); i += 2)
 	    for (const SAcscInfo* cFound = cFirst; cFound < cLast; ++ cFound)
 		if (cFound->m_vt100Code == *i)
-		    m_AcsMap [distance (cFirst, cFound)] = *(i + 1);
+		    _acsMap [distance (cFirst, cFound)] = *(i + 1);
     }
 }
 
 /// Queries the terminal parameters (such as the screen size)
 void CTerminfo::ObtainTerminalParameters (void)
 {
-    m_nRows = m_nColumns = 0;
+    _nRows = _nColumns = 0;
     // The environment variables seem to be the ones that lie least often.
     const char* sp;
     if ((sp = getenv("LINES")))
-	m_nRows = atoi(sp);
+	_nRows = atoi(sp);
     if ((sp = getenv("COLUMNS")))
-	m_nColumns = atoi(sp);
+	_nColumns = atoi(sp);
     // Next, try asking the VT
-    if (!m_nRows || !m_nColumns) {
+    if (!_nRows || !_nColumns) {
 	struct winsize ws;
 	if (!ioctl (STDIN_FILENO, TIOCGWINSZ, &ws)) {
-	    m_nColumns = ws.ws_col;
-	    m_nRows = ws.ws_row;
+	    _nColumns = ws.ws_col;
+	    _nRows = ws.ws_row;
 	}
     }
     // Try to fallback to the terminfo entries, or to 80x24.
-    if (!m_nRows || !m_nColumns) {
-	if ((m_nRows = GetNumber (ti::lines)) == dim_t(ti::no_value))
-	    m_nRows = 24;
-	if ((m_nColumns = GetNumber (ti::columns)) == dim_t(ti::no_value))
-	    m_nColumns = 80;
+    if (!_nRows || !_nColumns) {
+	if ((_nRows = GetNumber (ti::lines)) == dim_t(ti::no_value))
+	    _nRows = 24;
+	if ((_nColumns = GetNumber (ti::columns)) == dim_t(ti::no_value))
+	    _nColumns = 80;
     }
 }
 
@@ -232,37 +232,37 @@ void CTerminfo::ObtainTerminalParameters (void)
 /// Gets boolean value \p i.
 bool CTerminfo::GetBool (ti::EBooleans i) const
 {
-    return (size_t(i) < m_Booleans.size() ? (m_Booleans[i] > 0) : false);
+    return (size_t(i) < _booleans.size() ? (_booleans[i] > 0) : false);
 }
 
 /// Gets numeral value \p i.
 CTerminfo::number_t CTerminfo::GetNumber (ti::ENumbers i) const
 {
-    return (size_t(i) < m_Numbers.size() ? m_Numbers[i] : number_t(ti::no_value));
+    return (size_t(i) < _numbers.size() ? _numbers[i] : number_t(ti::no_value));
 }
 
 /// Gets string value \p i.
 CTerminfo::capout_t CTerminfo::GetString (ti::EStrings i) const
 {
-    if (size_t(i) >= m_StringOffsets.size() || m_StringOffsets[i] == stroffset_t(ti::no_value))
+    if (size_t(i) >= _stringOffsets.size() || _stringOffsets[i] == stroffset_t(ti::no_value))
 	return (no_value);
-    return (m_StringTable.begin() + m_StringOffsets[i]);
+    return (_stringTable.begin() + _stringOffsets[i]);
 }
 
 /// Pops a value from the program stack.
 CTerminfo::progvalue_t CTerminfo::PSPop (void) const
 {
-    if (m_Ctx.m_ProgStack.empty())
+    if (_ctx.progStack.empty())
 	return (0);
-    const progvalue_t v = m_Ctx.m_ProgStack.back();
-    m_Ctx.m_ProgStack.pop_back();
+    const progvalue_t v = _ctx.progStack.back();
+    _ctx.progStack.pop_back();
     return (v);
 }
 
 /// Pushes \p v onto the program stack.
 void CTerminfo::PSPush (progvalue_t v) const
 {
-    m_Ctx.m_ProgStack.push_back (v);
+    _ctx.progStack.push_back (v);
 }
 
 /// Runs the % opcodes in \p program and appends to \p result.
@@ -337,7 +337,7 @@ wchar_t CTerminfo::SubstituteChar (wchar_t c) const
 {
     for (uoff_t i = 0; i < acs_Last; ++ i)
 	if (c_AcscInfo[i].m_Unicode == c)
-	    return (m_AcsMap[i]);
+	    return (_acsMap[i]);
     return (c);
 }
 
@@ -361,19 +361,19 @@ void CTerminfo::LoadKeystrings (keystrings_t& ksv) const
 /// Clears the screen.
 CTerminfo::capout_t CTerminfo::Clear (void) const
 {
-    m_Ctx.m_Pos[0] = 0;
-    m_Ctx.m_Pos[1] = 0;
+    _ctx.pos[0] = 0;
+    _ctx.pos[1] = 0;
     return (GetString (ti::clear_screen));
 }
 
 /// Resets the saved terminal state without doing anything to the terminal.
 void CTerminfo::ResetState (void) const
 {
-    m_Ctx.m_Attrs = 0;
-    m_Ctx.m_FgColor = lightgray;
-    m_Ctx.m_BgColor = black;
-    m_Ctx.m_Pos[0] = 0;
-    m_Ctx.m_Pos[1] = 0;
+    _ctx.attrs = 0;
+    _ctx.fg = lightgray;
+    _ctx.bg = black;
+    _ctx.pos[0] = 0;
+    _ctx.pos[1] = 0;
 }
 
 /// Resets the terminal to a sane state.
@@ -386,9 +386,9 @@ CTerminfo::capout_t CTerminfo::Reset (void) const
 /// Stops all attributes, including color.
 CTerminfo::capout_t CTerminfo::AllAttrsOff (void) const
 {
-    m_Ctx.m_Attrs = 0;
-    m_Ctx.m_FgColor = lightgray;
-    m_Ctx.m_BgColor = black;
+    _ctx.attrs = 0;
+    _ctx.fg = lightgray;
+    _ctx.bg = black;
     return (GetString (ti::exit_attribute_mode));
 }
 
@@ -402,24 +402,24 @@ void CTerminfo::Update (void)
 void CTerminfo::MoveTo (coord_t x, coord_t y, rstrbuf_t s) const
 {
     RunStringProgram (GetString (ti::cursor_address), s, progargs_t(y, x));
-    m_Ctx.m_Pos[0] = x;
-    m_Ctx.m_Pos[1] = y;
+    _ctx.pos[0] = x;
+    _ctx.pos[1] = y;
 }
 
 /// Moves the cursor to \p x, \p y.
 CTerminfo::strout_t CTerminfo::MoveTo (coord_t x, coord_t y) const
 {
-    m_Ctx.m_Output.clear();
-    MoveTo (x, y, m_Ctx.m_Output);
-    return (m_Ctx.m_Output);
+    _ctx.output.clear();
+    MoveTo (x, y, _ctx.output);
+    return (_ctx.output);
 }
 
 /// Sets the color to \p fg on \p bg.
 CTerminfo::strout_t CTerminfo::Color (EColor fg, EColor bg) const
 {
-    m_Ctx.m_Output.clear();
-    Color (fg, bg, m_Ctx.m_Output);
-    return (m_Ctx.m_Output);
+    _ctx.output.clear();
+    Color (fg, bg, _ctx.output);
+    return (_ctx.output);
 }
 
 /// Truncates color values to supported range and sets attributes to compensate.
@@ -446,20 +446,20 @@ void CTerminfo::NormalizeColor (EColor& fg, EColor& bg, uint16_t& attrs) const
 /// Sets the color using normalized values (i.e. no attribute setting)
 void CTerminfo::NColor (EColor fg, EColor bg, rstrbuf_t s) const
 {
-    if (m_Ctx.m_FgColor != fg && fg != color_Preserve)
+    if (_ctx.fg != fg && fg != color_Preserve)
 	RunStringProgram (GetString (ti::set_a_foreground), s, progargs_t(fg));
-    if (m_Ctx.m_BgColor != bg && bg != color_Preserve)
+    if (_ctx.bg != bg && bg != color_Preserve)
 	RunStringProgram (GetString (ti::set_a_background), s, progargs_t(bg));
-    m_Ctx.m_FgColor = fg;
-    m_Ctx.m_BgColor = bg;
+    _ctx.fg = fg;
+    _ctx.bg = bg;
 }
 
 /// Sets the color to \p fg on \p bg, appending result to \p s.
 void CTerminfo::Color (EColor fg, EColor bg, rstrbuf_t s) const
 {
-    uint16_t newAttrs = m_Ctx.m_Attrs;
+    uint16_t newAttrs = _ctx.attrs;
     NormalizeColor (fg, bg, newAttrs);
-    if (m_Ctx.m_Attrs != newAttrs)
+    if (_ctx.attrs != newAttrs)
 	Attrs (newAttrs, s);
     NColor (fg, bg, s);
 }
@@ -481,7 +481,7 @@ CTerminfo::capout_t CTerminfo::AttrOn (EAttribute a) const
 	/* a_subscript */	ti::enter_subscript_mode,
 	/* a_superscript */	ti::enter_superscript_mode,
     };
-    m_Ctx.m_Attrs |= (1 << a);
+    _ctx.attrs |= (1 << a);
     return (a < attr_Last ? GetString (as[a]) : no_value);
 }
 
@@ -505,32 +505,32 @@ CTerminfo::capout_t CTerminfo::AttrOff (EAttribute a) const
 	/* a_subscript */	ti::exit_subscript_mode,
 	/* a_superscript */	ti::exit_superscript_mode,
     };
-    const uint16_t newAttrs (m_Ctx.m_Attrs & ~(1 << a));
+    const uint16_t newAttrs (_ctx.attrs & ~(1 << a));
     if (a >= attr_Last || (as[a] == ti::exit_attribute_mode && GetString(ti::set_attributes) != no_value))
 	return (Attrs (newAttrs));
-    m_Ctx.m_Attrs = newAttrs;
+    _ctx.attrs = newAttrs;
     return (GetString (as[a]));
 }
 
-/// Same as Attrs, but it appends to m_Output
+/// Same as Attrs, but it appends to output
 void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 {
-    if (m_Ctx.m_Attrs == a)
+    if (_ctx.attrs == a)
 	return;
     const capout_t sgr = GetString (ti::set_attributes);
     if (sgr == no_value) {
 	size_t nToOff (0), nToOn (0);
 	uint16_t mask (1);
 	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1) {
-	    nToOff += (m_Ctx.m_Attrs & mask) && !(a & mask);
-	    nToOn  += !(m_Ctx.m_Attrs & mask) && (a & mask);
+	    nToOff += (_ctx.attrs & mask) && !(a & mask);
+	    nToOn  += !(_ctx.attrs & mask) && (a & mask);
 	}
-	const uint16_t oldAttrs (m_Ctx.m_Attrs);
+	const uint16_t oldAttrs (_ctx.attrs);
 	if (nToOff) {
 	    s += GetString (ti::exit_attribute_mode);
 	    s += GetString (ti::exit_alt_charset_mode);
-	    m_Ctx.m_FgColor = lightgray;
-	    m_Ctx.m_BgColor = black;
+	    _ctx.fg = lightgray;
+	    _ctx.bg = black;
 	}
 	mask = 1;
 	for (uoff_t i = 0; i < attr_Last; ++ i, mask <<= 1)
@@ -541,56 +541,56 @@ void CTerminfo::Attrs (uint16_t a, rstrbuf_t s) const
 	for (uoff_t i = 0; i < pa.size(); ++ i)
 	    pa[i] = (a >> i) & 1;
 	RunStringProgram (sgr, s, pa);
-	m_Ctx.m_FgColor = lightgray;
-	m_Ctx.m_BgColor = black;
+	_ctx.fg = lightgray;
+	_ctx.bg = black;
     }
-    m_Ctx.m_Attrs = a;
+    _ctx.attrs = a;
 }
 
 /// Sets all attributes to values in \p a (masked by EAttribute)
 CTerminfo::strout_t CTerminfo::Attrs (uint16_t a) const
 {
-    m_Ctx.m_Output.clear();
-    Attrs (a, m_Ctx.m_Output);
-    return (m_Ctx.m_Output);
+    _ctx.output.clear();
+    Attrs (a, _ctx.output);
+    return (_ctx.output);
 }
 
 /// Draws a box in the given location using ACS characters.
 CTerminfo::strout_t CTerminfo::Box (coord_t x, coord_t y, dim_t w, dim_t h) const
 {
-    m_Ctx.m_Output = AttrOn (a_altcharset);
-    MoveTo (x, y, m_Ctx.m_Output);
+    _ctx.output = AttrOn (a_altcharset);
+    MoveTo (x, y, _ctx.output);
 
-    m_Ctx.m_Output += AcsChar (acs_UpperLeftCorner);
-    fill_n (back_inserter(m_Ctx.m_Output), w - 2, AcsChar (acs_HLine));
-    m_Ctx.m_Output += AcsChar (acs_UpperRightCorner);
+    _ctx.output += AcsChar (acs_UpperLeftCorner);
+    fill_n (back_inserter(_ctx.output), w - 2, AcsChar (acs_HLine));
+    _ctx.output += AcsChar (acs_UpperRightCorner);
 
     for (dim_t yi = 1; yi < h - 1; ++ yi) {
-	MoveTo (x, y + yi, m_Ctx.m_Output);
-	m_Ctx.m_Output += AcsChar (acs_VLine);
-	MoveTo (x + w - 1, y + yi, m_Ctx.m_Output);
-	m_Ctx.m_Output += AcsChar (acs_VLine);
+	MoveTo (x, y + yi, _ctx.output);
+	_ctx.output += AcsChar (acs_VLine);
+	MoveTo (x + w - 1, y + yi, _ctx.output);
+	_ctx.output += AcsChar (acs_VLine);
     }
 
-    MoveTo (x, y + h - 1, m_Ctx.m_Output);
-    m_Ctx.m_Output += AcsChar (acs_LowerLeftCorner);
-    fill_n (back_inserter(m_Ctx.m_Output), w - 2, AcsChar (acs_HLine));
-    m_Ctx.m_Output += AcsChar (acs_LowerRightCorner);
+    MoveTo (x, y + h - 1, _ctx.output);
+    _ctx.output += AcsChar (acs_LowerLeftCorner);
+    fill_n (back_inserter(_ctx.output), w - 2, AcsChar (acs_HLine));
+    _ctx.output += AcsChar (acs_LowerRightCorner);
 
-    Attrs ((m_Ctx.m_Attrs & ~(1 << a_altcharset)), m_Ctx.m_Output);
-    return (m_Ctx.m_Output);
+    Attrs ((_ctx.attrs & ~(1 << a_altcharset)), _ctx.output);
+    return (_ctx.output);
 }
 
 /// Draws a rectangle filled with \p c.
 CTerminfo::strout_t CTerminfo::Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c) const
 {
-    m_Ctx.m_Output = AttrOn (a_altcharset);
+    _ctx.output = AttrOn (a_altcharset);
     for (dim_t yi = 0; yi < h; ++ yi) {
-	MoveTo (x, y + yi, m_Ctx.m_Output);
-	fill_n (back_inserter(m_Ctx.m_Output), w, c);
+	MoveTo (x, y + yi, _ctx.output);
+	fill_n (back_inserter(_ctx.output), w, c);
     }
-    Attrs ((m_Ctx.m_Attrs & ~(1 << a_altcharset)), m_Ctx.m_Output);
-    return (m_Ctx.m_Output);
+    Attrs ((_ctx.attrs & ~(1 << a_altcharset)), _ctx.output);
+    return (_ctx.output);
 }
 
 /// Draws a horizontal line.
@@ -611,41 +611,41 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     assert (data && "Image should only be called with valid data");
     assert (x >= 0 && y >= 0 && x + w <= Width() && y + h <= Height() && "Clip the image data before passing it in. CGC::Clip can do it.");
 
-    const uint16_t oldAttrs (m_Ctx.m_Attrs);
-    const EColor oldFg (EColor(m_Ctx.m_FgColor)), oldBg (EColor(m_Ctx.m_BgColor));
+    const uint16_t oldAttrs (_ctx.attrs);
+    const EColor oldFg (EColor(_ctx.fg)), oldBg (EColor(_ctx.bg));
 
-    m_Ctx.m_Output = GetString(ti::ena_acs);
+    _ctx.output = GetString(ti::ena_acs);
     for (coord_t j = y; j < y + h; ++ j) {
 	for (coord_t i = x; i < x + w; ++ i, ++ data) {
-	    wchar_t dc = data->m_Char;
+	    wchar_t dc = data->c;
 	    if (!dc)
 		continue;
-	    if (i != m_Ctx.m_Pos[0] || j != m_Ctx.m_Pos[1]) {
-		if (i == 0 && j == m_Ctx.m_Pos[1] + 1) {
-		    m_Ctx.m_Output += '\n';
-		    m_Ctx.m_Pos[0] = 0;
-		    ++ m_Ctx.m_Pos[1];
+	    if (i != _ctx.pos[0] || j != _ctx.pos[1]) {
+		if (i == 0 && j == _ctx.pos[1] + 1) {
+		    _ctx.output += '\n';
+		    _ctx.pos[0] = 0;
+		    ++ _ctx.pos[1];
 		} else
-		    MoveTo (i, j, m_Ctx.m_Output);
+		    MoveTo (i, j, _ctx.output);
 	    }
-	    uint16_t dattr (data->m_Attrs & BitMask(uint16_t,attr_Last));
+	    uint16_t dattr (data->attrs & BitMask(uint16_t,attr_Last));
 	    if (dc > CHAR_MAX) {
 		dc = SubstituteChar(dc);
 		dattr |= (1 << a_altcharset);
 	    }
 	    if (!(dattr & (1 << a_altcharset)) && !isprint(dc))
 		dc = ' ';
-	    EColor fg (EColor(data->m_FgColor)), bg (EColor(data->m_BgColor));
+	    EColor fg (EColor(data->fg)), bg (EColor(data->bg));
 	    NormalizeColor (fg, bg, dattr);
-	    Attrs (dattr, m_Ctx.m_Output);
-	    NColor (fg, bg, m_Ctx.m_Output);
-	    m_Ctx.m_Output += char(dc);
-	    ++ m_Ctx.m_Pos[0];
+	    Attrs (dattr, _ctx.output);
+	    NColor (fg, bg, _ctx.output);
+	    _ctx.output += char(dc);
+	    ++ _ctx.pos[0];
 	}
     }
-    Attrs (oldAttrs, m_Ctx.m_Output);
-    NColor (oldFg, oldBg, m_Ctx.m_Output);
-    return (m_Ctx.m_Output);
+    Attrs (oldAttrs, _ctx.output);
+    NColor (oldFg, oldBg, _ctx.output);
+    return (_ctx.output);
 }
 
 //----------------------------------------------------------------------

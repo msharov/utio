@@ -1,8 +1,7 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
 
 #define _GNU_SOURCE 1	// for strsignal
 #include "stdmain.h"
@@ -44,9 +43,8 @@ extern "C" void InstallCleanupHandlers (void)
 	SIGIOT, SIGBUS,  SIGFPE,  SIGSEGV, SIGTERM,
 	SIGIO,  SIGCHLD
     };
-    for (uoff_t i = 0; i < VectorSize(c_Signals); ++ i)
+    for (size_t i = 0; i < VectorSize(c_Signals); ++ i)
 	signal (c_Signals[i], OnSignal);
     std::set_terminate (Terminate);
     std::set_unexpected (OnUnexpected);
 }
-

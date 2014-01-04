@@ -1,8 +1,7 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
-//
 
 #include "stdmain.h"
 
@@ -11,13 +10,13 @@
 /// Demonstrates the capabilities of the CKeyboard class.
 class CKeyboardDemo {
 private:
-			CKeyboardDemo (void);
+    inline		CKeyboardDemo (void) :_ti(),_kb() {}
 public:
 			DECLARE_SINGLETON (CKeyboardDemo)
     void		Run (void);
 private:
-    CTerminfo		m_TI;	///< The terminfo database.
-    CKeyboard		m_Kb;	///< The keyboard driver.
+    CTerminfo		_ti;	///< The terminfo database.
+    CKeyboard		_kb;	///< The keyboard driver.
 private:
     static const char*	c_KeyNameMap [kv_nKeys];
     static const char*	c_MetaBitNames [mksbit_Last];
@@ -25,25 +24,18 @@ private:
 
 //----------------------------------------------------------------------
 
-/// Default constructor.
-CKeyboardDemo::CKeyboardDemo (void)
-: m_TI (),
-  m_Kb ()
-{
-}
-
 /// Prints pressed keys until told to stop.
 void CKeyboardDemo::Run (void)
 {
-    m_TI.Load();	// Loads the terminfo database (using $TERM)
-    m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
+    _ti.Load();	// Loads the terminfo database (using $TERM)
+    _kb.Open (_ti);	// Also places the terminal in UI-friendly mode.
 
     cout << "Keyboard demo. Press keys to print their value, 'q' to quit." << endl;
 
     wchar_t key = 0;
     while (key != 'q') {
 	cout.flush();
-	key = m_Kb.GetKey();
+	key = _kb.GetKey();
 
 	cout << "Got key: ";
 	for (uoff_t i = 0; i < mksbit_Last; ++ i)
@@ -231,4 +223,3 @@ const char* CKeyboardDemo::c_MetaBitNames [mksbit_Last] = {
     "CapsLock",
     "ScrollLock"
 };
-

@@ -1,11 +1,9 @@
 // This file is part of the utio library, a terminal I/O library.
 //
-// Copyright (C) 2004 by Mike Sharov <msharov@users.sourceforge.net>
+// Copyright (c) 2004 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 //
-// \file stdmain.h
-//
-// \brief Standard program main with error handling.
+// Standard program main with error handling.
 //
 // The reason for using the singleton and all this error handling is that it
 // is very important for CKeyboard object to be able to clean up on exit. If
@@ -24,11 +22,8 @@
 // framebuffer, or X. Crashing the UI environment without cleanup is a very
 // bad idea and you will have to write something like the code in this file
 // for every UI framework you choose to implement on top of utio.
-//
 
-#ifndef STDMAIN_H_6A5A6F7B06CC2ED07880C5283C61797A
-#define STDMAIN_H_6A5A6F7B06CC2ED07880C5283C61797A
-
+#pragma once
 #include <utio.h>
 using namespace utio;
 using namespace utio::gdt;
@@ -65,6 +60,3 @@ int main (void)					\
     InstallCleanupHandlers();			\
     return (RunDemo<DemoClass>());		\
 }
-
-#endif
-
