@@ -1,4 +1,4 @@
-Keyboard demo. Press keys to print their value, 'q' to quit.
+[?1h=Keyboard demo. Press keys to print their value, 'q' to quit.
 Got key: /
 Got key: /
 Got key: Space
@@ -10,3 +10,4 @@ Got key: F9
 Got key: F12
 Got key: Insert
 Got key: q
+[?1l>

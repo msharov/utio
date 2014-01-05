@@ -31,6 +31,7 @@ private:
     keymap_t		_keymap;		///< Currently loaded keymap.
     mutable string	_keydata;		///< Buffered keydata.
     struct termios	_initialTermios;	///< What it was before we munged it.
+    const char*		_keypadoffstr;		///< How to turn off the keypad keycodes
     static bool		s_bTermInUIMode;	///< Current terminal state, static because the terminal is process-global.
 };
 } // namespace utio

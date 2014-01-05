@@ -24,7 +24,7 @@ test/run:	${test/BVTS}
 	@for i in ${test/BVTS}; do \
 	    echo "Running $$i"; \
 	    TERM=xterm ./$$i < $$i.cc &> $$i.out; \
-	    diff $$i.std $$i.out && rm -f $$i.out; \
+	    cmp $$i.std $$i.out && rm -f $$i.out; \
 	done
 
 ${test/BVTS}: test/%: $Otest/%.o $Otest/stdmain.o ${ALLTGTS}

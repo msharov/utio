@@ -25,6 +25,7 @@ CKeyboard::CKeyboard (void)
 :_keymap()
 ,_keydata()
 ,_initialTermios()
+,_keypadoffstr("")
 {
     fill_n ((void*) &_initialTermios, sizeof(struct termios), '\x0');
     _keydata.reserve (64);
@@ -44,12 +45,15 @@ void CKeyboard::Open (const CTerminfo& rti)
     LoadKeymap (rti);
     EnterUIMode();
     cin.set_nonblock();
+    cout << rti.GetString (ti::keypad_xmit);
+    _keypadoffstr = rti.GetString (ti::keypad_local);
 }
 
 /// Leaves UI mode.
 void CKeyboard::Close (void)
 {
     LeaveUIMode();
+    cout << _keypadoffstr;
     cin.set_nonblock (false);
 }
 
