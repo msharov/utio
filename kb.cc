@@ -114,16 +114,14 @@ bool CKeyboard::WaitForKeyData (long timeout) const
 ///
 void CKeyboard::EnterUIMode (void)
 {
-    if (s_bTermInUIMode)
+    if (s_bTermInUIMode || !isatty (STDIN_FILENO))
 	return;
+
     int flag;
     if ((flag = fcntl (STDIN_FILENO, F_GETFL)) < 0)
 	throw file_exception ("F_GETFL", "stdin");
     if (fcntl (STDIN_FILENO, F_SETFL, flag | O_NONBLOCK))
 	throw file_exception ("F_SETFL", "stdin");
-
-    if (!isatty (STDIN_FILENO))
-	return;
 
     if (-1 == tcgetattr (STDIN_FILENO, &_initialTermios))
 	throw libc_exception ("tcgetattr");
