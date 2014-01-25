@@ -1,4 +1,4 @@
-// "OPOS[17~[20~[24~[2~q"	This line contains test keystrokes
+// "OPOS[17~[20~[24~[2~qOD"	This line contains test keystrokes
 //
 // This file is part of the utio library, a terminal I/O library.
 //
