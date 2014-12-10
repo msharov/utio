@@ -151,11 +151,11 @@ void CTerminfo::write (ostream& os) const
 /// Returns the written size of the terminfo entry.
 size_t CTerminfo::stream_size (void) const
 {
-    return (stream_size_of(STerminfoHeader()) +
+    return stream_size_of(STerminfoHeader()) +
 	    Align (_name.size() + _booleans.size(), __alignof__(number_t)) +
 	    _numbers.size() * sizeof(number_t) +
 	    _stringOffsets.size() * sizeof(stroffset_t) +
-	    _stringTable.size());
+	    _stringTable.size();
 }
 
 /// Loads the terminfo entry \p termname.
@@ -232,31 +232,31 @@ void CTerminfo::ObtainTerminalParameters (void)
 /// Gets boolean value \p i.
 bool CTerminfo::GetBool (ti::EBooleans i) const
 {
-    return (size_t(i) < _booleans.size() ? (_booleans[i] > 0) : false);
+    return size_t(i) < _booleans.size() ? (_booleans[i] > 0) : false;
 }
 
 /// Gets numeral value \p i.
 CTerminfo::number_t CTerminfo::GetNumber (ti::ENumbers i) const
 {
-    return (size_t(i) < _numbers.size() ? _numbers[i] : number_t(ti::no_value));
+    return size_t(i) < _numbers.size() ? _numbers[i] : number_t(ti::no_value);
 }
 
 /// Gets string value \p i.
 CTerminfo::capout_t CTerminfo::GetString (ti::EStrings i) const
 {
     if (size_t(i) >= _stringOffsets.size() || _stringOffsets[i] == stroffset_t(ti::no_value))
-	return (no_value);
-    return (_stringTable.begin() + _stringOffsets[i]);
+	return no_value;
+    return _stringTable.begin() + _stringOffsets[i];
 }
 
 /// Pops a value from the program stack.
 CTerminfo::progvalue_t CTerminfo::PSPop (void) const
 {
     if (_ctx.progStack.empty())
-	return (0);
+	return 0;
     const progvalue_t v = _ctx.progStack.back();
     _ctx.progStack.pop_back();
-    return (v);
+    return v;
 }
 
 /// Pushes \p v onto the program stack.
@@ -337,8 +337,8 @@ wchar_t CTerminfo::SubstituteChar (wchar_t c) const
 {
     for (uoff_t i = 0; i < acs_Last; ++ i)
 	if (c_AcscInfo[i].m_Unicode == c)
-	    return (_acsMap[i]);
-    return (c);
+	    return _acsMap[i];
+    return c;
 }
 
 /// Loads terminal strings produced by special keys into \p ksv.
@@ -363,7 +363,7 @@ CTerminfo::capout_t CTerminfo::Clear (void) const
 {
     _ctx.pos[0] = 0;
     _ctx.pos[1] = 0;
-    return (GetString (ti::clear_screen));
+    return GetString (ti::clear_screen);
 }
 
 /// Resets the saved terminal state without doing anything to the terminal.
@@ -380,7 +380,7 @@ void CTerminfo::ResetState (void) const
 CTerminfo::capout_t CTerminfo::Reset (void) const
 {
     ResetState();
-    return (GetString (ti::reset_1string));
+    return GetString (ti::reset_1string);
 }
 
 /// Stops all attributes, including color.
@@ -389,7 +389,7 @@ CTerminfo::capout_t CTerminfo::AllAttrsOff (void) const
     _ctx.attrs = 0;
     _ctx.fg = lightgray;
     _ctx.bg = black;
-    return (GetString (ti::exit_attribute_mode));
+    return GetString (ti::exit_attribute_mode);
 }
 
 /// Updates cached screen information.
@@ -411,7 +411,7 @@ CTerminfo::strout_t CTerminfo::MoveTo (coord_t x, coord_t y) const
 {
     _ctx.output.clear();
     MoveTo (x, y, _ctx.output);
-    return (_ctx.output);
+    return _ctx.output;
 }
 
 /// Sets the color to \p fg on \p bg.
@@ -419,7 +419,7 @@ CTerminfo::strout_t CTerminfo::Color (EColor fg, EColor bg) const
 {
     _ctx.output.clear();
     Color (fg, bg, _ctx.output);
-    return (_ctx.output);
+    return _ctx.output;
 }
 
 /// Truncates color values to supported range and sets attributes to compensate.
@@ -482,7 +482,7 @@ CTerminfo::capout_t CTerminfo::AttrOn (EAttribute a) const
 	/* a_superscript */	ti::enter_superscript_mode,
     };
     _ctx.attrs |= (1 << a);
-    return (a < attr_Last ? GetString (as[a]) : no_value);
+    return a < attr_Last ? GetString (as[a]) : no_value;
 }
 
 /// \brief Stops attribute \p a.
@@ -507,9 +507,9 @@ CTerminfo::capout_t CTerminfo::AttrOff (EAttribute a) const
     };
     const uint16_t newAttrs (_ctx.attrs & ~(1 << a));
     if (a >= attr_Last || (as[a] == ti::exit_attribute_mode && GetString(ti::set_attributes) != no_value))
-	return (Attrs (newAttrs));
+	return Attrs (newAttrs);
     _ctx.attrs = newAttrs;
-    return (GetString (as[a]));
+    return GetString (as[a]);
 }
 
 /// Same as Attrs, but it appends to output
@@ -552,7 +552,7 @@ CTerminfo::strout_t CTerminfo::Attrs (uint16_t a) const
 {
     _ctx.output.clear();
     Attrs (a, _ctx.output);
-    return (_ctx.output);
+    return _ctx.output;
 }
 
 /// Draws a box in the given location using ACS characters.
@@ -578,7 +578,7 @@ CTerminfo::strout_t CTerminfo::Box (coord_t x, coord_t y, dim_t w, dim_t h) cons
     _ctx.output += AcsChar (acs_LowerRightCorner);
 
     Attrs ((_ctx.attrs & ~(1 << a_altcharset)), _ctx.output);
-    return (_ctx.output);
+    return _ctx.output;
 }
 
 /// Draws a rectangle filled with \p c.
@@ -590,19 +590,19 @@ CTerminfo::strout_t CTerminfo::Bar (coord_t x, coord_t y, dim_t w, dim_t h, char
 	fill_n (back_inserter(_ctx.output), w, c);
     }
     Attrs ((_ctx.attrs & ~(1 << a_altcharset)), _ctx.output);
-    return (_ctx.output);
+    return _ctx.output;
 }
 
 /// Draws a horizontal line.
 CTerminfo::strout_t CTerminfo::HLine (coord_t x, coord_t y, dim_t w) const
 {
-    return (Bar (x, y, w, 1, AcsChar(acs_HLine)));
+    return Bar (x, y, w, 1, AcsChar(acs_HLine));
 }
 
 /// Draws a vertical line.
 CTerminfo::strout_t CTerminfo::VLine (coord_t x, coord_t y, dim_t h) const
 {
-    return (Bar (x, y, 1, h, AcsChar(acs_VLine)));
+    return Bar (x, y, 1, h, AcsChar(acs_VLine));
 }
 
 /// Draws character \p data into the given box. 0-valued characters are transparent.
@@ -645,7 +645,7 @@ CTerminfo::strout_t CTerminfo::Image (coord_t x, coord_t y, dim_t w, dim_t h, co
     }
     Attrs (oldAttrs, _ctx.output);
     NColor (oldFg, oldBg, _ctx.output);
-    return (_ctx.output);
+    return _ctx.output;
 }
 
 //----------------------------------------------------------------------

@@ -33,7 +33,7 @@ extern "C" void InstallCleanupHandlers (void);
 
 /// Declares singleton Instance() call in \p DemoClass.
 #define DECLARE_SINGLETON(DemoClass)	\
-    static DemoClass& Instance (void) { static DemoClass obj; return (obj); }
+    static DemoClass& Instance (void) { static DemoClass obj; return obj; }
 
 /// Exception handling harness for demos
 template <typename T>
@@ -50,7 +50,7 @@ int RunDemo (void) throw()
 	cout.flush();
 	cerr << "Unexpected error." << endl;
     }
-    return (rv);
+    return rv;
 }
 
 /// Standard main with error handling.
@@ -58,5 +58,5 @@ int RunDemo (void) throw()
 int main (void)					\
 {						\
     InstallCleanupHandlers();			\
-    return (RunDemo<DemoClass>());		\
+    return RunDemo<DemoClass>();		\
 }

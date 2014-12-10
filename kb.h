@@ -21,7 +21,7 @@ public:
     void		EnterUIMode (void);
     void		LeaveUIMode (void);
     wchar_t		DecodeKey (istream& is) const;
-    inline bool		IsInUIMode (void) const			{ return (s_bTermInUIMode); }
+    inline bool		IsInUIMode (void) const			{ return s_bTermInUIMode; }
     inline void		LoadKeymap (const CTerminfo& rti)	{ rti.LoadKeystrings (_keymap); }
     wchar_t		GetKey (bool bBlock = true) const;
     bool		WaitForKeyData (long timeout = 0) const;

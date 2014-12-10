@@ -30,11 +30,11 @@ public:
     void			Image (Rect r, const canvas_t& cells);
     void			Char (Point2d p, wchar_t c);
     void			Text (Point2d p, const string& str);
-    inline const canvas_t&	Canvas (void) const	{ return (_canvas); }
-    inline canvas_t&		Canvas (void)		{ return (_canvas); }
-    inline const Size2d&	Size (void) const	{ return (_size); }
-    inline dim_t			Width (void) const	{ return (_size[0]); }
-    inline dim_t			Height (void) const	{ return (_size[1]); }
+    inline const canvas_t&	Canvas (void) const	{ return _canvas; }
+    inline canvas_t&		Canvas (void)		{ return _canvas; }
+    inline const Size2d&	Size (void) const	{ return _size; }
+    inline dim_t			Width (void) const	{ return _size[0]; }
+    inline dim_t			Height (void) const	{ return _size[1]; }
     inline void			Box (coord_t x, coord_t y, dim_t w, dim_t h)				{ Box (Rect (x, y, w, h)); }
     inline void			Bar (coord_t x, coord_t y, dim_t w, dim_t h, wchar_t c = ' ')		{ Bar (Rect (x, y, w, h), c); }
     inline void			HLine (coord_t x, coord_t y, dim_t l)					{ HLine (Point2d (x, y), l); }

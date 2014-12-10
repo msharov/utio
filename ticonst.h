@@ -36,12 +36,12 @@ enum EColor {
 inline EColor operator+= (EColor& c, int v)
 {
     const uint32_t result = (static_cast<uint32_t>(c) + v) % color_Last;
-    return (c = static_cast<EColor>(result));
+    return c = static_cast<EColor>(result);
 }
 inline EColor operator-= (EColor& c, int v)
 {
     const uint32_t result = (static_cast<uint32_t>(c) - v) % color_Last;
-    return (c = static_cast<EColor>(result));
+    return c = static_cast<EColor>(result);
 }
 
 /// Text attributes for terminals.
@@ -80,10 +80,10 @@ public:
     inline	CCharCell (const SCharCell& sc);
     inline	CCharCell (wchar_t v, rcself_t t);
     inline bool	EqualFormat (rcself_t v) const
-		    { return (*noalias_cast<const uint32_t*>(&fg) == *noalias_cast<const uint32_t*>(&v.fg)); }
+		    { return *noalias_cast<const uint32_t*>(&fg) == *noalias_cast<const uint32_t*>(&v.fg); }
     inline bool	operator== (rcself_t v) const;
     inline void	operator= (rcself_t v);
-    inline bool	HasAttr (EAttribute a) const	{ return (attrs & (1 << a)); }
+    inline bool	HasAttr (EAttribute a) const	{ return attrs & (1 << a); }
     inline void	SetAttr (EAttribute a)		{ attrs |= (1 << a); }
     inline void	ClearAttr (EAttribute a)	{ attrs &= ~(1 << a); }
 };
@@ -100,13 +100,13 @@ inline bool CCharCell::operator== (rcself_t v) const
     TOUCH_CHARCELL_VALUES_R(v);
     TOUCH_CHARCELL_VALUES_R((*this));
     // Optimize to avoid word and byte comparisons, since it is basically a whole-object compare
-    // Original: return ((c == v.c) & EqualFormat (v));
+    // Original: return (c == v.c) & EqualFormat (v);
     const u_long* lps = noalias_cast<const u_long*>(&v.c);
     const u_long* lpd = noalias_cast<const u_long*>(&c);
     bool bEqual = true;
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	bEqual &= (lpd[i] == lps[i]);
-    return (bEqual);
+    return bEqual;
 }
 
 /// Assigns \p v to self.

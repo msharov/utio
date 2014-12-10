@@ -28,12 +28,12 @@ void CGC::Resize (Size2d sz)
 
 inline CGC::canvas_t::iterator CGC::CanvasAt (Point2d p)
 {
-    return (_canvas.begin() + p[1] * _size[0] + p[0]);
+    return _canvas.begin() + p[1] * _size[0] + p[0];
 }
 
 inline CGC::canvas_t::const_iterator CGC::CanvasAt (Point2d p) const
 {
-    return (_canvas.begin() + p[1] * _size[0] + p[0]);
+    return _canvas.begin() + p[1] * _size[0] + p[0];
 }
 
 /// Clears the canvas with spaces with current attributes.
@@ -137,7 +137,7 @@ bool CGC::MakeDiffFrom (const CGC& src)
 	    *inew = nullCell;
 	bHaveChanges |= !bSameCell;
     }
-    return (bHaveChanges);
+    return bHaveChanges;
 }
 
 /// Prints character \p c.
@@ -177,7 +177,7 @@ bool CGC::Clip (Point2d& pt) const
     bottomright -= 1;
     simd::pmax (c_ZeroPoint, pt);
     simd::pmin (bottomright, pt);
-    return ((oldPoint == pt) & (_size[0] > 0) & (_size[1] > 0));
+    return (oldPoint == pt) & (_size[0] > 0) & (_size[1] > 0);
 }
 
 /// Clips rectangle \p r to the canvas.
@@ -194,7 +194,7 @@ bool CGC::Clip (Rect& r) const
     if (r[0][0] > r[1][0])
 	swap (r[0][0], r[1][0]);
     simd::pmax (r[0], r[1]);
-    return (oldRect == r);
+    return oldRect == r;
 }
 
 //----------------------------------------------------------------------

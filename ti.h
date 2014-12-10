@@ -36,8 +36,8 @@ public:
     capout_t		AttrOff (EAttribute a) const;
     strout_t		Attrs (uint16_t a) const;
     capout_t		AllAttrsOff (void) const;
-    inline capout_t	HideCursor (void) const			{ return (GetString (ti::cursor_invisible)); }
-    inline capout_t	ShowCursor (void) const			{ return (GetString (ti::cursor_normal)); }
+    inline capout_t	HideCursor (void) const			{ return GetString (ti::cursor_invisible); }
+    inline capout_t	ShowCursor (void) const			{ return GetString (ti::cursor_normal); }
     strout_t		Image (coord_t x, coord_t y, dim_t w, dim_t h, const CCharCell* data) const;
     strout_t		Box (coord_t x, coord_t y, dim_t w, dim_t h) const;
     strout_t		Bar (coord_t x, coord_t y, dim_t w, dim_t h, char c = ' ') const;
@@ -45,12 +45,12 @@ public:
     strout_t		VLine (coord_t x, coord_t y, dim_t h) const;
     capout_t		Reset (void) const;
     void		ResetState (void) const;
-    inline strout_t	Name (void) const			{ return (_name); }
-    inline dim_t	Width (void) const			{ return (_nColumns); }
-    inline dim_t	Height (void) const			{ return (_nRows); }
-    inline size_t	Colors (void) const			{ return (_nColors); }
-    inline size_t	ColorPairs (void) const			{ return (_nPairs); }
-    inline char		AcsChar (EGraphicChar c) const		{ return (_acsMap[c]); }
+    inline strout_t	Name (void) const			{ return _name; }
+    inline dim_t	Width (void) const			{ return _nColumns; }
+    inline dim_t	Height (void) const			{ return _nRows; }
+    inline size_t	Colors (void) const			{ return _nColors; }
+    inline size_t	ColorPairs (void) const			{ return _nPairs; }
+    inline char		AcsChar (EGraphicChar c) const		{ return _acsMap[c]; }
     bool		GetBool (ti::EBooleans i) const;
     number_t		GetNumber (ti::ENumbers i) const;
     capout_t		GetString (ti::EStrings i) const;
@@ -92,7 +92,7 @@ private:
 	uint8_t		bg;		///< Background color.
     };
 public:
-    static inline wchar_t AcsUnicodeValue (EGraphicChar c)	{ return (c_AcscInfo[c].m_Unicode); }
+    static inline wchar_t AcsUnicodeValue (EGraphicChar c)	{ return c_AcscInfo[c].m_Unicode; }
 private:
     void		CacheFrequentValues (void);
     void		ObtainTerminalParameters (void);
@@ -103,7 +103,7 @@ private:
     void		Attrs (uint16_t a, rstrbuf_t s) const;
     void		RunStringProgram (const char* program, string& result, progargs_t args) const;
     progvalue_t		PSPop (void) const;
-    inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return (v ? v : 1); }
+    inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return v ? v : 1; }
     void		PSPush (progvalue_t v) const;
 private:
     string		_name;		///< Name of the terminfo entry.

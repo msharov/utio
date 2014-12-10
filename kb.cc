@@ -69,7 +69,7 @@ wchar_t CKeyboard::GetKey (bool bBlock) const
 	is.link (_keydata);
     } while (!(key = DecodeKey(is)) && bBlock);
     _keydata.erase (_keydata.begin(), is.pos());
-    return (key);
+    return key;
 }
 
 /// Reads all available stdin data (nonblocking)
@@ -105,7 +105,7 @@ bool CKeyboard::WaitForKeyData (long timeout) const
     } while (errno == EINTR);
     if (rv < 0)
 	throw file_exception ("select", "stdin");
-    return (rv);
+    return rv;
 }
 
 //----------------------------------------------------------------------
@@ -163,7 +163,7 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 {
     wchar_t kv = 0;
     if (!is.remaining())
-	return (kv);
+	return kv;
 
     // Find the longest match in the keymap.
     size_t matchedSize = 0, kss, ki = 0;
@@ -199,7 +199,7 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 	s_CurB = b;
 	is.skip (3);
     }
-    return (kv);
+    return kv;
 }
 
 } // namespace utio
