@@ -1,48 +1,37 @@
 ################ Build options #######################################
 
 NAME		:= @PKG_NAME@
-MAJOR		:= @PKG_MAJOR@
-MINOR		:= @PKG_MINOR@
-
 #DEBUG		:= 1
-BUILD_SHARED	:= 1
-#BUILD_STATIC	:= 1
 
 ################ Programs ############################################
 
 CXX		:= @CXX@
-LD		:= @CC@
+CC		:= @CC@
 AR		:= @AR@
 RANLIB		:= @RANLIB@
 INSTALL		:= @INSTALL@
 
 INSTALLDATA	:= ${INSTALL} -D -p -m 644
 INSTALLLIB	:= ${INSTALLDATA}
+RMPATH		:= rmdir -p --ignore-fail-on-non-empty
 
 ################ Destination #########################################
 
-prefix		:= @prefix@
 INCDIR		:= @includedir@
 LIBDIR		:= @libdir@
 
 ################ Compiler options ####################################
 
-CXXFLAGS	:= -Wall -Wextra -Wpointer-arith -Wcast-qual -Wsynth \
-		-Wwrite-strings -Wno-cast-align -Wno-strict-aliasing \
-		-Woverloaded-virtual -Wredundant-decls -Wno-overflow \
-		-Wsign-promo -Wshadow -fPIC @SYSWARNS@ @CUSTOMINCDIR@
+CXXFLAGS	:= -Wall -Wextra -Woverloaded-virtual -Wpointer-arith\
+		-Wcast-qual -Wredundant-decls -Wshadow @SYSWARNS@ @CUSTOMINCDIR@
 LDFLAGS		:= @CUSTOMLIBDIR@
-LIBS		:= @libustl@
+LIBS		:= @libustl@ @libsupc++@
 ifdef DEBUG
     CXXFLAGS	+= -O0 -g
     LDFLAGS	+= -rdynamic
 else
-    CXXFLAGS	+= -Os -g0 -DNDEBUG=1 ${INLINEOPTS}
+    CXXFLAGS	+= -Os -g0 -DNDEBUG=1
     LDFLAGS	+= -s -Wl,-gc-sections
 endif
+BUILDDIR	:= @builddir@/${NAME}
 O		:= .o/
-
-slib_lnk	= lib$1.so
-slib_son	= lib$1.so.${MAJOR}
-slib_tgt	= lib$1.so.${MAJOR}.${MINOR}
-slib_flags	= @SHBLDFL@

@@ -5,11 +5,7 @@ test/BVTS	:= $(addprefix $O,$(test/SRCS:.cc=))
 test/OBJS	:= $(addprefix $O,$(test/SRCS:.cc=.o)) $Otest/stdmain.o
 test/DEPS	:= ${test/OBJS:.o=.d}
 test/OUTS	:= $(addprefix $O,$(test/SRCS:.cc=.out))
-ifdef BUILD_SHARED
-test/LIBS	:= -L$(abspath $O.) -l${NAME} -Wl,--rpath=$(abspath $O.)
-else
 test/LIBS	+= ${LIBA} ${LIBS}
-endif
 CXXFLAGS	+= -I.
 
 ################ Compilation ###########################################
@@ -30,7 +26,7 @@ test/run:	${test/BVTS}
 
 ${test/BVTS}: $Otest/%: $Otest/%.o $Otest/stdmain.o ${ALLTGTS}
 	@echo "Linking $@ ..."
-	@${LD} ${LDFLAGS} -o $@ $< $Otest/stdmain.o ${test/LIBS}
+	@${CC} ${LDFLAGS} -o $@ $< $Otest/stdmain.o ${test/LIBS}
 
 ################ Maintenance ###########################################
 
@@ -43,6 +39,6 @@ test/clean:
 check:		test/run
 test/check:	check
 
-${test/OBJS}: Makefile test/Module.mk Config.mk ${NAME}/config.h
+${test/OBJS}:	${ALLTGTS}
 
 -include ${test/DEPS}

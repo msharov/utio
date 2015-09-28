@@ -6,39 +6,28 @@ SRCS	:= $(wildcard *.cc)
 INCS	:= $(wildcard *.h)
 OBJS	:= $(addprefix $O,$(SRCS:.cc=.o))
 DEPS	:= ${OBJS:.o=.d}
+MKDEPS	:= Makefile Config.mk config.h ${NAME}/config.h $O.d
+ONAME	:= $(notdir $(abspath $O))
+LIBA_R	:= $Olib${NAME}.a
+LIBA_D	:= $Olib${NAME}_d.a
+ifdef DEBUG
+LIBA	:= ${LIBA_D}
+else
+LIBA	:= ${LIBA_R}
+endif
 
 ################ Compilation ###########################################
 
 .PHONY: all clean check distclean maintainer-clean
 
-all:	Config.mk config.h ${NAME}/config.h
-ALLTGTS	:= Config.mk config.h ${NAME}/config.h
+ALLTGTS	:= ${MKDEPS} ${LIBA}
+all:	${ALLTGTS}
 
-SLIBL	:= $O$(call slib_lnk,${NAME})
-SLIBS	:= $O$(call slib_son,${NAME})
-SLIBT	:= $O$(call slib_tgt,${NAME})
-ifdef BUILD_SHARED
-ALLTGTS	+= ${SLIBT} ${SLIBS} ${SLIBL}
-
-all:	${SLIBT} ${SLIBS} ${SLIBL}
-${SLIBT}:	${OBJS}
-	@echo "Linking $(notdir $@) ..."
-	@${LD} -fPIC ${LDFLAGS} $(call slib_flags,$(subst $O,,${SLIBS})) -o $@ $^ ${LIBS}
-${SLIBS} ${SLIBL}:	${SLIBT}
-	@(cd $(dir $@); rm -f $(notdir $@); ln -s $(notdir $<) $(notdir $@))
-
-endif
-ifdef BUILD_STATIC
-LIBA	:= $Olib${NAME}.a
-ALLTGTS	+= ${LIBA}
-
-all:	${LIBA}
 ${LIBA}:	${OBJS}
 	@echo "Linking $@ ..."
 	@rm -f $@
 	@${AR} qc $@ ${OBJS}
 	@${RANLIB} $@
-endif
 
 $O%.o:	%.cc
 	@echo "    Compiling $< ..."
@@ -75,43 +64,33 @@ uninstall-incs:
 	@if [ -d ${LIDIR} -o -f ${RINCI} ]; then\
 	    echo "Removing ${LIDIR}/ and ${LIDIR}.h ...";\
 	    rm -f ${INCSI} ${RINCI};\
-	    rmdir ${LIDIR};\
+	    ${RMPATH} ${LIDIR};\
 	fi
 endif
 
 ####### Install libraries (shared and/or static)
 
 ifdef LIBDIR
-ifdef BUILD_SHARED
-LIBTI	:= ${LIBDIR}/$(notdir ${SLIBT})
-LIBLI	:= ${LIBDIR}/$(notdir ${SLIBS})
-LIBSI	:= ${LIBDIR}/$(notdir ${SLIBL})
-install:	${LIBTI} ${LIBLI} ${LIBSI}
-${LIBTI}:	${SLIBT}
-	@echo "Installing $@ ..."
-	@${INSTALLLIB} $< $@
-${LIBLI} ${LIBSI}: ${LIBTI}
-	@(cd ${LIBDIR}; rm -f $@; ln -s $(notdir $<) $(notdir $@))
-endif
-ifdef BUILD_STATIC
 LIBAI	:= ${LIBDIR}/$(notdir ${LIBA})
 install:	${LIBAI}
 ${LIBAI}:	${LIBA}
 	@echo "Installing $@ ..."
 	@${INSTALLLIB} $< $@
-endif
 
 uninstall:
-	@echo "Removing library from ${LIBDIR} ..."
-	@rm -f ${LIBTI} ${LIBLI} ${LIBSI} ${LIBAI}
+	@if [ -f ${LIBAI} ]; then\
+	    echo "Removing library from ${LIBDIR} ...";\
+	    rm -f ${LIBAI};\
+	    ${RMPATH} ${LIBDIR};\
+	fi
 endif
 
 ################ Maintenance ###########################################
 
 clean:
-	@if [ -d $O ]; then\
-	    rm -f ${SLIBS} ${SLIBT} ${SLIBL} ${LIBA} ${OBJS} ${DEPS};\
-	    rmdir $O;\
+	@if [ -h ${ONAME} ]; then\
+	    rm -f ${OBJS} ${DEPS} ${LIBA_R} ${LIBA_D} $O.d ${ONAME};\
+	    ${RMPATH} ${BUILDDIR};\
 	fi
 
 distclean:	clean
@@ -119,17 +98,25 @@ distclean:	clean
 
 maintainer-clean: distclean
 
+$O.d:	${BUILDDIR}/.d
+	@[ -h ${ONAME} ] || ln -sf ${BUILDDIR} ${ONAME}
+${BUILDDIR}/.d:	Makefile
+	@mkdir -p ${BUILDDIR} && touch ${BUILDDIR}/.d
+
 INPLACE_INCS := $(addprefix ${NAME}/,$(filter-out config.h,${INCS}))
 ${INPLACE_INCS}: ${NAME}/%:	${NAME}/config.h
 ${NAME}/config.h:	config.h
 	@echo "    Linking inplace header location ..."
 	@rm -f ${NAME}; ln -s . ${NAME}
 
-${OBJS}:		Makefile Config.mk config.h
+${OBJS}:		${MKDEPS}
 Config.mk:		Config.mk.in
 config.h:		config.h.in
 Config.mk config.h:	configure
-	@if [ -x config.status ]; then echo "Reconfiguring ..."; ./config.status; \
-	else echo "Running configure ..."; ./configure; fi
+	@if [ -x config.status ]; then			\
+	    echo "Reconfiguring ..."; ./config.status;	\
+	else						\
+	    echo "Running configure ..."; ./configure;	\
+	fi
 
 -include ${DEPS}
