@@ -79,8 +79,7 @@ void CGC::HLine (Point2d p, dim_t l)
 	return;
     if (coord_t(l) > _size[0] - p[0])
 	l = _size[0] - p[0];
-    const CCharCell vlc (acsv_HLine, _template);
-    fill_n (CanvasAt(p), l, vlc);
+    fill_n (CanvasAt(p), l, CCharCell (acsv_HLine, _template));
 }
 
 /// Draws a vertical line from \p p of length \p l.
@@ -91,20 +90,20 @@ void CGC::VLine (Point2d p, dim_t l)
     if (coord_t(l) > _size[1] - p[1])
 	l = _size[1] - p[1];
     const CCharCell vlc (acsv_VLine, _template);
-    for (dim_t i = 0; i < l; ++ i)
+    for (dim_t i = 0; i < l; ++i)
 	*CanvasAt (Point2d (p[0], p[1] + i)) = vlc;
 }
 
 /// Copies canvas data from \p r into \p cells.
 void CGC::GetImage (Rect r, canvas_t& cells) const
 {
-    const size_t inyskip = Width() - r.Width();
+    const auto inyskip = Width() - r.Width();
     Clip (r);
     cells.resize (r.Width() * r.Height());
-    canvas_t::iterator dout (cells.begin());
-    canvas_t::const_iterator din (CanvasAt (r[0]));
-    for (dim_t y = 0; y < r.Height(); ++ y, din += inyskip)
-	for (dim_t x = 0; x < r.Width(); ++ x, ++ din, ++ dout)
+    auto dout (cells.begin());
+    auto din (CanvasAt (r[0]));
+    for (auto y = 0u; y < r.Height(); ++y, din += inyskip)
+	for (auto x = 0u; x < r.Width(); ++x, ++din, ++dout)
 	    if (din->c)
 		*dout = *din;
 }
@@ -112,12 +111,12 @@ void CGC::GetImage (Rect r, canvas_t& cells) const
 /// Copies canvas data from \p cells into \p r.
 void CGC::Image (Rect r, const canvas_t& cells)
 {
-    const size_t outyskip = Width() - r.Width();
+    const auto outyskip = Width() - r.Width();
     Clip (r);
-    canvas_t::const_iterator din (cells.begin());
-    canvas_t::iterator dout (CanvasAt (r[0]));
-    for (dim_t y = 0; y < r.Height(); ++ y, dout += outyskip)
-	for (dim_t x = 0; x < r.Width(); ++ x, ++ din, ++ dout)
+    auto din (cells.begin());
+    auto dout (CanvasAt (r[0]));
+    for (auto y = 0u; y < r.Height(); ++ y, dout += outyskip)
+	for (auto x = 0u; x < r.Width(); ++ x, ++ din, ++ dout)
 	    if (din->c)
 		*dout = *din;
 }
@@ -126,9 +125,9 @@ void CGC::Image (Rect r, const canvas_t& cells)
 bool CGC::MakeDiffFrom (const CGC& src)
 {
     assert (src.Canvas().size() == _canvas.size() && "Diffs can only be made on equally sized canvasses");
-    register canvas_t::pointer inew (Canvas().begin());
-    register canvas_t::const_pointer iold (src.Canvas().begin());
-    const canvas_t::const_pointer iend (src.Canvas().end());
+    auto inew (Canvas().begin());
+    auto iold (src.Canvas().begin());
+    const auto iend (src.Canvas().end());
     const CCharCell nullCell (0, color_Preserve, color_Preserve, 0);
     bool bHaveChanges = false;
     for (; iold < iend; ++iold, ++inew) {
@@ -152,11 +151,11 @@ void CGC::Text (Point2d p, const string& str)
 {
     if (!Clip (p))
 	return;
-    const canvas_t::iterator doutstart (CanvasAt (p));
-    const canvas_t::iterator doutend = doutstart + (_size[0] - p[0]);
+    auto doutstart (CanvasAt (p));
+    auto doutend = doutstart + (_size[0] - p[0]);
     assert (doutend >= doutstart);
-    canvas_t::iterator dout (doutstart);
-    for (string::utf8_iterator si = str.utf8_begin(); (si < str.utf8_end()) & (dout < doutend); ++si) {
+    auto dout (doutstart);
+    for (auto si = str.utf8_begin(); si < str.utf8_end() && dout < doutend; ++si) {
 	if (*si == '\t') {
 	    const size_t absX = p[0] + distance (doutstart, dout);
 	    size_t toTab = Align (absX + 1, _tabSize) - absX;

@@ -10,10 +10,10 @@ namespace utio {
 /// Contains geometric primitive objects.
 namespace gdt {
 
-typedef int16_t			coord_t;	///< A geometric coordinate.
-typedef uint16_t		dim_t;		///< A dimension.
-typedef tuple<2, dim_t>		Size2d;		///< A geometric size.
-typedef tuple<2, coord_t>	Point2d;	///< A geometric point.
+using coord_t	= int16_t;		///< A geometric coordinate.
+using dim_t	= uint16_t;		///< A dimension.
+using Size2d	= tuple<2, dim_t>;	///< A geometric size.
+using Point2d	= tuple<2, coord_t>;	///< A geometric point.
 
 /// Represents a geometric rectangle.
 class Rect : public tuple<2, Point2d> {

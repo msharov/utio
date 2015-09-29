@@ -27,7 +27,7 @@ CKeyboard::CKeyboard (void)
 ,_initialTermios()
 ,_keypadoffstr("")
 {
-    fill_n ((void*) &_initialTermios, sizeof(struct termios), '\x0');
+    memset (&_initialTermios, 0, sizeof(struct termios));
     _keydata.reserve (64);
 }
 
@@ -78,7 +78,7 @@ void CKeyboard::ReadKeyData (void) const
     ostream os (_keydata.end(), _keydata.capacity() - _keydata.size());
     errno = 0;
     while (os.remaining()) {
-	ssize_t br = read (STDIN_FILENO, os.ipos(), os.remaining());
+	auto br = read (STDIN_FILENO, os.ipos(), os.remaining());
 	if (br > 0)
 	    os.skip (br);
 	else if (br < 0 && errno != EAGAIN && errno != EINTR)
@@ -96,12 +96,12 @@ bool CKeyboard::WaitForKeyData (long timeout) const
     FD_ZERO (&fds);
     FD_SET (STDIN_FILENO, &fds);
     struct timeval tv = { 0, timeout };
-    struct timeval* ptv = timeout ? &tv : NULL;
+    struct timeval* ptv = timeout ? &tv : nullptr;
     errno = 0;
     int rv;
     do {
 	errno = 0;
-	rv = select (1, &fds, NULL, NULL, ptv);
+	rv = select (1, &fds, nullptr, nullptr, ptv);
     } while (errno == EINTR);
     if (rv < 0)
 	throw file_exception ("select", "stdin");
@@ -127,7 +127,7 @@ void CKeyboard::EnterUIMode (void)
     if (fcntl (STDIN_FILENO, F_SETFL, flag | O_NONBLOCK))
 	throw file_exception ("F_SETFL", "stdin");
 
-    if (-1 == tcgetattr (STDIN_FILENO, &_initialTermios))
+    if (0 > tcgetattr (STDIN_FILENO, &_initialTermios))
 	throw libc_exception ("tcgetattr");
     struct termios tios (_initialTermios);
     tios.c_lflag &= ~(ICANON | ECHO);	// No by-line buffering, no echo.
@@ -137,11 +137,11 @@ void CKeyboard::EnterUIMode (void)
     tios.c_cc[VQUIT] = 0xFF;		// Disable ^\. Root window will handle.
     tios.c_cc[VSUSP] = 0xFF;		// Disable ^z. Suspends in UI mode result in garbage.
 
-    if (-1 == tcflush (STDIN_FILENO, TCIFLUSH))	// Flush the input queue; who knows what was pressed.
+    if (0 > tcflush (STDIN_FILENO, TCIFLUSH))	// Flush the input queue; who knows what was pressed.
 	throw libc_exception ("tcflush");
 
     s_bTermInUIMode = true;		// Cleanup is needed after the next statement.
-    if (-1 == tcsetattr (STDIN_FILENO, TCSAFLUSH, &tios))
+    if (0 > tcsetattr (STDIN_FILENO, TCSAFLUSH, &tios))
 	throw libc_exception ("tcsetattr");
 }
 
@@ -167,7 +167,7 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 
     // Find the longest match in the keymap.
     size_t matchedSize = 0, kss, ki = 0;
-    for (const char* ks = _keymap.begin(); ki < kv_nKeys; ++ki, ks += kss + 1) {
+    for (auto ks = _keymap.begin(); ki < kv_nKeys; ++ki, ks += kss + 1) {
 	if ((kss = strlen(ks)) <= is.remaining() && kss > matchedSize && strncmp (is.ipos(), ks, kss) == 0) {
 	    kv = ki + kv_First;
 	    matchedSize = kss;
@@ -177,7 +177,7 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 
     // Read the keystring as UTF-8 if enough bytes are available,
     if ((!kv || kv == kv_Esc) && is.remaining() && (matchedSize = min (Utf8SequenceBytes(*is.ipos()), is.remaining()))) {
-	char kc = *is.ipos();
+	auto kc = *is.ipos();
 	if (isalpha (kc + 0x60) && kc != '\t' && kc != '\n') {
 	    kc += 0x60;
 	    kv = (isupper(kc) ? kf_Alt : kf_Ctrl) | tolower(kc);

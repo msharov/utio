@@ -28,17 +28,20 @@ ${test/BVTS}: $Otest/%: $Otest/%.o $Otest/stdmain.o ${ALLTGTS}
 	@echo "Linking $@ ..."
 	@${CC} ${LDFLAGS} -o $@ $< $Otest/stdmain.o ${test/LIBS}
 
+$Otest/.d:	$O.d
+	@mkdir $Otest && touch $Otest/.d
+
 ################ Maintenance ###########################################
 
 clean:	test/clean
 test/clean:
 	@if [ -d $Otest ]; then\
-	    rm -f ${test/BVTS} ${test/OBJS} ${test/DEPS} ${test/OUTS};\
+	    rm -f ${test/BVTS} ${test/OBJS} ${test/DEPS} ${test/OUTS} $Otest/.d;\
 	    rmdir $Otest;\
 	fi
 check:		test/run
 test/check:	check
 
-${test/OBJS}:	${ALLTGTS}
+${test/OBJS}:	${ALLTGTS} $Otest/.d
 
 -include ${test/DEPS}

@@ -12,7 +12,7 @@ namespace utio {
 /// Takes raw codes from the input port and translates them into keycode events.
 class CKeyboard {
 public:
-    typedef CTerminfo::keystrings_t	keymap_t;
+    using keymap_t	= CTerminfo::keystrings_t;
 public:
 			CKeyboard (void);
 		       ~CKeyboard (void);

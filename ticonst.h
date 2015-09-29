@@ -73,7 +73,7 @@ struct SCharCell {
 /// Structure for character images
 class CCharCell : public SCharCell {
 public:
-    typedef const CCharCell&	rcself_t;
+    using rcself_t	= const CCharCell&;
 public:
     inline	CCharCell (wchar_t nv = ' ', EColor nfg = lightgray, EColor nbg = color_Preserve, uint16_t nattrs = 0)
 		    { c = nv; fg = nfg; bg = nbg; attrs = nattrs; }
@@ -88,6 +88,8 @@ public:
     inline void	ClearAttr (EAttribute a)	{ attrs &= ~(1 << a); }
 };
 
+//{{{ CCharCell inlines implementation
+
 // These are required to tell the compiler that the fields ARE being changed.
 // The changes are not visible because the specializations below cast to long
 // and operate on those for efficiency.
@@ -101,8 +103,8 @@ inline bool CCharCell::operator== (rcself_t v) const
     TOUCH_CHARCELL_VALUES_R((*this));
     // Optimize to avoid word and byte comparisons, since it is basically a whole-object compare
     // Original: return (c == v.c) & EqualFormat (v);
-    const u_long* lps = noalias_cast<const u_long*>(&v.c);
-    const u_long* lpd = noalias_cast<const u_long*>(&c);
+    auto lps = noalias_cast<const u_long*>(&v.c);
+    auto lpd = noalias_cast<const u_long*>(&c);
     bool bEqual = true;
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	bEqual &= (lpd[i] == lps[i]);
@@ -114,8 +116,8 @@ inline void CCharCell::operator= (rcself_t v)
 {
     TOUCH_CHARCELL_VALUES_R(v);
     // Optimize to copy more than one item at once.
-    const u_long* lps = noalias_cast<const u_long*>(&v.c);
-    u_long* lpd = noalias_cast<u_long*>(&c);
+    auto lps = noalias_cast<const u_long*>(&v.c);
+    auto lpd = noalias_cast<u_long*>(&c);
     for (uoff_t i = 0; i < sizeof(CCharCell)/sizeof(u_long); ++i)
 	lpd[i] = lps[i];
     TOUCH_CHARCELL_VALUES_W((*this));
@@ -138,9 +140,9 @@ inline CCharCell::CCharCell (const SCharCell& sc)
 #undef TOUCH_CHARCELL_VALUES_R
 #undef TOUCH_CHARCELL_VALUES_W
 
-//----------------------------------------------------------------------
+//}}}-------------------------------------------------------------------
 
-/// Standard graphic characters supported by some terminals.
+//{{{ Standard graphic characters supported by some terminals.
 enum EGraphicChar {
     acs_PoundSign,
     acs_DownArrow,
@@ -176,9 +178,9 @@ enum EGraphicChar {
     acs_VLine,
     acs_Last
 };
+//}}}
 
-/// \brief Unicode wchar_t values for EGraphicChar constants.
-/// The unicode value is from UnicodeData.txt from www.unicode.org
+//{{{ Unicode wchar_t values for EGraphicChar constants.
 enum EGraphicCharValue {
     acsv_PoundSign		= 0x00A3,
     acsv_DownArrow		= 0x2193,
@@ -213,7 +215,10 @@ enum EGraphicCharValue {
     acsv_UpperRightCorner	= 0x2518,
     acsv_VLine			= 0x2502
 };
+//}}}
 
+//{{{ Terminfo constant names ------------------------------------------
+///
 /// \brief Contains constants copied from term.h in enum form.
 ///
 /// These constants are in a namespace to make them semi-private and to
@@ -222,7 +227,7 @@ enum EGraphicCharValue {
 ///
 namespace ti {
 
-/// Boolean caps in terminfo order
+//{{{2 Boolean caps in terminfo order ----------------------------------
 enum EBooleans {
     auto_left_margin,
     auto_right_margin,
@@ -270,7 +275,9 @@ enum EBooleans {
     return_does_clr_eol
 };
 
-/// Numeral caps in terminfo order
+//}}}2-----------------------------------------------------------------
+//{{{2 Numeral caps in terminfo order
+
 enum ENumbers {
     columns,
     init_tabs,
@@ -314,7 +321,9 @@ enum ENumbers {
     no_value = -1
 };
 
-/// String caps in terminfo order
+//}}}2------------------------------------------------------------------
+//{{{2 String caps in terminfo order
+
 enum EStrings {
     back_tab,
     bell,
@@ -731,10 +740,11 @@ enum EStrings {
     memory_unlock,
     box_chars_1
 };
-
+//}}}2
 } // namespace ti
+//}}}-------------------------------------------------------------------
 
-/// Codes returned by CKeyboard for special keys
+//{{{ Codes returned by CKeyboard for special keys
 enum EKeyDataValue {
     kv_Space = ' ',
     kv_Tab = '\t',
@@ -889,8 +899,9 @@ enum EKeyDataValue {
     kv_Last,
     kv_nKeys = (kv_Last - kv_First)
 };
+//}}}
 
-/// Used by CKeyboard to report meta key state.
+//{{{ Meta key state constants
 enum EMetaKeyBits {
     mksbit_Shift,
     mksbit_Alt,
@@ -914,6 +925,7 @@ enum EMetaKeyFlag {
     kf_CapsLock	= (1 << (kf_MetaBit + mksbit_CapsLock)),
   kf_ScrollLock	= (1 << (kf_MetaBit + mksbit_ScrollLock))
 };
+//}}}
 
 #define KV_MASK		((1 << ::utio::kf_MetaBit) - 1)
 #define KF_MASK		(~KV_MASK)

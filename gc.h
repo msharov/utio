@@ -13,12 +13,12 @@ namespace utio {
 /// Quite useful for internal buffer (Canvas()).
 class CGC {
 public:
-    typedef vector<CCharCell>	canvas_t;	///< Type of the output buffer.
-    typedef gdt::coord_t	coord_t;
-    typedef gdt::dim_t		dim_t;
-    typedef gdt::Point2d	Point2d;
-    typedef gdt::Size2d		Size2d;
-    typedef gdt::Rect		Rect;
+    using canvas_t	= vector<CCharCell>;	///< Type of the output buffer.
+    using coord_t	= gdt::coord_t;
+    using dim_t		= gdt::dim_t;
+    using Point2d	= gdt::Point2d;
+    using Size2d	= gdt::Size2d;
+    using Rect		= gdt::Rect;
 public:
 				CGC (void);
     void			Clear (wchar_t c = ' ');
@@ -33,8 +33,8 @@ public:
     inline const canvas_t&	Canvas (void) const	{ return _canvas; }
     inline canvas_t&		Canvas (void)		{ return _canvas; }
     inline const Size2d&	Size (void) const	{ return _size; }
-    inline dim_t			Width (void) const	{ return _size[0]; }
-    inline dim_t			Height (void) const	{ return _size[1]; }
+    inline dim_t		Width (void) const	{ return _size[0]; }
+    inline dim_t		Height (void) const	{ return _size[1]; }
     inline void			Box (coord_t x, coord_t y, dim_t w, dim_t h)				{ Box (Rect (x, y, w, h)); }
     inline void			Bar (coord_t x, coord_t y, dim_t w, dim_t h, wchar_t c = ' ')		{ Bar (Rect (x, y, w, h), c); }
     inline void			HLine (coord_t x, coord_t y, dim_t l)					{ HLine (Point2d (x, y), l); }

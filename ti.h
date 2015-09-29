@@ -17,18 +17,18 @@ namespace utio {
 ///
 class CTerminfo {
 public:
-    typedef int16_t		number_t;	///< Type of numeric terminfo values.
-    typedef const char*		capout_t;	///< Type of values returned by all capability output functions.
-    typedef const string&	strout_t;
-    typedef string&		rstrbuf_t;
-    typedef string		keystrings_t;	///< List of key strings corresponding to EKeyDataValue enum.
-    typedef gdt::coord_t	coord_t;
-    typedef gdt::dim_t		dim_t;
+    using number_t	= int16_t;	///< Type of numeric terminfo values.
+    using capout_t	= const char*;	///< Type of values returned by all capability output functions.
+    using strout_t	= const string&;
+    using rstrbuf_t	= string&;
+    using keystrings_t	= string;	///< List of key strings corresponding to EKeyDataValue enum.
+    using coord_t	= gdt::coord_t;
+    using dim_t		= gdt::dim_t;
     static const char no_value[1];
 public:
 			CTerminfo (void);
-    void		Load (const char* termname = NULL);
-    void		LoadEntry (memblock& buf, const char* termname = NULL) const;
+    void		Load (const char* termname = nullptr);
+    void		LoadEntry (memblock& buf, const char* termname = nullptr) const;
     strout_t		MoveTo (coord_t x, coord_t y) const;
     strout_t		Color (EColor fg, EColor bg = color_Preserve) const;
     capout_t		Clear (void) const;
@@ -61,17 +61,17 @@ public:
     void		write (ostream& os) const;
     size_t		stream_size (void) const;
 private:
-    typedef vector<int8_t>	boolvec_t;
-    typedef vector<number_t>	numvec_t;
-    typedef uint16_t		stroffset_t;
-    typedef vector<stroffset_t>	stroffvec_t;
-    typedef string		strtable_t;
-    typedef unsigned long	progvalue_t;
-    typedef vector<progvalue_t>	progstack_t;
-    typedef tuple<acs_Last,char>	acsmap_t;
-    typedef tuple<attr_Last,number_t>	progargs_t;
+    using boolvec_t	= vector<int8_t>;
+    using numvec_t	= vector<number_t>;
+    using stroffset_t	= uint16_t;
+    using stroffvec_t	= vector<stroffset_t>;
+    using strtable_t	= string;
+    using progvalue_t	= unsigned long;
+    using progstack_t	= vector<progvalue_t>;
+    using acsmap_t	= tuple<acs_Last,char>;
+    using progargs_t	= tuple<attr_Last,number_t>;
     /// Structure for describing alternate character set values.
-    struct DLL_LOCAL SAcscInfo {
+    struct SAcscInfo {
 	char		m_vt100Code;	///< vt100 code for this character.
 	char		m_Default;	///< Default value, if the terminfo does not specify.
 	uint16_t	m_Unicode;	///< Unicode equivalent character value.
@@ -103,7 +103,7 @@ private:
     void		Attrs (uint16_t a, rstrbuf_t s) const;
     void		RunStringProgram (const char* program, string& result, progargs_t args) const;
     progvalue_t		PSPop (void) const;
-    inline progvalue_t	PSPopNonzero (void) const	{ const progvalue_t v (PSPop()); return v ? v : 1; }
+    inline progvalue_t	PSPopNonzero (void) const	{ auto v (PSPop()); return v ? v : 1; }
     void		PSPush (progvalue_t v) const;
 private:
     string		_name;		///< Name of the terminfo entry.

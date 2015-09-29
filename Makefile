@@ -31,7 +31,6 @@ ${LIBA}:	${OBJS}
 
 $O%.o:	%.cc
 	@echo "    Compiling $< ..."
-	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
 	@${CXX} ${CXXFLAGS} -MMD -MT "$(<:.cc=.s) $@" -o $@ -c $<
 
 %.s:	%.cc
@@ -62,7 +61,7 @@ ${RINCI}: ${NAME}.h
 uninstall:	uninstall-incs
 uninstall-incs:
 	@if [ -d ${LIDIR} -o -f ${RINCI} ]; then\
-	    echo "Removing ${LIDIR}/ and ${LIDIR}.h ...";\
+	    echo "Removing ${LIDIR}/ and ${RINCI} ...";\
 	    rm -f ${INCSI} ${RINCI};\
 	    ${RMPATH} ${LIDIR};\
 	fi
