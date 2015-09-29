@@ -5,37 +5,29 @@
 
 #include "stdmain.h"
 
-//----------------------------------------------------------------------
-
 class CHelloWorld {
-private:
-    inline	CHelloWorld (void) :_ti() {}
 public:
 		DECLARE_SINGLETON (CHelloWorld)		// See stdmain.h
     void	Run (void);
 private:
+    inline	CHelloWorld (void) :_ti() {}
+private:
     CTerminfo	_ti;
 };
-
-//----------------------------------------------------------------------
 
 /// Prints a bunch of multicolored lines.
 void CHelloWorld::Run (void)
 {
-    _ti.Load();		// Just loads the terminfo (using $TERM)
-
+    // Load terminfo using $TERM environment variable
+    _ti.Load();
     cout << ios::hex;
-    for (int y = black; y < color_Last; ++ y) {
-	for (int x = black; x < color_Last; ++ x)
+    // Print out a table of color values
+    for (int y = black; y < color_Last; ++y) {
+	for (int x = black; x < color_Last; ++x)
 	    cout << _ti.Color (EColor(x), EColor(y)) << x;
 	cout << _ti.Color (green, black) << "\tHello World!" << endl;
     }
-
-    cout << _ti.AllAttrsOff();	// Not using Reset() to keep the output onscreen.
+    cout << _ti.AllAttrsOff();
 }
 
-//----------------------------------------------------------------------
-
-StdDemoMain (CHelloWorld)
-
-//----------------------------------------------------------------------
+StdTestMain (CHelloWorld)

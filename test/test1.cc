@@ -10,12 +10,12 @@
 //----------------------------------------------------------------------
 
 /// Demonstrates the capabilities of the CKeyboard class.
-class CKeyboardDemo {
-private:
-    inline		CKeyboardDemo (void) :_ti(),_kb() {}
+class CKeyboardTest {
 public:
-			DECLARE_SINGLETON (CKeyboardDemo)
+			DECLARE_SINGLETON (CKeyboardTest)
     void		Run (void);
+private:
+    inline		CKeyboardTest (void) :_ti(),_kb() {}
 private:
     CTerminfo		_ti;	///< The terminfo database.
     CKeyboard		_kb;	///< The keyboard driver.
@@ -27,15 +27,14 @@ private:
 //----------------------------------------------------------------------
 
 /// Prints pressed keys until told to stop.
-void CKeyboardDemo::Run (void)
+void CKeyboardTest::Run (void)
 {
-    _ti.Load();	// Loads the terminfo database (using $TERM)
+    _ti.Load();		// Loads the terminfo database (using $TERM)
     _kb.Open (_ti);	// Also places the terminal in UI-friendly mode.
 
     cout << "Keyboard demo. Press keys to print their value, 'q' to quit." << endl;
 
-    wchar_t key = 0;
-    while (key != 'q') {
+    for (wchar_t key = 0; key != 'q';) {
 	cout.flush();
 	key = _kb.GetKey();
 
@@ -59,13 +58,9 @@ void CKeyboardDemo::Run (void)
 }
 
 //----------------------------------------------------------------------
-
-StdDemoMain (CKeyboardDemo)
-
-//----------------------------------------------------------------------
 //{{{ Names for all the special keycodes.
 
-const char* CKeyboardDemo::c_KeyNameMap [kv_nKeys] = {
+const char* CKeyboardTest::c_KeyNameMap [kv_nKeys] = {
     "Esc",		// kv_Esc
     "Backspace",	// kv_Backspace
     "Backtab",		// kv_Backtab
@@ -215,7 +210,7 @@ const char* CKeyboardDemo::c_KeyNameMap [kv_nKeys] = {
 };
 
 /// Names for the meta bits on the keycodes.
-const char* CKeyboardDemo::c_MetaBitNames [mksbit_Last] = {
+const char* CKeyboardTest::c_MetaBitNames [mksbit_Last] = {
     "Shift",
     "Alt",
     "Ctrl",
@@ -227,3 +222,5 @@ const char* CKeyboardDemo::c_MetaBitNames [mksbit_Last] = {
 };
 
 //}}}-------------------------------------------------------------------
+
+StdTestMain (CKeyboardTest)

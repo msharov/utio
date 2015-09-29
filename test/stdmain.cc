@@ -21,7 +21,7 @@ static void OnSignal (int sig)
 }
 
 /// Called by the framework on unrecoverable exception handling errors.
-static void Terminate (void)
+static void Terminate (void) noexcept
 {
     assert (!"Unrecoverable exception handling error detected.");
     raise (SIGABRT);
@@ -29,14 +29,14 @@ static void Terminate (void)
 }
 
 /// Called when an exception violates a throw specification.
-static void OnUnexpected (void)
+static void OnUnexpected (void) noexcept
 {
     cerr << "Fatal internal error: unexpected exception caught.\n";
     Terminate();
 }
 
 /// Installs OnSignal as handler for signals.
-extern "C" void InstallCleanupHandlers (void)
+extern "C" void InstallCleanupHandlers (void) noexcept
 {
     static const uint8_t c_Signals[] = {
 	SIGINT, SIGQUIT, SIGILL,  SIGTRAP, SIGABRT,

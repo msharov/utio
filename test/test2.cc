@@ -9,12 +9,12 @@
 //----------------------------------------------------------------------
 
 /// Runs an interactive screen with a moveable box.
-class CGCDemo {
+class CGCTest {
 private:
-		CGCDemo (void);
-	       ~CGCDemo (void);
+		CGCTest (void);
+	       ~CGCTest (void);
 public:
-		DECLARE_SINGLETON (CGCDemo)
+		DECLARE_SINGLETON (CGCTest)
     void	Run (void);
 private:
     void	Draw (CGC& gc);
@@ -30,7 +30,7 @@ private:
 //----------------------------------------------------------------------
 
 /// Default constructor.
-CGCDemo::CGCDemo (void)
+CGCTest::CGCTest (void)
 :_ti()
 ,_kb()
 ,_fg (green)
@@ -40,13 +40,17 @@ CGCDemo::CGCDemo (void)
 }
 
 /// Destructor to clean up UI state.
-CGCDemo::~CGCDemo (void)
+CGCTest::~CGCTest (void)
 {
-    cout << _ti.Reset() << _ti.Clear();	// Restores normal terminal state.
+    // Restores normal terminal state.
+    // CKeyboard destructor will already reset the keyboard state, but
+    // CGCTest::Draw also hides the cursor. Finally, the UI output
+    // should be removed.
+    cout << _ti.Reset() << _ti.Clear();
 }
 
 /// Draws a box with a hole on the screen.
-void CGCDemo::DrawBox (CGC& gc, Point2d pos)
+void CGCTest::DrawBox (CGC& gc, Point2d pos)
 {
     gc.Bar (pos[0], pos[1], 12, 4, ' ');
     gc.Box (pos[0], pos[1], 12, 4);
@@ -65,7 +69,7 @@ void CGCDemo::DrawBox (CGC& gc, Point2d pos)
 }
 
 /// Draws two boxes on the screen, one moveable.
-void CGCDemo::Draw (CGC& gc)
+void CGCTest::Draw (CGC& gc)
 {
     gc.Color (green, black);
     gc.Clear();				// Clears with current color; green on black.
@@ -76,7 +80,7 @@ void CGCDemo::Draw (CGC& gc)
 }
 
 /// Runs the event loop for the demo.
-void CGCDemo::Run (void)
+void CGCTest::Run (void)
 {
     _ti.Load();		// Loads the terminfo database (using $TERM)
     _kb.Open (_ti);	// Also places the terminal in UI-friendly mode.
@@ -89,8 +93,7 @@ void CGCDemo::Run (void)
     cout << _ti.HideCursor();	// Don't want the cursor to blink unless in a text box.
     cout << _ti.Clear();	// Avoid watching the screen scroll.
 
-    wchar_t key = 0;
-    while (key != 'q') {
+    for (wchar_t key = 0; key != 'q';) {
 	Draw (gc);		// Draws the boxes at current positions.
 
 	// Only the differences need to be written, so find them.
@@ -106,13 +109,13 @@ void CGCDemo::Run (void)
 
 	// Moving one of the boxes with bounds checking.
 	if ((key == kv_Up || key == 'k') && _pos[1] > 0)
-	    -- _pos[1];
+	    --_pos[1];
 	else if ((key == kv_Down || key == 'j') && _pos[1] < gc.Height() - 12)
-	    ++ _pos[1];
+	    ++_pos[1];
 	else if ((key == kv_Left || key == 'h') && _pos[0] > 0)
-	    -- _pos[0];
+	    --_pos[0];
 	else if ((key == kv_Right || key == 'l') && _pos[0] < gc.Width() - 12)
-	    ++ _pos[0];
+	    ++_pos[0];
 	// And color cycling to verify they all work.
 	else if (key == 'f')
 	    _fg = EColor ((_fg + 1) % color_Last);
@@ -123,6 +126,4 @@ void CGCDemo::Run (void)
 
 //----------------------------------------------------------------------
 
-StdDemoMain (CGCDemo)
-
-//----------------------------------------------------------------------
+StdTestMain (CGCTest)

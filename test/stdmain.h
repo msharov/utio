@@ -29,15 +29,15 @@ using namespace utio;
 using namespace utio::gdt;
 using namespace ustl;
 
-extern "C" void InstallCleanupHandlers (void);
+extern "C" void InstallCleanupHandlers (void) noexcept;
 
-/// Declares singleton Instance() call in \p DemoClass.
-#define DECLARE_SINGLETON(DemoClass)	\
-    static DemoClass& Instance (void) { static DemoClass obj; return obj; }
+/// Declares singleton Instance() call in \p TestClass
+#define DECLARE_SINGLETON(TestClass)	\
+    static TestClass& Instance (void) { static TestClass obj; return obj; }
 
 /// Exception handling harness for demos
 template <typename T>
-int RunDemo (void) throw()
+int RunTest (void) noexcept
 {
     int rv = EXIT_FAILURE;
     try {
@@ -53,10 +53,10 @@ int RunDemo (void) throw()
     return rv;
 }
 
-/// Standard main with error handling.
-#define StdDemoMain(DemoClass)			\
-int main (void)					\
-{						\
-    InstallCleanupHandlers();			\
-    return RunDemo<DemoClass>();		\
+/// Standard main with error handling
+#define StdTestMain(TestClass)	\
+int main (void)			\
+{				\
+    InstallCleanupHandlers();	\
+    return RunTest<TestClass>();\
 }
