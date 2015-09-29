@@ -16,100 +16,68 @@
 </div>
 <hr class="banner" />
 
-<h2><a name="Contents">Contents</a></h2>
-
-<ul>
-    <li><a href="#Overview">Overview</a></li>
-    <li><a href="#CTerminfo">CTerminfo</a></li>
-    <li><a href="#CGC">CGC</a></li>
-    <li><a href="#CKeyboard">CKeyboard</a></li>
-    <li><a href="#Build">How to build it</a></li>
-    <li><a href="#Support">What if it doesn't work?</a></li>
-</ul>
-<hr class="banner" />
-
-<h2><a name="Overview">Overview</a></h2>
+<h2 id="Overview">Overview</h2>
 <p>
-"But I want this text to be green!" So began my complaint about the lack
-of console capabilities in Linux. Many people have made this complaint
-before and were given the same answer I received: "use curses". Now,
-curses is a pretty ugly beast, written decades ago when dumb terminals
-existed and terminal control sequences were actually interpreted by
-sundry horrible hardware designed by complete idiots (or so it seems
-in hindsight). Hardware that supported only a couple of colors, or a
-limited number of color combinations (oh, the horror!). Hardware that
-sometimes gave you nothing but the newline code to work with. As a result
-of pandering to all these designs, curses became what it is now. There
-is no need to blame its developers; I am sure that neither you nor I
-could have done better with the specifications they were given.
-</p><p>
-In the modern times, however, text consoles are a very different environment.
-Monochrome monitors, dumb vt100 terminals, and all such weird hardware has
-been dumped into museums, landfills, or big company junk rooms. Consoles
-are all emulated now, and support only several capability sets. There are
-the OS default text console, which on Linux is called "linux", and a couple
-of X terminal emulators, which try to be compatible with xterm. All of them
-support color text. None of them have limited "color pairs" number. All have
-decent positioning, cursor movement, clearing, drawing, and Unicode text
-writing capabilities. As a result, there is simply no reason to work with
-them in the same ugly manner that was necessary to support the hundreds of
-braindead terminal types that existed back in the middle of last century.
-</p><p>
-And so I wrote this library, which has basically the same functionality as
-curses, but with a different approach. Whereas curses made no assumptions
-regarding what sort of an application you want to write, I'm assuming you
-want it to look like all the text UIs have looked since the glory days of
-DOS. That is, they draw on the screen only when you tell them to, instead
-of echoing every character the user types. They don't have to buffer the
-input to save to cost of transmitting a character over an ancient 128 baud
-line. They get the escape key as soon as it is pressed, instead of seeing
-if the user is so 5331 that he can type his own terminal conrol codes. They
-know how to decode arrow key codes instead of making you write your own code
-to do it. And so on.
-</p><p>
-My other concern with curses is that it is a pure C library. Now that C++
-specification is stable (unlike at the time when curses was written) and
-is fully supported on every platform in existence, there is absolutely no
-reason to use plain C for any application over a few hundred lines. C code
-makes it really hard to create good designs for your software, and as a
-result, pretty much all large C projects (like the Linux kernel, for example)
-either are converting to C++ or are manually implementing C++ features in C
-(like the Linux kernel does when it builds what are effectively C++ vtables
-for its drivers). This library is entirely in C++, with interfaces packed
-into objects, as they are supposed to be, errors handled with exceptions,
-and cleanup taken care of by destructors.
+This library implements a simple C++ API for using terminfo in linux
+terminals for those situations where using curses is inconvenient. UTIO
+can add colors to your text output, directly use some terminfo capabilities
+without going into fullscreen mode, and, when you do want fullscreen mode,
+it better integrates into modern event-driven designs.
 </p>
 
-<h2><a name="CTerminfo">CTerminfo</a></h2>
+<h2 id="Build">How to build it</h2>
+<p>
+Download the package from
+<a href="https://github.com/msharov/utio/releases/latest">https://github.com/msharov/utio/releases/latest</a>.
+Make sure you have the necessary dependencies:
+C++11 compiler, such as gcc 4.6+, the
+<a href="https://github.com/msharov/ustl/releases/latest">uSTL</a>
+library version 2.2+, and, if your distribution does not
+provide the terminfo database, it can be downloaded with the <a
+href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a>
+package.
+</p>
+<pre>
+    % ./configure &amp;&amp; make &amp;&amp; make install
+</pre>
+<p>
+<kbd>./configure --help</kbd> lists configuration options, like setting an
+installation path other than <kbd>/usr/local</kbd>. To use the library,
+include <kbd>utio.h</kbd> and link with <kbd>-lutio</kbd>. Look at the
+example programs in the <kbd>text</kbd> directory to start with something
+that is known to work.
+</p>
 
+<h2 id="CTerminfo">CTerminfo</h2>
 <p>
 "But I want this text to be red!" Is the simplest terminal capability
 you could ask for. If you have an application that just prints stuff out
 to the screen, like, say, a compiler, you might not necessarily want to
 use a fully featured windowing system just to make the error messages
-print out red. In curses you'd have to create a window, keep track of
-rotating the lines through the screen, and worry a lot about how to
-remember where the dirty areas are. <var>CTerminfo</var> answers this problem with
-a simple stream-based interface that lets you directly print terminal
-capabilities, taking care of all those little details, like having to
-set the bold attribute to get all 16 colors. Here's a simple example:
+print out red. In curses you'd have to create a window and keep track
+of rotating the lines through the screen. <var>CTerminfo</var> answers
+this problem with a simple stream-based interface that lets you directly
+print terminal capabilities, taking care of all those little details,
+like having to set the bold attribute to get all 16 colors. Here's a
+simple example:
 </p><pre>
     CTerminfo ti;
     ti.Load();
     cout &lt;&lt; ti.Color(red) &lt;&lt; "Error: can't open file x" &lt;&lt; endl;
 </pre><p>
-The second (optional) argument to Color sets the background color. See
-EColor enum in <tt>ticonst.h</tt> for available color values. With
-color_Preserve value you can keep the fancy backgrounds provided by
-some graphical terminal emulators (ETerm). You can also draw simple
-stuff like lines (HLine, VLine) and boxes (Box), positioned where you
-want them (MoveTo), which is useful for making progress displays nicer
-than printing "23% complete" every few seconds. You can clear the screen
-(Clear) or just parts of it (Bar). You can get ASCII art from files and
-dump it on the screen (Image). In other words, do all those things that
-DOS programmers had forever; things that let them develop text editors,
-IDEs (Borland), file managers (Norton Commander), and many wonderful text
-mode games like zzt. <var>CTerminfo</var> also provides the ability to directly
+The second (optional) argument to Color sets the background
+color. See <tt>EColor</tt> enum in <tt>ticonst.h</tt> for available
+color values. With <tt>color_Preserve</tt> value you can keep the
+fancy backgrounds provided by some graphical terminal emulators
+(ETerm). You can also draw simple stuff like lines (HLine, VLine)
+and boxes (Box), positioned where you want them (MoveTo), which is
+useful for making progress displays nicer than printing "23% complete"
+every few seconds. You can clear the screen (Clear) or just parts of
+it (Bar). You can get ASCII art from files and dump it on the screen
+(Image). In other words, do all those things that DOS programmers had
+forever; things that let them develop text editors, IDEs (Borland),
+file managers (Norton Commander), and many wonderful text mode games
+like zzt. <var>CTerminfo</var> also provides the ability to directly
 use terminal capabilities, if there is something you really need. You
 can get the terminfo-given values for booleans (GetBoolean), numbers
 (GetNumber), or strings (GetString). Take a look at <tt>ticonst.h</tt>
@@ -135,17 +103,17 @@ consistent results. The terminal keeps state too and therefore must be
 used from one thread only.
 </p><p>
 The terminal description record is loaded from the terminfo database,
-usually located under /usr/share/terminfo. The database location may be
-overridden by setting <var>TERMINFO</var> environment variable to the
-correct location. If <tt>Load</tt> is called without an argument (which
-can give a specific terminal name), as in the example listing above, the
-terminal name is obtained from the <var>TERM</var> environment variable.
-If neither is set, the name defaults to "linux", which may or may not be
-correct. Loading errors are reported by throwing appropriate exceptions.
+usually located under <tt>/usr/share/terminfo</tt>. The database
+location may be overridden by setting <var>TERMINFO</var> environment
+variable to the correct location. If <tt>Load</tt> is called without an
+argument (which can give a specific terminal name), as in the example
+listing above, the terminal name is obtained from the <var>TERM</var>
+environment variable.  If neither is set, the name defaults to "linux",
+which may or may not be correct. Loading errors are reported by throwing
+appropriate exceptions.
 </p>
 
-<h2><a name="CGC">CGC</a></h2>
-
+<h2 id="CGC">CGC</h2>
 <p>
 While <var>CTerminfo</var> is a decent interface for a simple, output-only
 application, a more sophisticated approach is usually desired for a truly
@@ -169,18 +137,21 @@ the <var>Image</var> command in <var>CTerminfo</var>. The intended use,
 however is a triple-buffer rotating system that writes only differences
 between updates. Here is an example of how it might work:
 </p><pre>
-    CGC gc;		// This is where the code draws.
-    CGC scr;		// This contains the current contents of the screen.
+    CTerminal ti;
+    ti.Load();
+
+    CGC gc,		// This is where the code draws.
+	scr;		// This contains the current contents of the screen.
 
     // Make both the same size as the screen.
-    gc.Resize (m_TI.Width(), m_TI.Height());
-    scr.Resize (m_TI.Width(), m_TI.Height());
+    gc.Resize (ti.Width(), ti.Height());
+    scr.Resize (ti.Width(), ti.Height());
 
     while (inEventLoop) {
 	Draw (gc);		// Draws everything that should be on the screen.
 	gc.MakeDiffFrom (scr);	// Only the differences need to be written, so find them.
 	// gc now has only new stuff, the rest is zeroed out, and isn't drawn.
-	cout &lt;&lt; m_TI.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
+	cout &lt;&lt; ti.Image (0, 0, gc.Width(), gc.Height(), gc.Canvas().begin());
 	cout.flush();
 	screen.Image (gc);	// Now apply the same diff to the screen cache.
 	gc.Image (screen);	// ... and copy it back for a fresh start.
@@ -188,8 +159,7 @@ between updates. Here is an example of how it might work:
     }
 </pre>
 
-<h2><a name="CKeyboard">CKeyboard</a></h2>
-
+<h2 id="CKeyboard">CKeyboard</h2>
 <p>
 An interactive application is worthless if you can't interact with it,
 so some code is invariably required to accept keystrokes from the user
@@ -211,11 +181,14 @@ would greatly increase the code size of this library.  Thankfully,
 it is possible to run in semi-normal "cooked" mode and still interpret
 keycodes correctly. That is what <var>CKeyboard</var> is for.
 </p><pre>
-    m_Kb.Open (m_TI);	// Also places the terminal in UI-friendly mode.
+    CTerminfo ti;
+    ti.Load();
+    CKeyboard kb;
+    kb.Open (ti);	// Also places the terminal in UI-friendly mode.
     wchar_t key = 0;
-    CKeyboard::metastate_t meta;
     while (key != 'q') {
-	key = m_Kb.GetKey (&amp;meta);	// Synchronous call.
+	CKeyboard::metastate_t meta;
+	key = kb.GetKey (&amp;meta);	// Synchronous call.
 	// ... do whatever with key ...
     }
 </pre><p>
@@ -228,57 +201,25 @@ the call will return immediately with 0 if there is nothing to read. Then
 you can continue with your idle loop or do a <var>select</var> call on
 whatever file descriptors you are currently watching.
 </p><p>
-<strong>WARNING:</strong> It is very important to allow
-<var>CKeyboard</var> to call its destructor (or to manually call
-<var>LeaveUIMode</var>) before exiting. If it fails to do so, the keyboard
-remains in the UI state and the shell will not be very usable. There
-will be no echo, no cursor, and no scrollback. (You can manually fix it
-with <kbd>"stty sane"</kbd> and <kbd>"echo ^v ESC c"</kbd>) This cleanup
-problem is common to all UI environments, be it curses, console, the
-framebuffer, or X. Crashing the UI environment without cleanup is a very
-bad idea. It's also pretty bad for your objects in general, possibly
-resulting in leaking resources, memory, IPC resources, etc. Most object
-oriented UI frameworks take care of this for you in some way. Some require
-an application object, which is guaranteed destructed on exit; you can see
-an example implementation of this approach in the demo directory. Some
-just register <var>atexit()</var> functions to clean up anything that
-really needs to be cleaned up. And then there are those who just assume
-nothing bad will ever happen and that the user knows how to reboot. Try
-not to fall into the last category.
+It is important to allow <var>CKeyboard</var> to call its destructor
+(or to manually call <var>LeaveUIMode</var>) before exiting. If it fails
+to do so, the keyboard remains in the UI state and the shell will not
+be usable. There will be no echo, no cursor, and no scrollback. (You
+can manually fix it with <kbd>"stty sane"</kbd> and <kbd>"echo ^v ESC
+c"</kbd>) This cleanup problem is common to all UI environments, be it
+curses, console, the framebuffer, or X. Crashing the UI environment
+without cleanup is a very bad idea. It's also pretty bad for your
+objects in general, possibly resulting in leaking resources, memory, IPC
+resources, etc. Most object oriented UI frameworks take care of this for
+you in some way. Some require an application object, which is guaranteed
+destructed on exit; you can see an example implementation of this approach
+in the <tt>test</tt> directory. Some just register <var>atexit()</var>
+functions to clean up anything that really needs to be cleaned up. And
+then there are those who just assume nothing bad will ever happen and
+that the user knows how to reboot. Try not to fall into the last category.
 </p>
 
-<h2><a name="Build">How to build it</a></h2>
-
-<p>
-At this point I'm going to mention that this project is no longer being
-developed. I have discovered that terminfo entries are just plain
-wrong in many cases and nobody is particularly interested in fixing
-them. Specific terminfo entries must be written for currently existing
-terminal emulators, including xterm, which no longer conforms to the
-original terminfo. I am not interested in doing it due to the amount
-of work involved, but you are, of course, welcome to try. If you do,
-you may want to take over this project. Anyway...
-</p><p>
-Building this library is a fairly standard procedure. Download the package from
-<a href="https://github.com/msharov/utio/releases/latest">https://github.com/msharov/utio/releases/latest</a>.
-Make sure you have the necessary dependencies: C++11 compiler, such as gcc 4.6+, the
-<a href="https://github.com/msharov/ustl/releases/latest">uSTL</a> library
-version 1.1 or higher, and the terminfo database, available in the
-<a href="http://www.gnu.org/software/ncurses/ncurses.html">ncurses</a>
-package, if your distribution doesn't provide it separately.
-</p>
-<pre>
-% ./configure &amp;&amp; make &amp;&amp; make install
-</pre>
-<p>
-<kbd>./configure --help</kbd> lists configuration options, like setting an
-installation path other than <kbd>/usr/local</kbd>. To use the library,
-include <kbd>utio.h</kbd> and link with <kbd>-lutio</kbd>. Look at the
-example programs in the <kbd>demo</kbd> directory to start with something
-that is known to work.
-</p>
-
-<h2><a name="Support">What if it doesn't work?</a></h2>
+<h2 id="Support">What if it doesn't work?</h2>
 <p>
 Problems should be reported using <a href="https://github.com/msharov/utio/issues">Github project trackers</a>
 reachable from the <a href="https://github.com/msharov/utio">library project page.</a>
