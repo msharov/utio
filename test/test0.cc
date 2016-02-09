@@ -20,7 +20,7 @@ void CHelloWorld::Run (void)
 {
     // Load terminfo using $TERM environment variable
     _ti.Load();
-    cout << ios::hex;
+    cout << ios::hex << ios::uppercase;
     // Print out a table of color values
     for (int y = black; y < color_Last; ++y) {
 	for (int x = black; x < color_Last; ++x)
