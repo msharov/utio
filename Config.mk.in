@@ -23,8 +23,8 @@ LIBDIR		:= @libdir@
 ################ Compiler options ####################################
 
 CXXFLAGS	:= -Wall -Wextra -Woverloaded-virtual -Wpointer-arith\
-		-Wcast-qual -Wredundant-decls -Wshadow @SYSWARNS@\
-		-std=c++11 @CUSTOMINCDIR@
+		-Wcast-qual -Wredundant-decls -Wshadow \
+		-std=c++14 -march=native @CUSTOMINCDIR@
 LDFLAGS		:= @CUSTOMLIBDIR@
 LIBS		:= @libustl@ @libsupc++@
 ifdef DEBUG
