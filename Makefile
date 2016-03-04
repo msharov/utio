@@ -6,7 +6,7 @@ SRCS	:= $(wildcard *.cc)
 INCS	:= $(wildcard *.h)
 OBJS	:= $(addprefix $O,$(SRCS:.cc=.o))
 DEPS	:= ${OBJS:.o=.d}
-MKDEPS	:= Makefile Config.mk config.h ${NAME}/config.h $O.d
+MKDEPS	:= Makefile Config.mk config.h $O.d
 ONAME	:= $(notdir $(abspath $O))
 LIBA_R	:= $Olib${NAME}.a
 LIBA_D	:= $Olib${NAME}_d.a
@@ -93,7 +93,7 @@ clean:
 	fi
 
 distclean:	clean
-	@rm -f Config.mk config.h config.status ${NAME}
+	@rm -f Config.mk config.h config.status
 
 maintainer-clean: distclean
 
@@ -101,12 +101,6 @@ $O.d:	${BUILDDIR}/.d
 	@[ -h ${ONAME} ] || ln -sf ${BUILDDIR} ${ONAME}
 ${BUILDDIR}/.d:	Makefile
 	@mkdir -p ${BUILDDIR} && touch ${BUILDDIR}/.d
-
-INPLACE_INCS := $(addprefix ${NAME}/,$(filter-out config.h,${INCS}))
-${INPLACE_INCS}: ${NAME}/%:	${NAME}/config.h
-${NAME}/config.h:	config.h
-	@echo "    Linking inplace header location ..."
-	@rm -f ${NAME}; ln -s . ${NAME}
 
 ${OBJS}:		${MKDEPS}
 Config.mk:		Config.mk.in

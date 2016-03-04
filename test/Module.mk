@@ -6,7 +6,6 @@ test/OBJS	:= $(addprefix $O,$(test/SRCS:.cc=.o)) $Otest/stdmain.o
 test/DEPS	:= ${test/OBJS:.o=.d}
 test/OUTS	:= $(addprefix $O,$(test/SRCS:.cc=.out))
 test/LIBS	+= ${LIBA} ${LIBS}
-CXXFLAGS	+= -I.
 
 ################ Compilation ###########################################
 
@@ -29,7 +28,8 @@ ${test/BVTS}: $Otest/%: $Otest/%.o $Otest/stdmain.o ${ALLTGTS}
 	@${CC} ${LDFLAGS} -o $@ $< $Otest/stdmain.o ${test/LIBS}
 
 $Otest/.d:	$O.d
-	@mkdir $Otest && touch $Otest/.d
+	@[ -d $Otest ] || mkdir $Otest
+	@touch $@
 
 ################ Maintenance ###########################################
 

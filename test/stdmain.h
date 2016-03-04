@@ -24,7 +24,8 @@
 // for every UI framework you choose to implement on top of utio.
 
 #pragma once
-#include <utio.h>
+#include "../gc.h"
+#include "../kb.h"
 using namespace utio;
 using namespace utio::gdt;
 using namespace ustl;
