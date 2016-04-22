@@ -19,7 +19,7 @@ test/all:	${test/BVTS}
 test/run:	${test/BVTS}
 	@for i in 0 1 2; do \
 	    echo "Running $Otest/test$$i"; \
-	    TERM=xterm $Otest/test$$i < test/test$$i.cc > $Otest/test$$i.out 2>&1; \
+	    TERM=xterm COLUMNS=80 LINES=24 $Otest/test$$i < test/test$$i.cc > $Otest/test$$i.out 2>&1; \
 	    cmp test/test$$i.std $Otest/test$$i.out && rm -f $Otest/test$$i.out; \
 	done
 
