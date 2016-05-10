@@ -26,15 +26,15 @@ CKeyboard::CKeyboard (void)
 ,_keydata()
 ,_initialTermios()
 ,_keypadoffstr("")
+,_curB (0)
 {
     memset (&_initialTermios, 0, sizeof(struct termios));
     _keydata.reserve (64);
 }
 
-/// Destructor cleans up keyboard in case of abnormal termination.
-CKeyboard::~CKeyboard (void)
+/*static*/ void CKeyboard::Error (const char* f)
 {
-    Close();
+    throw file_exception (f, "stdin");
 }
 
 //----------------------------------------------------------------------
@@ -58,7 +58,7 @@ void CKeyboard::Close (void)
 }
 
 /// Reads a key from stdin.
-wchar_t CKeyboard::GetKey (bool bBlock) const
+wchar_t CKeyboard::GetKey (bool bBlock)
 {
     wchar_t key = 0;
     istream is;
@@ -73,7 +73,7 @@ wchar_t CKeyboard::GetKey (bool bBlock) const
 }
 
 /// Reads all available stdin data (nonblocking)
-void CKeyboard::ReadKeyData (void) const
+void CKeyboard::ReadKeyData (void)
 {
     ostream os (_keydata.end(), _keydata.capacity() - _keydata.size());
     errno = 0;
@@ -82,7 +82,7 @@ void CKeyboard::ReadKeyData (void) const
 	if (br > 0)
 	    os.skip (br);
 	else if (br < 0 && errno != EAGAIN && errno != EINTR)
-	    throw file_exception ("read", "stdin");
+	    Error ("read");
 	else
 	    break;
     }
@@ -104,7 +104,7 @@ bool CKeyboard::WaitForKeyData (long timeout) const
 	rv = select (1, &fds, nullptr, nullptr, ptv);
     } while (errno == EINTR);
     if (rv < 0)
-	throw file_exception ("select", "stdin");
+	Error ("select");
     return rv;
 }
 
@@ -123,26 +123,27 @@ void CKeyboard::EnterUIMode (void)
 
     int flag;
     if ((flag = fcntl (STDIN_FILENO, F_GETFL)) < 0)
-	throw file_exception ("F_GETFL", "stdin");
+	Error ("F_GETFL");
     if (fcntl (STDIN_FILENO, F_SETFL, flag | O_NONBLOCK))
-	throw file_exception ("F_SETFL", "stdin");
+	Error ("F_SETFL");
 
     if (0 > tcgetattr (STDIN_FILENO, &_initialTermios))
-	throw libc_exception ("tcgetattr");
+	Error ("tcgetattr");
     struct termios tios (_initialTermios);
     tios.c_lflag &= ~(ICANON | ECHO);	// No by-line buffering, no echo.
-    tios.c_iflag &= ~(IXON | IXOFF);	// No ^s scroll lock (whose dumb idea was it?)
+    tios.c_iflag &= ~(IXON | IXOFF);	// No ^s scroll lock
     tios.c_cc[VMIN] = 1;		// Read at least 1 character on each read().
     tios.c_cc[VTIME] = 0;		// Disable time-based preprocessing (Esc sequences)
-    tios.c_cc[VQUIT] = 0xFF;		// Disable ^\. Root window will handle.
-    tios.c_cc[VSUSP] = 0xFF;		// Disable ^z. Suspends in UI mode result in garbage.
+    tios.c_cc[VQUIT] = 0xff;		// Disable ^\. Root window will handle.
+    tios.c_cc[VSUSP] = 0xff;		// Disable ^z. Suspends in UI mode result in garbage.
 
     if (0 > tcflush (STDIN_FILENO, TCIFLUSH))	// Flush the input queue; who knows what was pressed.
-	throw libc_exception ("tcflush");
+	Error ("tcflush");
 
     s_bTermInUIMode = true;		// Cleanup is needed after the next statement.
+    signal (SIGTSTP, SIG_IGN);		// Disable ^z suspend.
     if (0 > tcsetattr (STDIN_FILENO, TCSAFLUSH, &tios))
-	throw libc_exception ("tcsetattr");
+	Error ("tcsetattr");
 }
 
 /// Leaves UI mode.
@@ -152,14 +153,15 @@ void CKeyboard::LeaveUIMode (void)
 	return;
     tcflush (STDIN_FILENO, TCIFLUSH);	// Should not leave any garbage for the shell
     if (tcsetattr (STDIN_FILENO, TCSANOW, &_initialTermios))
-	throw file_exception ("tcsetattr", "stdin");
+	Error ("tcsetattr");
+    signal (SIGTSTP, SIG_DFL);		// Re-enable ^z suspend.
     s_bTermInUIMode = false;
 }
 
 //----------------------------------------------------------------------
 
 /// Decodes a keystring in \p str that was read from stdin into an eventcode.
-wchar_t CKeyboard::DecodeKey (istream& is) const
+wchar_t CKeyboard::DecodeKey (istream& is)
 {
     wchar_t kv = 0;
     if (!is.remaining())
@@ -192,13 +194,12 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
 
     // Decode mouse data
     if (kv == kv_Mouse && is.remaining() >= 3) {
-	static uint8_t s_CurB = 0;
 	uint8_t x, y, b, bs;
 	b = is.ipos()[0]; x = is.ipos()[1]; y = is.ipos()[2];
 	x -= '!'; y -= '!'; b = (b + 1) & 3;			// Coordinates are '!'-based, buttons are 0,1,2 with motion and drag flags, which I mask off.
-	bs = b - s_CurB; bs = (bs != 0) + (int8_t(bs) < 0);	// Convert to "down" or "up" values.
-	kv = kf_Mouse | (bs << 18) | (max(b,s_CurB) << 16) | (x << 8) | y;	// Packing should match UMouseEvent structure (doing it manually here generates considerably less code)
-	s_CurB = b;
+	bs = b - _curB; bs = (bs != 0) + (int8_t(bs) < 0);	// Convert to "down" or "up" values.
+	kv = kf_Mouse | (bs << 18) | (max(b,_curB) << 16) | (x << 8) | y;	// Packing should match UMouseEvent structure (doing it manually here generates considerably less code)
+	_curB = b;
 	is.skip (3);
     }
     return kv;
