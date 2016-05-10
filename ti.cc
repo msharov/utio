@@ -835,7 +835,8 @@ const int16_t CTerminfo::c_KeyToStringMap [kv_nKeys] = {
     ti::key_undo,	// kv_Undo
     ti::key_up,		// kv_Up
     ti::key_a1,		// kv_UpLeft
-    ti::key_a3		// kv_UpRight
+    ti::key_a3,		// kv_UpRight
+    ti::key_enter	// kv_KPEnter
 };
 
 //}}}-------------------------------------------------------------------

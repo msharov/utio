@@ -896,6 +896,7 @@ enum EKeyDataValue {
     kv_Up,
     kv_UpLeft,
     kv_UpRight,
+    kv_KPEnter,
     kv_Last,
     kv_nKeys = (kv_Last - kv_First)
 };

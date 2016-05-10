@@ -187,6 +187,8 @@ wchar_t CKeyboard::DecodeKey (istream& is) const
     }
     if (kv == 0x7F)	// xterms are not always consistent with this...
 	kv = kv_Backspace;
+    if (kv == kv_KPEnter)	// always use kv_Enter instead
+	kv = kv_Enter;
 
     // Decode mouse data
     if (kv == kv_Mouse && is.remaining() >= 3) {
