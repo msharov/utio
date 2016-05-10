@@ -9,7 +9,7 @@ terminal access.
 
 2. Compilation
 
-You will need the uSTL library 0.8 or later to compile utio.
+You will need the uSTL library 2.3 or later to compile utio.
 uSTL can be downloaded from https://github.com/msharov/ustl
 ./configure --help will list available configuration options.
 

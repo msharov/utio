@@ -6,7 +6,7 @@
 ######################################################################
 
 PKG_NAME="utio"
-PKG_VERSTR="v1.4"
+PKG_VERSTR="v1.3"
 PKG_BUGREPORT="Mike Sharov <msharov@users.sourceforge.net>"
 
 # Files that get created by this script
