@@ -280,19 +280,19 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    case 'i': ++args[0]; ++args[1];	break;	// %i adds 1 to i two arguments.
 	    case 'c': result += char(PSPop());	break;
 	    case 'x': base = 16; continue;
-	    case '0': if (!base) base = 8;
+	    case '0': if (!base) base = 8;		// fallthrough
 	    case '1': case '2': case '3': case '4':	// part of %d width field
 	    case '5': case '6': case '7': case '8':
 	    case '9': if (!base) base = 10;
 		      width = width * base + (*i - '0');
 		      continue;
-	    case '\\': base = 0;
+	    case '\\': base = 0;			// fallthrough
 	    case '{': continue;				// %{number}
 	    case '\'': if (*(i - 1) == '%') {		// %'A' or %'\017'
 		          if (*(i + 1) != '\\')
 		 	      width = *++i;
 		          continue;
-		      }
+		      }					// fallthrough
  	    case '}': PSPush (width);			break;
 	    // Binary operands are in infix (reversed) order
 	    case '+': PSPush (PSPop() + PSPop());	break;
@@ -310,7 +310,7 @@ void CTerminfo::RunStringProgram (const char* program, string& result, progargs_
 	    case 'O': PSPush (PSPop() || PSPop());	break;
 	    case '!': PSPush (!PSPop());		break;
 	    case '~': PSPush (~PSPop());		break;
-	    case 't': bCondValue = PSPop();
+	    case 't': bCondValue = PSPop();		// fallthrough
 	    case 'e': if ((bCondValue = !bCondValue)) { // this also supports elsif
 			  uoff_t elseLoc = prgstr.find ("%e", i - prgstr.begin());
 			  uoff_t endLoc = prgstr.find ("%;", i - prgstr.begin());
