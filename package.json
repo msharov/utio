@@ -1,0 +1,19 @@
+{
+    "name"		: "utio",
+    "version"		: "1.3-git",
+    "description"	: "Useful terminal IO library",
+    "license"		: "MIT",
+    "keywords"		: ["c++","terminal","curses","termio","ui"],
+    "repository"	: "msharov/utio",
+    "homepage"		: "https://msharov.github.io/utio/",
+    "bugs"		: "https://github.com/msharov/utio/issues",
+    "author"		: "Mike Sharov <msharov@users.sourceforge.net>",
+    "os"		: ["linux","bsd","macos","sunos","solaris","!win"],
+    "dependencies"	: {
+	"ustl"	:	"msharov/ustl#>=2.5"
+    },
+    "directories"	: {
+	"doc"	:	"docs",
+	"test"	:	"test"
+    }
+}
