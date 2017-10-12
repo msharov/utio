@@ -10,7 +10,7 @@
     "author"		: "Mike Sharov <msharov@users.sourceforge.net>",
     "os"		: ["linux","bsd","macos","sunos","solaris","!win"],
     "dependencies"	: {
-	"ustl"	:	"msharov/ustl#>=2.5"
+	"ustl"	:	"git://github.com/msharov/ustl.git#>=2.5"
     },
     "directories"	: {
 	"doc"	:	"docs",
