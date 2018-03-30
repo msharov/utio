@@ -1,27 +1,39 @@
 body {
-    font-family: sans-serif;
-    color: #0b0;
-    background-color: black;
-    margin: 5mm;
+	background-color: black;
+	color: #888;
+	font-family: sans-serif;
+	margin: 0;
 }
-div.banner {
-    color: #0bb;
-    background-color: #333;
-    text-align: center;
-    margin-top: -5mm;
-    margin-left: -5mm;
-    margin-right: -5mm;
-    margin-bottom: 5mm;
-    font-size: 1cm;
-    padding: 1mm;
+#pagectr {
+	background-color: #004;
+	margin: 0 auto;
+	max-width: 64em;
+	overflow: hidden;
 }
-div.motto {
-    color: #0aa;
-    font-style: italic;
-    font-size: 2mm;
-    margin-top: -5mm;
+#header {
+	border-bottom: 1px #044 solid;
+	overflow: hidden;
+	text-align: center;
 }
-a:link { color: #0aa; }
-a:visited { color: #6a6; }
-hr.banner { display: none; }
-h1 { text-align: center; }
+div#header h1 {
+	color: #0cc;
+	font-size: 2cm;
+	margin: .4em 1em;
+}
+div#header h6 {
+	color: #0aa;
+	font-style: italic;
+	font-size: 3.5mm;
+	margin: -1em 0 0.5em 0;
+}
+div#header hr		{ display: none }
+#content {
+	background-color: #003;
+	padding: 0.5em 1.5em;
+	text-align: justify;
+}
+#content a		{ color: #0bb }
+#content a:visited	{ color: #088 }
+#content a:active	{ color: #0ff }
+#content h2,h3		{ color: #899 }
+#content pre,tt,kbd	{ color: #588 }
