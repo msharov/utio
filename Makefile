@@ -2,114 +2,173 @@
 
 ################ Source files ##########################################
 
-SRCS	:= $(wildcard *.cc)
-INCS	:= $(wildcard *.h)
-OBJS	:= $(addprefix $O,$(SRCS:.cc=.o))
-DEPS	:= ${OBJS:.o=.d}
-MKDEPS	:= Makefile Config.mk config.h $O.d
-ONAME	:= $(notdir $(abspath $O))
-LIBA_R	:= $Olib${NAME}.a
-LIBA_D	:= $Olib${NAME}_d.a
-ifdef DEBUG
-LIBA	:= ${LIBA_D}
+srcs	:= $(wildcard *.cc)
+incs	:= $(filter-out ${name}.h,$(sort $(wildcard *.h) config.h))
+objs	:= $(addprefix $O,$(srcs:.cc=.o))
+deps	:= ${objs:.o=.d}
+docs	:= $(wildcard docs/*)
+confs	:= Config.mk config.h ${name}.pc
+oname   := $(notdir $(abspath $O))
+liba_r	:= $Olib${name}.a
+liba_d	:= $Olib${name}_d.a
+ifdef debug
+liba	:= ${liba_d}
 else
-LIBA	:= ${LIBA_R}
+liba	:= ${liba_r}
 endif
 
 ################ Compilation ###########################################
 
-.PHONY: all clean check distclean maintainer-clean
+.SUFFIXES:
+.PHONY: all clean distclean maintainer-clean
 
-ALLTGTS	:= ${MKDEPS} ${LIBA}
-all:	${ALLTGTS}
+all:	${liba}
 
-${LIBA}:	${OBJS}
+${liba}:	${objs}
 	@echo "Linking $@ ..."
 	@rm -f $@
-	@${AR} qc $@ ${OBJS}
+	@${AR} qc $@ $^
 	@${RANLIB} $@
 
 $O%.o:	%.cc
 	@echo "    Compiling $< ..."
-	@${CXX} ${CXXFLAGS} -MMD -MT "$(<:.cc=.s) $@" -o $@ -c $<
+	@${CXX} ${cxxflags} -MMD -MT "$(<:.cc=.s) $@" -o $@ -c $<
 
 %.s:	%.cc
 	@echo "    Compiling $< to assembly ..."
-	@${CXX} ${CXXFLAGS} -S -o $@ -c $<
-
-include test/Module.mk
+	@${CXX} ${cxxflags} -S -o $@ -c $<
 
 ################ Installation ##########################################
 
-.PHONY:	install uninstall install-incs uninstall-incs
+.PHONY:	install installdirs install-incs install-html
+.PHONY:	uninstall uninstall-incs uninstall-lib uninstall-pc uninstall-html
 
-####### Install headers
+ifdef includedir
+incsd	:= ${DESTDIR}${includedir}/${name}
+incsi	:= $(addprefix ${incsd}/,${incs})
+incr	:= ${incsd}.h
 
-ifdef INCDIR	# These ifdefs allow cold bootstrap to work correctly
-LIDIR	:= ${INCDIR}/${NAME}
-INCSI	:= $(addprefix ${LIDIR}/,$(filter-out ${NAME}.h,${INCS}))
-RINCI	:= ${LIDIR}.h
-
-install:	install-incs
-install-incs: ${INCSI} ${RINCI}
-${INCSI}: ${LIDIR}/%.h: %.h
+${incsd}:
+	@echo "Creating $@ ..."
+	@${INSTALL} -d $@
+${incsi}: ${incsd}/%.h: %.h | ${incsd}
 	@echo "Installing $@ ..."
-	@${INSTALLDATA} $< $@
-${RINCI}: ${NAME}.h
+	@${INSTALL_DATA} $< $@
+${incr}:	${name}.h | ${incsd}
 	@echo "Installing $@ ..."
-	@${INSTALLDATA} $< $@
+	@${INSTALL_DATA} $< $@
+
+installdirs:	${incsd}
+install:	${incsi} ${incr}
 uninstall:	uninstall-incs
 uninstall-incs:
-	@if [ -d ${LIDIR} -o -f ${RINCI} ]; then\
-	    echo "Removing ${LIDIR}/ and ${RINCI} ...";\
-	    rm -f ${INCSI} ${RINCI};\
-	    ${RMPATH} ${LIDIR};\
+	@if [ -d ${incsd} ]; then\
+	    echo "Removing headers ...";\
+	    rm -f ${incsi} ${incr};\
+	    rmdir ${incsd};\
 	fi
 endif
 
-####### Install libraries (shared and/or static)
+ifdef libdir
+libad	:= ${DESTDIR}${libdir}
+libai	:= ${libad}/$(notdir ${liba})
+libai_r	:= ${libad}/$(notdir ${liba_r})
+libai_d	:= ${libad}/$(notdir ${liba_d})
 
-ifdef LIBDIR
-LIBAI	:= ${LIBDIR}/$(notdir ${LIBA})
-install:	${LIBAI}
-${LIBAI}:	${LIBA}
+${libad}:
+	@echo "Creating $@ ..."
+	@${INSTALL} -d $@
+${libai}:	${liba} | ${libad}
 	@echo "Installing $@ ..."
-	@${INSTALLLIB} $< $@
+	@${INSTALL_DATA} $< $@
 
-uninstall:
-	@if [ -f ${LIBAI} ]; then\
-	    echo "Removing library from ${LIBDIR} ...";\
-	    rm -f ${LIBAI};\
-	    ${RMPATH} ${LIBDIR};\
+installdirs:	${libad}
+install:	${libai}
+uninstall:	uninstall-lib
+uninstall-lib:
+	@if [ -f ${libai_r} -o -f ${libai_d} ]; then\
+	    echo "Removing ${libai} ...";\
+	    rm -f ${libai_r} ${libai_d};\
+	fi
+endif
+
+ifdef docdir
+docsd	:= ${DESTDIR}${docdir}/${name}
+docsi	:= $(addprefix ${docsd}/,$(notdir ${docs}))
+
+${docsd}:
+	@echo "Creating $@ ..."
+	@${INSTALL} -d $@
+${docsi}: ${docsd}/%: docs/% | ${docsd}
+	@echo "Installing $@ ..."
+	@${INSTALL_DATA} $< $@
+
+install:	install-html
+install-html:	${docsi}
+installdirs:	${docsd}
+uninstall:	uninstall-html
+uninstall-html:
+	@if [ -d ${docsd} ]; then\
+	    echo "Removing documentation ...";\
+	    rm -f ${docsi};\
+	    rmdir ${docsd};\
+	fi
+endif
+
+ifdef pkgconfigdir
+pcd	:= ${DESTDIR}${pkgconfigdir}
+pci	:= ${pcd}/${name}.pc
+
+${pcd}:
+	@echo "Creating $@ ..."
+	@${INSTALL} -d $@
+${pci}:	${name}.pc | ${pcd}
+	@echo "Installing $@ ..."
+	@${INSTALL_DATA} $< $@
+
+installdirs:	${pcd}
+install:	${pci}
+uninstall:	uninstall-pc
+uninstall-pc:
+	@if [ -f ${pci} ]; then\
+	    echo "Removing ${pci} ...";\
+	    rm -f ${pci};\
 	fi
 endif
 
 ################ Maintenance ###########################################
 
+include test/Module.mk
+
 clean:
-	@if [ -h ${ONAME} ]; then\
-	    rm -f ${OBJS} ${DEPS} ${LIBA_R} ${LIBA_D} $O.d ${ONAME};\
-	    ${RMPATH} ${BUILDDIR};\
+	@if [ -d ${builddir} ]; then\
+	    rm -f ${liba_r} ${liba_d} ${objs} ${deps} $O.d;\
+	    rmdir ${builddir};\
 	fi
 
 distclean:	clean
-	@rm -f Config.mk config.h config.status
+	@rm -f ${oname} ${confs} config.status
 
 maintainer-clean: distclean
 
-$O.d:	${BUILDDIR}/.d
-	@[ -h ${ONAME} ] || ln -sf ${BUILDDIR} ${ONAME}
-${BUILDDIR}/.d:	Makefile
-	@mkdir -p ${BUILDDIR} && touch ${BUILDDIR}/.d
+$O.d:	${builddir}/.d
+	@[ -h ${oname} ] || ln -sf ${builddir} ${oname}
+$O%/.d:	$O.d
+	@[ -d $(dir $@) ] || mkdir $(dir $@)
+	@touch $@
+${builddir}/.d:	Makefile
+	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
+	@touch $@
 
-${OBJS}:		${MKDEPS}
-Config.mk:		Config.mk.in
-config.h:		config.h.in
-Config.mk config.h:	configure
-	@if [ -x config.status ]; then			\
-	    echo "Reconfiguring ..."; ./config.status;	\
-	else						\
-	    echo "Running configure ..."; ./configure;	\
+Config.mk:	Config.mk.in
+config.h:	config.h.in
+${name}.pc:	${name}.pc.in
+${objs}:	Makefile ${confs} $O.d
+${confs}:	configure
+	@if [ -x config.status ]; then echo "Reconfiguring ...";\
+	    ./config.status;\
+	else echo "Running configure ...";\
+	    ./configure;\
 	fi
 
--include ${DEPS}
+-include ${deps}

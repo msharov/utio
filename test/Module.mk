@@ -1,47 +1,41 @@
 ################ Source files ##########################################
 
-test/SRCS	:= $(wildcard test/test?.cc)
-test/BVTS	:= $(addprefix $O,$(test/SRCS:.cc=))
-test/OBJS	:= $(addprefix $O,$(test/SRCS:.cc=.o)) $Otest/stdmain.o
-test/DEPS	:= ${test/OBJS:.o=.d}
-test/OUTS	:= $(addprefix $O,$(test/SRCS:.cc=.out))
-test/LIBS	+= ${LIBA} ${LIBS}
+test/srcs	:= $(wildcard test/?????.cc)
+test/bins	:= $(addprefix $O,$(test/srcs:.cc=))
+test/objs	:= $(addprefix $O,$(test/srcs:.cc=.o)) $Otest/stdmain.o
+test/deps	:= ${test/objs:.o=.d}
+test/outs	:= $(addprefix $O,$(test/srcs:.cc=.out))
 
 ################ Compilation ###########################################
 
 .PHONY:	test/all test/run test/clean test/check
 
-test/all:	${test/BVTS}
+test/all:	${test/bins}
 
 # The correct output of a test is stored in testXX.std
 # When the test runs, its output is compared to .std
 #
-test/run:	${test/BVTS}
-	@for i in 0 1 2; do \
-	    echo "Running $Otest/test$$i"; \
-	    TERM=xterm COLUMNS=80 LINES=24 $Otest/test$$i < test/test$$i.cc > $Otest/test$$i.out 2>&1; \
-	    cmp test/test$$i.std $Otest/test$$i.out && rm -f $Otest/test$$i.out; \
+check:		test/check
+test/check:	${test/bins}
+	@for i in ${test/bins}; do \
+	    echo "Running $$i"; \
+	    TERM=xterm COLUMNS=80 LINES=24 $$i < test/`basename $$i`.cc > $$i.out 2>&1; \
+	    diff test/`basename $$i`.std $$i.out && rm -f $$i.out; \
 	done
 
-${test/BVTS}: $Otest/%: $Otest/%.o $Otest/stdmain.o ${ALLTGTS}
+${test/bins}: $Otest/%: $Otest/%.o $Otest/stdmain.o ${liba}
 	@echo "Linking $@ ..."
-	@${CC} ${LDFLAGS} -o $@ $< $Otest/stdmain.o ${test/LIBS}
-
-$Otest/.d:	$O.d
-	@[ -d $Otest ] || mkdir $Otest
-	@touch $@
+	@${CC} ${ldflags} -o $@ $^ ${libs}
 
 ################ Maintenance ###########################################
 
 clean:	test/clean
 test/clean:
-	@if [ -d $Otest ]; then\
-	    rm -f ${test/BVTS} ${test/OBJS} ${test/DEPS} ${test/OUTS} $Otest/.d;\
-	    rmdir $Otest;\
+	@if [ -d ${builddir}/test ]; then\
+	    rm -f ${test/bins} ${test/objs} ${test/deps} ${test/outs} $Otest/.d;\
+	    rmdir ${builddir}/test;\
 	fi
-check:		test/run
-test/check:	check
 
-${test/OBJS}:	${ALLTGTS} $Otest/.d
+${test/objs}:	Makefile test/Module.mk ${confs} $Otest/.d
 
--include ${test/DEPS}
+-include ${test/deps}

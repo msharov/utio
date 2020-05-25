@@ -1,7 +1,4 @@
-################ Build options #######################################
-
-NAME		:= @PKG_NAME@
-#DEBUG		:= 1
+name		:= @pkg_name@
 
 ################ Programs ############################################
 
@@ -10,29 +7,32 @@ CC		:= @CC@
 AR		:= @AR@
 RANLIB		:= @RANLIB@
 INSTALL		:= @INSTALL@
-
-INSTALLDATA	:= ${INSTALL} -D -p -m 644
-INSTALLLIB	:= ${INSTALLDATA}
-RMPATH		:= rmdir -p --ignore-fail-on-non-empty
+INSTALL_DATA	:= ${INSTALL} -m 644
 
 ################ Destination #########################################
 
-INCDIR		:= @includedir@
-LIBDIR		:= @libdir@
+prefix		:= @prefix@
+includedir	:= @includedir@
+libdir		:= @libdir@
+datadir		:= @datadir@
+docdir		:= @docdir@
+pkgconfigdir	:= @pkgconfigdir@
+TMPDIR		:= @TMPDIR@
+builddir	:= @builddir@/${name}
+O		:= .o/
 
 ################ Compiler options ####################################
 
-CXXFLAGS	:= -Wall -Wextra -Woverloaded-virtual -Wpointer-arith\
-		-Wcast-qual -Wredundant-decls -Wshadow \
-		-std=c++14 -march=native @CUSTOMINCDIR@
-LDFLAGS		:= @CUSTOMLIBDIR@
-LIBS		:= @libustl@ @libsupc++@
-ifdef DEBUG
-    CXXFLAGS	+= -O0 -g
-    LDFLAGS	+= -rdynamic
+#debug		:= 1
+libs		:= @pkglibs@
+ifdef debug
+    cxxflags	:= -O0 -ggdb3
+    ldflags	:= -g -rdynamic
 else
-    CXXFLAGS	+= -Os -g0 -DNDEBUG=1
-    LDFLAGS	+= -s -Wl,-gc-sections
+    cxxflags	:= -Os -g0 -DNDEBUG=1
+    ldflags	:= -s
 endif
-BUILDDIR	:= @builddir@/${NAME}
-O		:= .o/
+CXXFLAGS	:= -Wall -Wextra -Wredundant-decls -Wshadow
+cxxflags	+= -std=c++14 -ffunction-sections -fdata-sections \
+		   @pkgcflags@ ${CXXFLAGS}
+ldflags		+= @pkgldflags@ ${LDFLAGS}

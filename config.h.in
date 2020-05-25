@@ -7,23 +7,20 @@
 #pragma once
 
 // Define to the one symbol short name of this package.
-#define UTIO_NAME	"@PKG_NAME@"
+#define @pkg_uname@_NAME	"@pkg_name@"
 // Define to the full name and version of this package.
-#define UTIO_STRING	"@PKG_NAME@ @PKG_VERSTR@"
+#define @pkg_uname@_STRING	"@pkg_name@ @pkg_verstr@"
 // Define to the version of this package.
-#define UTIO_VERSION	@PKG_VERSION@
+#define @pkg_uname@_VERSION	@pkg_version@
 // Define to the address where bug reports for this package should be sent.
-#define UTIO_BUGREPORT	"@PKG_BUGREPORT@"
-
-/// Define to 1 if you have the uSTL library
-#undef HAVE_USTL_H
+#define @pkg_uname@_BUGREPORT	"@pkg_bugreport@"
 
 // Error messages for descriptive failure on missing components.
-#ifndef HAVE_USTL_H
-    #error "This project requires the uSTL library from https://github.com/msharov/ustl"
-#else
+#if __has_include(<ustl.h>)
     #include <ustl.h>
-    #if USTL_VERSION < 0x230
-	#error "uSTL library version 2.3.0 or above is required: https://github.com/msharov/ustl"
+    #if USTL_VERSION < 0x260
+	#error "[uSTL library](https://github.com/msharov/ustl) version 2.6.0 or above is required."
     #endif
+#else
+    #error "This project requires the [uSTL library](https://github.com/msharov/ustl)"
 #endif

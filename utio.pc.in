@@ -1,0 +1,10 @@
+prefix=@prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @pkg_name@
+Description: Terminfo-based text graphics library
+Version: @pkg_major@.@pkg_minor@
+Requires: ustl
+Libs: -L${libdir} -l@pkg_name@
+Cflags: -I${includedir}
