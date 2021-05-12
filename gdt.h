@@ -27,6 +27,7 @@ public:
 			    { at(0) = tl; at(1) = br; }
     inline		Rect (const Point2d& tl, const Size2d& wh)
 			    { at(0) = at(1) = tl; at(1) += wh; }
+    inline Rect&	operator= (const Rect& r)	{ tuple<2, Point2d>::operator= (r); return *this; }
     inline size_t	Width (void) const		{ return at(1)[0] - at(0)[0]; }
     inline size_t	Height (void) const		{ return at(1)[1] - at(0)[1]; }
     inline bool		Empty (void) const		{ return !Width() | !Height(); }
